@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { PageHeader } from '@/components/foster/layout/PageHeader'
 import { Card } from '@/components/foster/ui/Card'
+import { NewLitterDialog } from '@/components/foster/litters/NewLitterDialog'
 import { littersQueryOptions, type LitterRow } from '@/lib/foster-queries'
 
 type Filter = 'all' | 'active' | 'completed'
@@ -20,6 +21,7 @@ function formatDate(date: string) {
 export function DashboardPage() {
   const [filter, setFilter] = useState<Filter>('all')
   const [query, setQuery] = useState('')
+  const [dialogOpen, setDialogOpen] = useState(false)
   const { data: litters = [], isLoading } = useQuery(littersQueryOptions)
 
   const totalKittens = litters.reduce((sum, litter) => sum + litter.kittens.length, 0)
@@ -45,7 +47,20 @@ export function DashboardPage() {
       <PageHeader
         title="Foster dashboard"
         subtitle="Every batch, past and present, in one place"
+        action={
+          <button
+            type="button"
+            onClick={() => setDialogOpen(true)}
+            className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl bg-brand-500 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600"
+          >
+            <span aria-hidden>＋</span>
+            <span className="hidden sm:inline">New litter</span>
+            <span className="sr-only sm:hidden">New litter</span>
+          </button>
+        }
       />
+
+      <NewLitterDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
 
       <section aria-label="Foster summary" className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Metric label="Total cats fostered" value={String(totalKittens + litters.length)} note="Mamas + kittens" icon="♥" />
