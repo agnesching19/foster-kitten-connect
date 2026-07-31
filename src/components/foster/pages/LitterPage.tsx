@@ -13,9 +13,12 @@ export function LitterPage() {
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,20rem)_1fr] lg:gap-8 xl:grid-cols-[minmax(0,22rem)_1fr]">
         <Card className="h-fit bg-brand-50 border-brand-200">
-          <CardHeader title="Last changed" subtitle={formatRelativeDay(lastChange.date)} />
+          <CardHeader
+            title="Last changed"
+            subtitle={lastChange ? formatRelativeDay(lastChange.date) : 'No changes yet'}
+          />
           <p className="text-3xl font-bold tabular-nums text-brand-700 md:text-4xl">
-            {lastChange.time}
+            {lastChange?.time ?? '—'}
           </p>
           <Button fullWidth className="mt-4 md:max-w-none">
             Log litter change now
