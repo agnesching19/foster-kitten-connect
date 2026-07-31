@@ -10,33 +10,73 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as FeedingsRouteImport } from './routes/feedings'
+import { Route as LitterRouteImport } from './routes/litter'
+import { Route as PoopsRouteImport } from './routes/poops'
+import { Route as WeightsRouteImport } from './routes/weights'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FeedingsRoute = FeedingsRouteImport.update({
+  id: '/feedings',
+  path: '/feedings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LitterRoute = LitterRouteImport.update({
+  id: '/litter',
+  path: '/litter',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PoopsRoute = PoopsRouteImport.update({
+  id: '/poops',
+  path: '/poops',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WeightsRoute = WeightsRouteImport.update({
+  id: '/weights',
+  path: '/weights',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/feedings': typeof FeedingsRoute
+  '/litter': typeof LitterRoute
+  '/poops': typeof PoopsRoute
+  '/weights': typeof WeightsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/feedings': typeof FeedingsRoute
+  '/litter': typeof LitterRoute
+  '/poops': typeof PoopsRoute
+  '/weights': typeof WeightsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/feedings': typeof FeedingsRoute
+  '/litter': typeof LitterRoute
+  '/poops': typeof PoopsRoute
+  '/weights': typeof WeightsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/feedings' | '/litter' | '/poops' | '/weights'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/feedings' | '/litter' | '/poops' | '/weights'
+  id: '__root__' | '/' | '/feedings' | '/litter' | '/poops' | '/weights'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  FeedingsRoute: typeof FeedingsRoute
+  LitterRoute: typeof LitterRoute
+  PoopsRoute: typeof PoopsRoute
+  WeightsRoute: typeof WeightsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +88,43 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/feedings': {
+      id: '/feedings'
+      path: '/feedings'
+      fullPath: '/feedings'
+      preLoaderRoute: typeof FeedingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/litter': {
+      id: '/litter'
+      path: '/litter'
+      fullPath: '/litter'
+      preLoaderRoute: typeof LitterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/poops': {
+      id: '/poops'
+      path: '/poops'
+      fullPath: '/poops'
+      preLoaderRoute: typeof PoopsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/weights': {
+      id: '/weights'
+      path: '/weights'
+      fullPath: '/weights'
+      preLoaderRoute: typeof WeightsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  FeedingsRoute: FeedingsRoute,
+  LitterRoute: LitterRoute,
+  PoopsRoute: PoopsRoute,
+  WeightsRoute: WeightsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
