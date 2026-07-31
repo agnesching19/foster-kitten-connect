@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { littersQueryOptions, pickCurrentLitter } from '@/lib/foster-queries'
+import { AuthStatus } from './AuthStatus'
 
 const dotColors = ['bg-brand-400', 'bg-brand-500', 'bg-amber-400', 'bg-orange-400']
 
@@ -21,6 +22,7 @@ export function MobileHeader() {
               : `${litters.length} batches`}
           </p>
         </div>
+        <div className="flex items-center gap-3">
         <div className="flex -space-x-1">
           {kittens.slice(0, 4).map((kitten, index) => (
             <span
@@ -34,6 +36,8 @@ export function MobileHeader() {
               +{kittens.length - 4}
             </span>
           ) : null}
+        </div>
+        <AuthStatus variant="mobile" />
         </div>
       </div>
     </div>

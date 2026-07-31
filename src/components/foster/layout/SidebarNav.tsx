@@ -2,6 +2,7 @@ import { Link, useLocation } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { littersQueryOptions, pickCurrentLitter } from '@/lib/foster-queries'
 import { getNavLinkClass, navItems } from './navItems'
+import { AuthStatus } from './AuthStatus'
 
 const dotColors = ['bg-brand-400', 'bg-brand-500', 'bg-amber-400', 'bg-orange-400']
 
@@ -58,6 +59,10 @@ export function SidebarNav() {
         ) : (
           <p className="text-sm text-muted">No active batch</p>
         )}
+      </div>
+
+      <div className="border-t border-border px-5 py-4">
+        <AuthStatus variant="sidebar" />
       </div>
     </aside>
   )

@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as FeedingsRouteImport } from './routes/feedings'
 import { Route as LitterRouteImport } from './routes/litter'
 import { Route as PoopsRouteImport } from './routes/poops'
@@ -18,6 +19,11 @@ import { Route as WeightsRouteImport } from './routes/weights'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FeedingsRoute = FeedingsRouteImport.update({
@@ -43,6 +49,7 @@ const WeightsRoute = WeightsRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/feedings': typeof FeedingsRoute
   '/litter': typeof LitterRoute
   '/poops': typeof PoopsRoute
@@ -50,6 +57,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/feedings': typeof FeedingsRoute
   '/litter': typeof LitterRoute
   '/poops': typeof PoopsRoute
@@ -58,6 +66,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/feedings': typeof FeedingsRoute
   '/litter': typeof LitterRoute
   '/poops': typeof PoopsRoute
@@ -65,14 +74,16 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/feedings' | '/litter' | '/poops' | '/weights'
+  fullPaths: '/' | '/auth' | '/feedings' | '/litter' | '/poops' | '/weights'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/feedings' | '/litter' | '/poops' | '/weights'
-  id: '__root__' | '/' | '/feedings' | '/litter' | '/poops' | '/weights'
+  to: '/' | '/auth' | '/feedings' | '/litter' | '/poops' | '/weights'
+  id:
+    '__root__' | '/' | '/auth' | '/feedings' | '/litter' | '/poops' | '/weights'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRoute
   FeedingsRoute: typeof FeedingsRoute
   LitterRoute: typeof LitterRoute
   PoopsRoute: typeof PoopsRoute
@@ -86,6 +97,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/feedings': {
@@ -121,6 +139,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRoute,
   FeedingsRoute: FeedingsRoute,
   LitterRoute: LitterRoute,
   PoopsRoute: PoopsRoute,
@@ -129,3 +148,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
