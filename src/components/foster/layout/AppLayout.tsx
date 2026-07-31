@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom'
+import { Outlet } from '@tanstack/react-router'
 import { BottomNav } from './BottomNav'
 import { MobileHeader } from './MobileHeader'
 import { SidebarNav } from './SidebarNav'
