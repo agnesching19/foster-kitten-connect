@@ -1,16 +1,29 @@
+import { useQuery } from '@tanstack/react-query'
 import { PageHeader } from '@/components/foster/layout/PageHeader'
 import { Badge } from '@/components/foster/ui/Badge'
 import { Button } from '@/components/foster/ui/Button'
 import { Card, CardHeader } from '@/components/foster/ui/Card'
-import { mommaName, recentPoops } from '@/data/mockData'
+import { EmptyState } from '@/components/foster/ui/EmptyState'
+import {
+  groupByDate,
+  littersQueryOptions,
+  pickCurrentLitter,
+  poopsQueryOptions,
+} from '@/lib/foster-queries'
 import { formatRelativeDay } from '@/utils/formatDate'
 
 export function PoopsPage() {
+  const { data: litters = [], isLoading: littersLoading } = useQuery(littersQueryOptions)
+  const litter = pickCurrentLitter(litters)
+  const { data: entries = [], isLoading } = useQuery(poopsQueryOptions(litter?.id))
+  const days = groupByDate(entries)
+  const mother = litter?.mother_name ?? 'Momma'
+
   return (
     <div>
       <PageHeader
         title="Poops"
-        subtitle={`${mommaName} & kitten bathroom log`}
+        subtitle={`${mother} & kitten bathroom log`}
         action={
           <Button size="md" className="shrink-0">
             + Log
@@ -27,42 +40,52 @@ export function PoopsPage() {
         </Button>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
-        {recentPoops.map((day) => (
-          <Card key={day.date}>
-            <CardHeader
-              title={formatRelativeDay(day.date)}
-              subtitle={`${day.entries.length} entr${day.entries.length === 1 ? 'y' : 'ies'}`}
-            />
-            <ul className="space-y-2 md:grid md:grid-cols-2 md:gap-2 md:space-y-0">
-              {day.entries.map((entry) => (
-                <li
-                  key={entry.id}
-                  className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-lg">
-                      💩
-                    </span>
-                    <div>
-                      <p className="font-semibold text-ink">{entry.time}</p>
-                      {entry.note ? (
-                        <p className="text-sm text-muted">{entry.note}</p>
-                      ) : (
-                        <p className="text-sm text-muted">No note</p>
-                      )}
+      {littersLoading || isLoading ? (
+        <Card>
+          <p className="text-sm text-muted">Loading entries…</p>
+        </Card>
+      ) : days.length ? (
+        <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
+          {days.map((day) => (
+            <Card key={day.date}>
+              <CardHeader
+                title={formatRelativeDay(day.date)}
+                subtitle={`${day.items.length} entr${day.items.length === 1 ? 'y' : 'ies'}`}
+              />
+              <ul className="space-y-2 md:grid md:grid-cols-2 md:gap-2 md:space-y-0">
+                {day.items.map((entry) => (
+                  <li
+                    key={entry.id}
+                    className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-lg">
+                        💩
+                      </span>
+                      <div>
+                        <p className="font-semibold text-ink">{entry.time.slice(0, 5)}</p>
+                        <p className="text-sm text-muted">{entry.note ? entry.note : 'No note'}</p>
+                      </div>
                     </div>
-                  </div>
-                  <Badge
-                    label={entry.subject === 'momma' ? mommaName : 'Kitten'}
-                    color={entry.subject === 'momma' ? 'brand' : 'neutral'}
-                  />
-                </li>
-              ))}
-            </ul>
-          </Card>
-        ))}
-      </div>
+                    <Badge
+                      label={entry.kittens?.name ?? mother}
+                      color={entry.kitten_id ? 'neutral' : 'brand'}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <Card>
+          <EmptyState
+            icon="💩"
+            title="No entries yet"
+            description={litter ? 'Log a poop to start tracking.' : 'Add a litter first.'}
+          />
+        </Card>
+      )}
     </div>
   )
 }
