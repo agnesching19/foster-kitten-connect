@@ -12,6 +12,8 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppLayout } from "@/components/foster/layout/AppLayout";
+import { AuthProvider } from "@/hooks/useAuth";
+import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -126,8 +128,11 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* AppLayout renders <Outlet /> for nested routes. */}
-      <AppLayout />
+      <AuthProvider>
+        {/* AppLayout renders <Outlet /> for nested routes. */}
+        <AppLayout />
+        <Toaster />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
