@@ -14,7 +14,340 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      daily_notes: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          litter_id: string
+          note: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          litter_id: string
+          note: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          litter_id?: string
+          note?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_notes_litter_id_fkey"
+            columns: ["litter_id"]
+            isOneToOne: false
+            referencedRelation: "litters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feedings: {
+        Row: {
+          created_at: string
+          date: string
+          food: string
+          id: string
+          litter_id: string
+          meal_number: number | null
+          time: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          food: string
+          id?: string
+          litter_id: string
+          meal_number?: number | null
+          time: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          food?: string
+          id?: string
+          litter_id?: string
+          meal_number?: number | null
+          time?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedings_litter_id_fkey"
+            columns: ["litter_id"]
+            isOneToOne: false
+            referencedRelation: "litters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kittens: {
+        Row: {
+          created_at: string
+          id: string
+          litter_id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          litter_id: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          litter_id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kittens_litter_id_fkey"
+            columns: ["litter_id"]
+            isOneToOne: false
+            referencedRelation: "litters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      litter_changes: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          litter_id: string
+          time: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          litter_id: string
+          time: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          litter_id?: string
+          time?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "litter_changes_litter_id_fkey"
+            columns: ["litter_id"]
+            isOneToOne: false
+            referencedRelation: "litters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      litters: {
+        Row: {
+          album_url: string | null
+          arrived: string
+          created_at: string
+          date_of_birth: string | null
+          external_record: string | null
+          id: string
+          left_date: string | null
+          litter_name: string | null
+          mother_name: string
+          status: Database["public"]["Enums"]["litter_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          album_url?: string | null
+          arrived: string
+          created_at?: string
+          date_of_birth?: string | null
+          external_record?: string | null
+          id?: string
+          left_date?: string | null
+          litter_name?: string | null
+          mother_name: string
+          status?: Database["public"]["Enums"]["litter_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          album_url?: string | null
+          arrived?: string
+          created_at?: string
+          date_of_birth?: string | null
+          external_record?: string | null
+          id?: string
+          left_date?: string | null
+          litter_name?: string | null
+          mother_name?: string
+          status?: Database["public"]["Enums"]["litter_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      poop_entries: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          kitten_id: string | null
+          litter_id: string
+          note: string | null
+          time: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          kitten_id?: string | null
+          litter_id: string
+          note?: string | null
+          time: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          kitten_id?: string | null
+          litter_id?: string
+          note?: string | null
+          time?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poop_entries_kitten_id_fkey"
+            columns: ["kitten_id"]
+            isOneToOne: false
+            referencedRelation: "kittens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "poop_entries_litter_id_fkey"
+            columns: ["litter_id"]
+            isOneToOne: false
+            referencedRelation: "litters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weigh_ins: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          litter_id: string
+          time: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          litter_id: string
+          time: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          litter_id?: string
+          time?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weigh_ins_litter_id_fkey"
+            columns: ["litter_id"]
+            isOneToOne: false
+            referencedRelation: "litters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weights: {
+        Row: {
+          created_at: string
+          grams: number
+          id: string
+          kitten_id: string
+          updated_at: string
+          user_id: string
+          weigh_in_id: string
+        }
+        Insert: {
+          created_at?: string
+          grams: number
+          id?: string
+          kitten_id: string
+          updated_at?: string
+          user_id: string
+          weigh_in_id: string
+        }
+        Update: {
+          created_at?: string
+          grams?: number
+          id?: string
+          kitten_id?: string
+          updated_at?: string
+          user_id?: string
+          weigh_in_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weights_kitten_id_fkey"
+            columns: ["kitten_id"]
+            isOneToOne: false
+            referencedRelation: "kittens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weights_weigh_in_id_fkey"
+            columns: ["weigh_in_id"]
+            isOneToOne: false
+            referencedRelation: "weigh_ins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +356,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      litter_status: "active" | "completed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +483,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      litter_status: ["active", "completed"],
+    },
   },
 } as const
