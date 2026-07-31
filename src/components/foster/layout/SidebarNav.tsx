@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { Link, useLocation } from '@tanstack/react-router'
 import { fosterBatches, kittens } from '@/data/mockData'
 import type { KittenColor } from '@/types/foster'
 import { getNavLinkClass, navItems } from './navItems'
@@ -14,6 +14,8 @@ const kittenDotColors: Record<KittenColor, string> = {
 }
 
 export function SidebarNav() {
+  const pathname = useLocation({ select: (location) => location.pathname })
+
   return (
     <aside className="hidden md:flex md:w-64 md:shrink-0 md:flex-col md:border-r md:border-border md:bg-surface-raised lg:w-72">
       <div className="border-b border-border px-5 py-5">
@@ -26,22 +28,18 @@ export function SidebarNav() {
 
       <nav aria-label="Main navigation" className="flex-1 px-3 py-4">
         <ul className="space-y-1">
-          {navItems.map((item) => (
-            <li key={item.to}>
-              <NavLink
-                to={item.to}
-                end={item.to === '/'}
-                className={({ isActive }) => getNavLinkClass(isActive, 'sidebar')}
-              >
-                {({ isActive }) => (
-                  <>
-                    {item.icon(isActive)}
-                    <span>{item.label}</span>
-                  </>
-                )}
-              </NavLink>
-            </li>
-          ))}
+          {navItems.map((item) => {
+            const isActive =
+              item.to === '/' ? pathname === '/' : pathname.startsWith(item.to)
+            return (
+              <li key={item.to}>
+                <Link to={item.to} className={getNavLinkClass(isActive, 'sidebar')}>
+                  {item.icon(isActive)}
+                  <span>{item.label}</span>
+                </Link>
+              </li>
+            )
+          })}
         </ul>
       </nav>
 
