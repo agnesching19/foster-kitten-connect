@@ -35,14 +35,6 @@ export function pickCurrentLitter(litters: LitterRow[]): LitterRow | undefined {
   return litters.find((litter) => litter.status === 'active') ?? litters[0]
 }
 
-export const currentLitterQueryOptions = queryOptions({
-  queryKey: ['current-litter'],
-  queryFn: async (): Promise<LitterRow | null> => {
-    const litters = await littersQueryOptions.queryFn!({} as never)
-    return pickCurrentLitter(litters as LitterRow[]) ?? null
-  },
-})
-
 export interface FeedingRow {
   id: string
   date: string
