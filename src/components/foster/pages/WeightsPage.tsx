@@ -8,7 +8,7 @@ import { Button } from '@/components/foster/ui/Button'
 import { Card, CardHeader } from '@/components/foster/ui/Card'
 import { EmptyState } from '@/components/foster/ui/EmptyState'
 import { KittenDot } from '@/components/foster/ui/KittenDot'
-import { WeighInDialog } from '@/components/foster/logs/WeighInDialog'
+import { WeighInDialog } from '@/components/foster/dialogs/WeighInDialog'
 import { ConfirmDialog } from '@/components/foster/settings/ConfirmDialog'
 import {
   daysBetween,

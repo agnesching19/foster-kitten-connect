@@ -7,7 +7,7 @@ import { Badge } from '@/components/foster/ui/Badge'
 import { Button } from '@/components/foster/ui/Button'
 import { Card, CardHeader } from '@/components/foster/ui/Card'
 import { EmptyState } from '@/components/foster/ui/EmptyState'
-import { FeedingDialog } from '@/components/foster/logs/FeedingDialog'
+import { FeedingDialog } from '@/components/foster/dialogs/FeedingDialog'
 import { ConfirmDialog } from '@/components/foster/settings/ConfirmDialog'
 import {
   feedingsQueryOptions,

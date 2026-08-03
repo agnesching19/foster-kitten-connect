@@ -8,7 +8,7 @@ import { Button } from '@/components/foster/ui/Button'
 import { Card, CardHeader } from '@/components/foster/ui/Card'
 import { EmptyState } from '@/components/foster/ui/EmptyState'
 import { KittenDot } from '@/components/foster/ui/KittenDot'
-import { PoopDialog } from '@/components/foster/logs/PoopDialog'
+import { PoopDialog } from '@/components/foster/dialogs/PoopDialog'
 import { ConfirmDialog } from '@/components/foster/settings/ConfirmDialog'
 import {
   groupByDate,
