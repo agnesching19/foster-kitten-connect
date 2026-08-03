@@ -70,6 +70,7 @@ export function PoopsPage() {
         onClose={() => setDialogOpen(false)}
         litterId={litter?.id}
         entry={editing}
+        motherName={litter?.mother_name ?? null}
       />
 
       <ConfirmDialog
@@ -112,7 +113,9 @@ export function PoopsPage() {
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
-                      {entry.kitten_id ? (
+                      {entry.subject_type === 'mother' ? (
+                        <Badge label={`🐱 Momma${litter ? ` (${litter.mother_name})` : ''}`} color="neutral" />
+                      ) : entry.kitten_id ? (
                         <span className="flex items-center gap-1.5">
                           <KittenDot colour={entry.kittens?.tag_colour ?? null} />
                           <Badge label={entry.kittens?.name ?? 'Kitten'} color="neutral" />
