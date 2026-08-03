@@ -81,7 +81,7 @@ export const feedingsQueryOptions = (litterId: string | undefined) =>
         .select('id, date, time, food, meal_number, notes')
         .eq('litter_id', litterId!)
         .order('date', { ascending: false })
-        .order('time', { ascending: true })
+        .order('time', { ascending: false })
       if (error) throw error
       return (data ?? []) as FeedingRow[]
     },
