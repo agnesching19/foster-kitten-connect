@@ -153,19 +153,17 @@ export const legacyTemplateParser: SpreadsheetParser = {
         let matched = false
 
         const food = cell(foodColumn)
-        if (food && !isTicked(food) ? true : Boolean(food)) {
-          if (food) {
-            const mealRaw = cell(mealColumn)
-            const meal = Number(mealRaw.replace(/[^\d]/g, ''))
-            result.feedings.push({
-              date,
-              time,
-              food: isTicked(food) ? 'Fed' : food,
-              meal_number: Number.isInteger(meal) && meal > 0 ? meal : null,
-              notes,
-            })
-            matched = true
-          }
+        const mealRaw = cell(mealColumn)
+        if (food || mealRaw) {
+          const meal = Number(mealRaw.replace(/[^\d]/g, ''))
+          result.feedings.push({
+            date,
+            time,
+            food: !food || isTicked(food) ? 'Fed' : food,
+            meal_number: Number.isInteger(meal) && meal > 0 ? meal : null,
+            notes,
+          })
+          matched = true
         }
 
         const poop = cell(poopColumn)
