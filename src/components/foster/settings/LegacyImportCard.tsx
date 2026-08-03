@@ -10,6 +10,7 @@ import {
   type LegacyImportSummary,
 } from '@/lib/data-transfer/legacy/import'
 import { sheetsFromFiles, sheetsFromGoogleUrl } from '@/lib/data-transfer/legacy/load'
+import type { LegacySheet } from '@/lib/data-transfer/legacy/types'
 import { pickParser } from '@/lib/data-transfer/legacy/registry'
 import { totalRecords, type LegacyParseResult } from '@/lib/data-transfer/legacy/types'
 import { ProgressBar } from './ProgressBar'
@@ -43,7 +44,7 @@ export function LegacyImportCard() {
     if (inputRef.current) inputRef.current.value = ''
   }
 
-  async function analyse(load: () => Promise<ReturnType<typeof sheetsFromFiles>>) {
+  async function analyse(load: () => Promise<LegacySheet[]>) {
     setParsing(true)
     setSummary(null)
     try {
@@ -69,14 +70,17 @@ export function LegacyImportCard() {
     try {
       const outcome = await runLegacyImport(
         result,
-        {
-          userId: user.id,
-          litterId: litterId === NEW_LITTER ? null : litterId,
-          newLitter:
-            litterId === NEW_LITTER
-              ? { mother_name: motherName.trim(), litter_name: litterName.trim() || null, arrived }
-              : undefined,
-        },
+        litterId === NEW_LITTER
+          ? {
+              userId: user.id,
+              litterId: null,
+              newLitter: {
+                mother_name: motherName.trim(),
+                litter_name: litterName.trim() || null,
+                arrived,
+              },
+            }
+          : { userId: user.id, litterId },
         setProgress,
       )
       setSummary(outcome)
