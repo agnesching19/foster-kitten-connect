@@ -23,23 +23,27 @@ const MONTHS = [
   'dec',
 ]
 
+const WEEKDAY = /^(mon|tues?|tue|wed(nes)?|thur?s?|fri|sat(ur)?|sun)[a-z]*\.?,?\s*/i
+
 function pad(value: number): string {
   return String(value).padStart(2, '0')
 }
 
-/** Accepts YYYY-MM-DD, DD/MM/YYYY, MM/DD/YY, "12 Mar 2024", "Mar 12" etc. */
+/**
+ * Accepts YYYY-MM-DD, DD/MM/YYYY, MM/DD/YY, "12 Mar 2024", "Mar 12",
+ * and Google Sheets style "Fri, 19 June 2026".
+ */
 export function parseLooseDate(raw: string, fallbackYear = new Date().getFullYear()): string | null {
-  const value = raw.trim()
+  const value = raw.trim().replace(WEEKDAY, '').trim()
   if (!value) return null
 
   const iso = value.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/)
   if (iso) return `${iso[1]}-${pad(Number(iso[2]))}-${pad(Number(iso[3]))}`
 
-  const slash = value.match(/^(\d{1,2})[-/.](\d{1,2})(?:[-/.](\d{2,4}))?/)
+  const slash = value.match(/^(\d{1,2})[-/.](\d{1,2})(?:[-/.](\d{2,4}))?\s*$/)
   if (slash) {
     let a = Number(slash[1])
     let b = Number(slash[2])
-    // Day-first unless impossible (US-style sheets).
     if (a > 12 && b <= 12) {
       // already day/month
     } else if (b > 12 && a <= 12) {
@@ -53,20 +57,37 @@ export function parseLooseDate(raw: string, fallbackYear = new Date().getFullYea
     return `${year}-${pad(b)}-${pad(a)}`
   }
 
-  const textual = value
+  // Textual dates: scan tokens for a month name, a day and an optional year.
+  const tokens = value
     .toLowerCase()
-    .replace(/(\d+)(st|nd|rd|th)/g, '$1')
-    .match(/(?:(\d{1,2})\s+)?([a-z]{3,})\.?(?:\s+(\d{1,2}))?(?:[,\s]+(\d{2,4}))?/)
-  if (textual) {
-    const monthIndex = MONTHS.indexOf((textual[2] ?? '').slice(0, 3))
-    if (monthIndex >= 0) {
-      const day = Number(textual[1] ?? textual[3] ?? NaN)
-      if (Number.isInteger(day) && day >= 1 && day <= 31) {
-        let year = textual[4] ? Number(textual[4]) : fallbackYear
-        if (year < 100) year += 2000
-        return `${year}-${pad(monthIndex + 1)}-${pad(day)}`
-      }
+    .replace(/(\d+)(st|nd|rd|th)\b/g, '$1')
+    .split(/[\s,./-]+/)
+    .filter(Boolean)
+
+  let month = -1
+  let day = Number.NaN
+  let year = Number.NaN
+  for (const token of tokens) {
+    if (/^[a-z]+$/.test(token)) {
+      const index = MONTHS.indexOf(token.slice(0, 3))
+      if (index >= 0 && month < 0) month = index
+      continue
     }
+    if (/^\d{4}$/.test(token)) {
+      if (!Number.isInteger(year)) year = Number(token)
+      continue
+    }
+    if (/^\d{1,2}$/.test(token) && !Number.isInteger(day)) day = Number(token)
+  }
+  if (month >= 0 && Number.isInteger(day) && day >= 1 && day <= 31) {
+    const finalYear = Number.isInteger(year) ? year : fallbackYear
+    return `${finalYear}-${pad(month + 1)}-${pad(day)}`
+  }
+
+  // Last resort: let the runtime try (handles locale strings we do not model).
+  const parsed = new Date(value)
+  if (!Number.isNaN(parsed.getTime())) {
+    return `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(parsed.getDate())}`
   }
 
   return null
