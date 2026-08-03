@@ -172,8 +172,10 @@ function BatchCard({ litter }: { litter: LitterRow }) {
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
             {isActive ? (
-              <Link to="/feedings" className="inline-flex min-h-10 items-center rounded-xl bg-brand-500 px-4 text-sm font-semibold text-white transition hover:bg-brand-600">Open batch →</Link>
-            ) : null}
+              <Link to="/litters/$litterId" params={{ litterId: litter.id }} className="inline-flex min-h-10 items-center rounded-xl bg-brand-500 px-4 text-sm font-semibold text-white transition hover:bg-brand-600">Open batch →</Link>
+            ) : (
+              <Link to="/litters/$litterId" params={{ litterId: litter.id }} className="inline-flex min-h-10 items-center rounded-xl px-3 text-sm font-semibold text-brand-700 hover:bg-brand-50">Open batch →</Link>
+            )}
             {litter.album_url ? <a href={litter.album_url} target="_blank" rel="noreferrer" className="inline-flex min-h-10 items-center rounded-xl px-3 text-sm font-semibold text-brand-700 hover:bg-brand-50">View album ↗</a> : null}
             {litter.external_record ? <span className="ml-auto truncate text-xs text-muted" title={litter.external_record}>Record: {litter.external_record}</span> : null}
           </div>
