@@ -30,31 +30,80 @@ export async function sheetsFromFiles(files: File[]): Promise<LegacySheet[]> {
   return sheets
 }
 
-/** Fetches a public Google Sheet tab as CSV (the sheet must be link-viewable). */
+const TAB_CANDIDATES = [
+  'Momma',
+  'Mumma',
+  'Mamma',
+  'Mama',
+  'Mom',
+  'Mum',
+  'Mother',
+  'Kitten weights',
+  'Kitten Weights',
+  'Kitten weight',
+  'Kittens weights',
+  'Weights',
+  'Weight',
+]
+
+function gvizUrl(id: string, params: string): string {
+  return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&${params}`
+}
+
+async function fetchCsv(url: string): Promise<string | null> {
+  try {
+    const response = await fetch(url)
+    if (!response.ok) return null
+    return await response.text()
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Reads a public Google Sheets workbook. Every known tab name is requested plus
+ * the default tab (or an explicit #gid=…), so multi-sheet workbooks import in
+ * one go. The workbook must be shared as "Anyone with the link".
+ */
 export async function sheetsFromGoogleUrl(url: string): Promise<LegacySheet[]> {
   const trimmed = url.trim()
   const id = trimmed.match(/\/spreadsheets\/d\/([\w-]+)/)?.[1]
   if (!id) throw new Error('That does not look like a Google Sheets link.')
   const gid = trimmed.match(/[#&?]gid=(\d+)/)?.[1]
-  const exportUrl =
-    `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv` +
-    (gid ? `&gid=${gid}` : '')
 
-  let response: Response
-  try {
-    response = await fetch(exportUrl)
-  } catch {
+  const sheets: LegacySheet[] = []
+  const seen = new Set<string>()
+  let reachable = false
+
+  const add = (name: string, text: string | null) => {
+    if (text === null) return
+    reachable = true
+    const fingerprint = text.slice(0, 400)
+    if (seen.has(fingerprint)) return
+    seen.add(fingerprint)
+    const sheet = toSheet(name, text)
+    if (sheet) sheets.push(sheet)
+  }
+
+  // Default tab (or the explicitly linked one).
+  add(gid ? `Google Sheet (gid ${gid})` : 'Google Sheet', await fetchCsv(gvizUrl(id, gid ? `gid=${gid}` : 'gid=0')))
+
+  if (!gid) {
+    const results = await Promise.all(
+      TAB_CANDIDATES.map(async (name) => ({
+        name,
+        text: await fetchCsv(gvizUrl(id, `sheet=${encodeURIComponent(name)}`)),
+      })),
+    )
+    for (const entry of results) add(entry.name, entry.text)
+  }
+
+  if (!sheets.length) {
     throw new Error(
-      'Could not reach that spreadsheet. Make sure sharing is set to "Anyone with the link", or download the tab as CSV and upload it here.',
+      reachable
+        ? 'That workbook was reachable but no readable tabs were found. Download the tabs as CSV and upload them here instead.'
+        : 'Could not read that workbook. Set sharing to "Anyone with the link", or download the tabs as CSV and upload them here.',
     )
   }
-  if (!response.ok) {
-    throw new Error(
-      `Google returned ${response.status}. Set sharing to "Anyone with the link", or upload the tab as a CSV instead.`,
-    )
-  }
-  const text = await response.text()
-  const sheet = toSheet(gid ? `Google Sheet (gid ${gid})` : 'Google Sheet', text)
-  if (!sheet) throw new Error('That sheet tab appears to be empty.')
-  return [sheet]
+  return sheets
 }

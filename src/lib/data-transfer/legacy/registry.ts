@@ -1,9 +1,14 @@
 import { currentExportParser } from './current-export-parser'
 import { legacyTemplateParser } from './legacy-template-parser'
+import { workbookParser } from './workbook-parser'
 import type { LegacySheet, SpreadsheetParser } from './types'
 
 /** Add future spreadsheet templates here — nothing else needs to change. */
-export const spreadsheetParsers: SpreadsheetParser[] = [currentExportParser, legacyTemplateParser]
+export const spreadsheetParsers: SpreadsheetParser[] = [
+  workbookParser,
+  currentExportParser,
+  legacyTemplateParser,
+]
 
 export function pickParser(sheets: LegacySheet[]): SpreadsheetParser {
   let best = legacyTemplateParser
