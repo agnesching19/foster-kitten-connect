@@ -60,6 +60,7 @@ export type Database = {
           id: string
           litter_id: string
           meal_number: number | null
+          notes: string | null
           time: string
           updated_at: string
           user_id: string
@@ -71,6 +72,7 @@ export type Database = {
           id?: string
           litter_id: string
           meal_number?: number | null
+          notes?: string | null
           time: string
           updated_at?: string
           user_id: string
@@ -82,6 +84,7 @@ export type Database = {
           id?: string
           litter_id?: string
           meal_number?: number | null
+          notes?: string | null
           time?: string
           updated_at?: string
           user_id?: string
@@ -103,6 +106,7 @@ export type Database = {
           litter_id: string
           name: string
           sort_order: number
+          tag_colour: Database["public"]["Enums"]["tag_colour"] | null
           updated_at: string
           user_id: string
         }
@@ -112,6 +116,7 @@ export type Database = {
           litter_id: string
           name: string
           sort_order?: number
+          tag_colour?: Database["public"]["Enums"]["tag_colour"] | null
           updated_at?: string
           user_id: string
         }
@@ -121,6 +126,7 @@ export type Database = {
           litter_id?: string
           name?: string
           sort_order?: number
+          tag_colour?: Database["public"]["Enums"]["tag_colour"] | null
           updated_at?: string
           user_id?: string
         }
@@ -140,6 +146,7 @@ export type Database = {
           date: string
           id: string
           litter_id: string
+          notes: string | null
           time: string
           updated_at: string
           user_id: string
@@ -149,6 +156,7 @@ export type Database = {
           date: string
           id?: string
           litter_id: string
+          notes?: string | null
           time: string
           updated_at?: string
           user_id: string
@@ -158,6 +166,7 @@ export type Database = {
           date?: string
           id?: string
           litter_id?: string
+          notes?: string | null
           time?: string
           updated_at?: string
           user_id?: string
@@ -274,6 +283,7 @@ export type Database = {
           date: string
           id: string
           litter_id: string
+          notes: string | null
           time: string
           updated_at: string
           user_id: string
@@ -283,6 +293,7 @@ export type Database = {
           date: string
           id?: string
           litter_id: string
+          notes?: string | null
           time: string
           updated_at?: string
           user_id: string
@@ -292,6 +303,7 @@ export type Database = {
           date?: string
           id?: string
           litter_id?: string
+          notes?: string | null
           time?: string
           updated_at?: string
           user_id?: string
@@ -360,6 +372,18 @@ export type Database = {
     }
     Enums: {
       litter_status: "active" | "completed"
+      tag_colour:
+        | "blue"
+        | "pink"
+        | "red"
+        | "orange"
+        | "yellow"
+        | "green"
+        | "purple"
+        | "white"
+        | "grey"
+        | "brown"
+        | "black"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -488,6 +512,19 @@ export const Constants = {
   public: {
     Enums: {
       litter_status: ["active", "completed"],
+      tag_colour: [
+        "blue",
+        "pink",
+        "red",
+        "orange",
+        "yellow",
+        "green",
+        "purple",
+        "white",
+        "grey",
+        "brown",
+        "black",
+      ],
     },
   },
 } as const
