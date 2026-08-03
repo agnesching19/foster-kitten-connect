@@ -11,7 +11,7 @@ export interface LitterRow {
   status: 'active' | 'completed'
   external_record: string | null
   album_url: string | null
-  kittens: { id: string; name: string }[]
+  kittens: { id: string; name: string; sort_order: number }[]
 }
 
 export const littersQueryOptions = queryOptions({
@@ -20,13 +20,15 @@ export const littersQueryOptions = queryOptions({
     const { data, error } = await supabase
       .from('litters')
       .select(
-        'id, mother_name, litter_name, date_of_birth, arrived, left_date, status, external_record, album_url, kittens(id, name)',
+        'id, mother_name, litter_name, date_of_birth, arrived, left_date, status, external_record, album_url, kittens(id, name, sort_order)',
       )
       .order('arrived', { ascending: false })
     if (error) throw error
     return (data ?? []).map((litter) => ({
       ...litter,
-      kittens: [...(litter.kittens ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
+      kittens: [...(litter.kittens ?? [])].sort(
+        (a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name),
+      ),
     })) as LitterRow[]
   },
 })
@@ -34,6 +36,29 @@ export const littersQueryOptions = queryOptions({
 export function pickCurrentLitter(litters: LitterRow[]): LitterRow | undefined {
   return litters.find((litter) => litter.status === 'active') ?? litters[0]
 }
+
+export interface KittenRow {
+  id: string
+  name: string
+  sort_order: number
+  litter_id: string
+}
+
+export const kittensQueryOptions = (litterId: string | undefined) =>
+  queryOptions({
+    queryKey: ['kittens', litterId],
+    enabled: Boolean(litterId),
+    queryFn: async (): Promise<KittenRow[]> => {
+      const { data, error } = await supabase
+        .from('kittens')
+        .select('id, name, sort_order, litter_id')
+        .eq('litter_id', litterId!)
+        .order('sort_order', { ascending: true })
+        .order('name', { ascending: true })
+      if (error) throw error
+      return (data ?? []) as KittenRow[]
+    },
+  })
 
 export interface FeedingRow {
   id: string
