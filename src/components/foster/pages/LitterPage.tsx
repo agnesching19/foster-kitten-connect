@@ -8,7 +8,7 @@ import { Button } from '@/components/foster/ui/Button'
 import { Card, CardHeader } from '@/components/foster/ui/Card'
 import { EmptyState } from '@/components/foster/ui/EmptyState'
 import { nowTime, todayIso } from '@/components/foster/ui/FormDialog'
-import { LitterChangeDialog } from '@/components/foster/logs/LitterChangeDialog'
+import { LitterChangeDialog } from '@/components/foster/dialogs/LitterChangeDialog'
 import { ConfirmDialog } from '@/components/foster/settings/ConfirmDialog'
 import {
   litterChangesQueryOptions,
