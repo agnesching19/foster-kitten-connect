@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as FeedingsRouteImport } from './routes/feedings'
 import { Route as LitterRouteImport } from './routes/litter'
 import { Route as PoopsRouteImport } from './routes/poops'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as WeightsRouteImport } from './routes/weights'
 import { Route as LittersLitterIdRouteImport } from './routes/litters.$litterId'
 
@@ -42,6 +43,11 @@ const PoopsRoute = PoopsRouteImport.update({
   path: '/poops',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WeightsRoute = WeightsRouteImport.update({
   id: '/weights',
   path: '/weights',
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/feedings': typeof FeedingsRoute
   '/litter': typeof LitterRoute
   '/poops': typeof PoopsRoute
+  '/settings': typeof SettingsRoute
   '/weights': typeof WeightsRoute
   '/litters/$litterId': typeof LittersLitterIdRoute
 }
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   '/feedings': typeof FeedingsRoute
   '/litter': typeof LitterRoute
   '/poops': typeof PoopsRoute
+  '/settings': typeof SettingsRoute
   '/weights': typeof WeightsRoute
   '/litters/$litterId': typeof LittersLitterIdRoute
 }
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   '/feedings': typeof FeedingsRoute
   '/litter': typeof LitterRoute
   '/poops': typeof PoopsRoute
+  '/settings': typeof SettingsRoute
   '/weights': typeof WeightsRoute
   '/litters/$litterId': typeof LittersLitterIdRoute
 }
@@ -89,6 +98,7 @@ export interface FileRouteTypes {
     | '/feedings'
     | '/litter'
     | '/poops'
+    | '/settings'
     | '/weights'
     | '/litters/$litterId'
   fileRoutesByTo: FileRoutesByTo
@@ -98,6 +108,7 @@ export interface FileRouteTypes {
     | '/feedings'
     | '/litter'
     | '/poops'
+    | '/settings'
     | '/weights'
     | '/litters/$litterId'
   id:
@@ -107,6 +118,7 @@ export interface FileRouteTypes {
     | '/feedings'
     | '/litter'
     | '/poops'
+    | '/settings'
     | '/weights'
     | '/litters/$litterId'
   fileRoutesById: FileRoutesById
@@ -117,6 +129,7 @@ export interface RootRouteChildren {
   FeedingsRoute: typeof FeedingsRoute
   LitterRoute: typeof LitterRoute
   PoopsRoute: typeof PoopsRoute
+  SettingsRoute: typeof SettingsRoute
   WeightsRoute: typeof WeightsRoute
   LittersLitterIdRoute: typeof LittersLitterIdRoute
 }
@@ -158,6 +171,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PoopsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/weights': {
       id: '/weights'
       path: '/weights'
@@ -181,6 +201,7 @@ const rootRouteChildren: RootRouteChildren = {
   FeedingsRoute: FeedingsRoute,
   LitterRoute: LitterRoute,
   PoopsRoute: PoopsRoute,
+  SettingsRoute: SettingsRoute,
   WeightsRoute: WeightsRoute,
   LittersLitterIdRoute: LittersLitterIdRoute,
 }
