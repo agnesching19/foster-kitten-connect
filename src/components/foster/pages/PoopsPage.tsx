@@ -95,34 +95,36 @@ export function PoopsPage() {
                 title={formatRelativeDay(day.date)}
                 subtitle={`${day.items.length} entr${day.items.length === 1 ? 'y' : 'ies'}`}
               />
-              <ul className="space-y-2 md:grid md:grid-cols-2 md:gap-2 md:space-y-0">
+              <ul className="divide-y divide-border/70">
                 {day.items.map((entry) => (
                   <li
                     key={entry.id}
-                    className="flex items-center justify-between gap-2 rounded-xl bg-gray-50 px-4 py-3"
+                    className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-3 gap-y-1 py-3 first:pt-0 last:pb-0"
                   >
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-lg">
-                        💩
-                      </span>
-                      <div className="min-w-0">
-                        <p className="font-semibold text-ink">{entry.time.slice(0, 5)}</p>
-                        <p className="truncate text-sm text-muted">
-                          {entry.note ? entry.note : 'No note'}
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-lg">
+                      💩
+                    </span>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <p className="text-base font-semibold tabular-nums text-ink">
+                          {entry.time.slice(0, 5)}
                         </p>
+                        {entry.subject_type === 'mother' ? (
+                          <Badge label={`🐱 Momma${litter ? ` (${litter.mother_name})` : ''}`} color="neutral" />
+                        ) : entry.kitten_id ? (
+                          <span className="flex items-center gap-1.5">
+                            <KittenDot colour={entry.kittens?.tag_colour ?? null} />
+                            <Badge label={entry.kittens?.name ?? 'Kitten'} color="neutral" />
+                          </span>
+                        ) : (
+                          <Badge label="Not identified" color="neutral" />
+                        )}
                       </div>
+                      {entry.note ? (
+                        <p className="mt-0.5 text-sm text-muted">{entry.note}</p>
+                      ) : null}
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
-                      {entry.subject_type === 'mother' ? (
-                        <Badge label={`🐱 Momma${litter ? ` (${litter.mother_name})` : ''}`} color="neutral" />
-                      ) : entry.kitten_id ? (
-                        <span className="flex items-center gap-1.5">
-                          <KittenDot colour={entry.kittens?.tag_colour ?? null} />
-                          <Badge label={entry.kittens?.name ?? 'Kitten'} color="neutral" />
-                        </span>
-                      ) : (
-                        <Badge label="Not identified" color="neutral" />
-                      )}
                       <button
                         type="button"
                         className={iconButtonClass}

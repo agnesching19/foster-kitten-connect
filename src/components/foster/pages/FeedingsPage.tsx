@@ -93,31 +93,33 @@ export function FeedingsPage() {
                 title={formatRelativeDay(day.date)}
                 subtitle={`${day.items.length} feeding${day.items.length === 1 ? '' : 's'}`}
               />
-              <ul className="space-y-2 md:grid md:grid-cols-2 md:gap-2 md:space-y-0">
+              <ul className="divide-y divide-border/70">
                 {day.items.map((feeding) => (
                   <li
                     key={feeding.id}
-                    className="flex items-center justify-between gap-2 rounded-xl bg-gray-50 px-4 py-3"
+                    className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-3 gap-y-1 py-3 first:pt-0 last:pb-0"
                   >
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-100 text-lg">
-                        🍼
-                      </span>
-                      <div className="min-w-0">
-                        <p className="font-semibold text-ink">{feeding.time.slice(0, 5)}</p>
-                        <p className="truncate text-sm capitalize text-muted">{feeding.food}</p>
-                        {feeding.notes ? (
-                          <p className="truncate text-xs text-muted">{feeding.notes}</p>
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-lg">
+                      🍼
+                    </span>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <p className="text-base font-semibold tabular-nums text-ink">
+                          {feeding.time.slice(0, 5)}
+                        </p>
+                        {feeding.meal_number != null ? (
+                          <Badge
+                            label={feeding.meal_number > 3 ? 'Pouch 4+' : `Pouch ${feeding.meal_number}`}
+                            color="brand"
+                          />
                         ) : null}
                       </div>
+                      <p className="mt-0.5 text-sm capitalize text-muted">{feeding.food}</p>
+                      {feeding.notes ? (
+                        <p className="mt-0.5 text-xs text-muted">{feeding.notes}</p>
+                      ) : null}
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
-                      {feeding.meal_number != null ? (
-                        <Badge
-                          label={feeding.meal_number > 3 ? 'Pouch 4+' : `Pouch ${feeding.meal_number}`}
-                          color="brand"
-                        />
-                      ) : null}
                       <button
                         type="button"
                         className={iconButtonClass}
