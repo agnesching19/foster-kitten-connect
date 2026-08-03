@@ -93,6 +93,7 @@ export interface PoopRow {
   time: string
   note: string | null
   kitten_id: string | null
+  subject_type: 'mother' | 'kitten'
   kittens: { name: string; tag_colour: TagColour | null } | null
 }
 
@@ -103,7 +104,7 @@ export const poopsQueryOptions = (litterId: string | undefined) =>
     queryFn: async (): Promise<PoopRow[]> => {
       const { data, error } = await supabase
         .from('poop_entries')
-        .select('id, date, time, note, kitten_id, kittens(name, tag_colour)')
+        .select('id, date, time, note, kitten_id, subject_type, kittens(name, tag_colour)')
         .eq('litter_id', litterId!)
         .order('date', { ascending: false })
         .order('time', { ascending: false })
