@@ -1,23 +1,26 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/foster/ui/Button'
+import type { LitterRow } from '@/lib/foster-queries'
 
 interface NewLitterDialogProps {
   open: boolean
   onClose: () => void
+  litter?: LitterRow | null
 }
 
 const inputClass =
   'min-h-11 w-full rounded-xl border border-border bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100'
 
-export function NewLitterDialog({ open, onClose }: NewLitterDialogProps) {
+export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps) {
   const { user } = useAuth()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const isEdit = Boolean(litter)
 
   const [motherName, setMotherName] = useState('')
   const [litterName, setLitterName] = useState('')
@@ -39,11 +42,26 @@ export function NewLitterDialog({ open, onClose }: NewLitterDialogProps) {
     setAlbumUrl('')
   }
 
+  useEffect(() => {
+    if (!open) return
+    if (litter) {
+      setMotherName(litter.mother_name)
+      setLitterName(litter.litter_name ?? '')
+      setDateOfBirth(litter.date_of_birth ?? '')
+      setArrived(litter.arrived)
+      setLeftDate(litter.left_date ?? '')
+      setStatus(litter.status)
+      setExternalRecord(litter.external_record ?? '')
+      setAlbumUrl(litter.album_url ?? '')
+    } else {
+      reset()
+    }
+  }, [open, litter])
+
   const mutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error('You need to be signed in to add a litter.')
-      const { error } = await supabase.from('litters').insert({
-        user_id: user.id,
+      const payload = {
         mother_name: motherName.trim(),
         litter_name: litterName.trim() || null,
         date_of_birth: dateOfBirth || null,
@@ -52,13 +70,16 @@ export function NewLitterDialog({ open, onClose }: NewLitterDialogProps) {
         status,
         external_record: externalRecord.trim() || null,
         album_url: albumUrl.trim() || null,
-      })
+      }
+      const { error } = litter
+        ? await supabase.from('litters').update(payload).eq('id', litter.id)
+        : await supabase.from('litters').insert({ user_id: user.id, ...payload })
       if (error) throw error
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['litters'] })
-      toast.success('Litter added')
-      reset()
+      toast.success(isEdit ? 'Litter updated' : 'Litter added')
+      if (!isEdit) reset()
       onClose()
     },
     onError: (error: Error) => {
@@ -78,8 +99,12 @@ export function NewLitterDialog({ open, onClose }: NewLitterDialogProps) {
       >
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
-            <h2 id="new-litter-title" className="text-lg font-semibold text-ink">New litter</h2>
-            <p className="mt-0.5 text-sm text-muted">Add a foster batch to your dashboard</p>
+            <h2 id="new-litter-title" className="text-lg font-semibold text-ink">
+              {isEdit ? 'Edit litter' : 'New litter'}
+            </h2>
+            <p className="mt-0.5 text-sm text-muted">
+              {isEdit ? 'Update this litter’s details' : 'Add a foster batch to your dashboard'}
+            </p>
           </div>
           <button
             type="button"
@@ -152,7 +177,7 @@ export function NewLitterDialog({ open, onClose }: NewLitterDialogProps) {
 
             <div className="mt-1 flex gap-2 sm:col-span-2">
               <Button type="submit" size="md" fullWidth disabled={mutation.isPending}>
-                {mutation.isPending ? 'Saving…' : 'Save litter'}
+                {mutation.isPending ? 'Saving…' : isEdit ? 'Save changes' : 'Save litter'}
               </Button>
               <Button type="button" variant="secondary" size="md" onClick={onClose} disabled={mutation.isPending}>
                 Cancel
