@@ -1,22 +1,49 @@
-import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { supabase } from '@/integrations/supabase/client'
 import { PageHeader } from '@/components/foster/layout/PageHeader'
 import { Badge } from '@/components/foster/ui/Badge'
 import { Button } from '@/components/foster/ui/Button'
 import { Card, CardHeader } from '@/components/foster/ui/Card'
 import { EmptyState } from '@/components/foster/ui/EmptyState'
+import { FeedingDialog } from '@/components/foster/logs/FeedingDialog'
+import { ConfirmDialog } from '@/components/foster/settings/ConfirmDialog'
 import {
   feedingsQueryOptions,
   groupByDate,
   littersQueryOptions,
   pickCurrentLitter,
+  type FeedingRow,
 } from '@/lib/foster-queries'
 import { formatRelativeDay } from '@/utils/formatDate'
 
+const iconButtonClass =
+  'flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-white text-sm text-muted transition hover:bg-brand-50 hover:text-ink'
+
 export function FeedingsPage() {
+  const queryClient = useQueryClient()
   const { data: litters = [], isLoading: littersLoading } = useQuery(littersQueryOptions)
   const litter = pickCurrentLitter(litters)
   const { data: feedings = [], isLoading } = useQuery(feedingsQueryOptions(litter?.id))
   const days = groupByDate(feedings)
+
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editing, setEditing] = useState<FeedingRow | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<FeedingRow | null>(null)
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('feedings').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: async () => {
+      setPendingDelete(null)
+      await queryClient.invalidateQueries({ queryKey: ['feedings', litter?.id] })
+      toast.success('Feeding deleted')
+    },
+    onError: (error: Error) => toast.error(error.message || 'Could not delete the feeding'),
+  })
 
   return (
     <div>
@@ -24,10 +51,34 @@ export function FeedingsPage() {
         title="Feedings"
         subtitle={litter ? `${litter.mother_name}'s daily pouches` : 'Daily pouches'}
         action={
-          <Button size="md" className="shrink-0">
+          <Button
+            size="md"
+            className="shrink-0"
+            onClick={() => {
+              setEditing(null)
+              setDialogOpen(true)
+            }}
+          >
             + Log
           </Button>
         }
+      />
+
+      <FeedingDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        litterId={litter?.id}
+        feeding={editing}
+      />
+
+      <ConfirmDialog
+        open={Boolean(pendingDelete)}
+        title="Delete this feeding?"
+        description="This cannot be undone."
+        confirmLabel="Delete"
+        busy={remove.isPending}
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={() => pendingDelete && remove.mutate(pendingDelete.id)}
       />
 
       {littersLoading || isLoading ? (
@@ -46,23 +97,47 @@ export function FeedingsPage() {
                 {day.items.map((feeding) => (
                   <li
                     key={feeding.id}
-                    className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3 md:flex-col md:items-start md:gap-2 lg:flex-row lg:items-center lg:justify-between"
+                    className="flex items-center justify-between gap-2 rounded-xl bg-gray-50 px-4 py-3"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
                       <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-100 text-lg">
                         🍼
                       </span>
-                      <div>
+                      <div className="min-w-0">
                         <p className="font-semibold text-ink">{feeding.time.slice(0, 5)}</p>
-                        <p className="text-sm capitalize text-muted">{feeding.food}</p>
+                        <p className="truncate text-sm capitalize text-muted">{feeding.food}</p>
+                        {feeding.notes ? (
+                          <p className="truncate text-xs text-muted">{feeding.notes}</p>
+                        ) : null}
                       </div>
                     </div>
-                    {feeding.meal_number != null ? (
-                      <Badge
-                        label={feeding.meal_number > 3 ? 'Pouch 4+' : `Pouch ${feeding.meal_number}`}
-                        color="brand"
-                      />
-                    ) : null}
+                    <div className="flex shrink-0 items-center gap-1">
+                      {feeding.meal_number != null ? (
+                        <Badge
+                          label={feeding.meal_number > 3 ? 'Pouch 4+' : `Pouch ${feeding.meal_number}`}
+                          color="brand"
+                        />
+                      ) : null}
+                      <button
+                        type="button"
+                        className={iconButtonClass}
+                        aria-label="Edit feeding"
+                        onClick={() => {
+                          setEditing(feeding)
+                          setDialogOpen(true)
+                        }}
+                      >
+                        ✎
+                      </button>
+                      <button
+                        type="button"
+                        className={iconButtonClass}
+                        aria-label="Delete feeding"
+                        onClick={() => setPendingDelete(feeding)}
+                      >
+                        ✕
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
