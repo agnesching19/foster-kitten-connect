@@ -120,7 +120,7 @@ export function LegacyImportCard() {
     <Card>
       <CardHeader
         title="Import existing Foster Kitten Tracker spreadsheet"
-        subtitle="For migrating your historical Google Sheets. Columns are detected from their headers and contents, so file names and column order do not matter. Unrecognised rows are skipped, never fatal."
+        subtitle="One-time migration for your historical workbooks. Paste a Google Sheets link to read the whole workbook, or upload several exported CSVs at once — the Momma and Kitten weights sheets are detected automatically, Chart and unknown sheets are ignored."
       />
 
       <div className="grid gap-3">
@@ -144,13 +144,15 @@ export function LegacyImportCard() {
             </Button>
           </div>
           <span className="mt-1 block text-xs text-muted">
-            The sheet must be shared as “Anyone with the link”. Add <code>#gid=…</code> to target a
-            specific tab.
+            The workbook must be shared as “Anyone with the link”. All recognised tabs are read; add{' '}
+            <code>#gid=…</code> to import one specific tab only.
           </span>
         </label>
 
         <div>
-          <span className="mb-1 block text-sm font-medium text-ink">…or upload a CSV export</span>
+          <span className="mb-1 block text-sm font-medium text-ink">
+            …or upload the exported CSVs (select several at once)
+          </span>
           <input
             ref={inputRef}
             type="file"
@@ -167,7 +169,7 @@ export function LegacyImportCard() {
             onClick={() => inputRef.current?.click()}
             disabled={parsing || Boolean(progress) || !user}
           >
-            {parsing ? 'Reading…' : 'Choose spreadsheet CSV'}
+            {parsing ? 'Reading…' : 'Choose spreadsheet CSVs'}
           </Button>
         </div>
       </div>
