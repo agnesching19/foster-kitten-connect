@@ -234,6 +234,7 @@ export type Database = {
           kitten_id: string | null
           litter_id: string
           note: string | null
+          subject_type: Database["public"]["Enums"]["poop_subject_type"]
           time: string
           updated_at: string
           user_id: string
@@ -245,6 +246,7 @@ export type Database = {
           kitten_id?: string | null
           litter_id: string
           note?: string | null
+          subject_type?: Database["public"]["Enums"]["poop_subject_type"]
           time: string
           updated_at?: string
           user_id: string
@@ -256,6 +258,7 @@ export type Database = {
           kitten_id?: string | null
           litter_id?: string
           note?: string | null
+          subject_type?: Database["public"]["Enums"]["poop_subject_type"]
           time?: string
           updated_at?: string
           user_id?: string
@@ -372,6 +375,7 @@ export type Database = {
     }
     Enums: {
       litter_status: "active" | "completed"
+      poop_subject_type: "mother" | "kitten"
       tag_colour:
         | "blue"
         | "pink"
@@ -512,6 +516,7 @@ export const Constants = {
   public: {
     Enums: {
       litter_status: ["active", "completed"],
+      poop_subject_type: ["mother", "kitten"],
       tag_colour: [
         "blue",
         "pink",
