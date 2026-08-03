@@ -17,7 +17,7 @@ export const Route = createFileRoute("/")({
       {
         property: "og:description",
         content:
-          "A dashboard for foster carers: batches, feedings, weigh-ins and litter box history.",
+          "Track foster momma cats and their kittens: batches, feedings, weights, bathroom logs and litter changes.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

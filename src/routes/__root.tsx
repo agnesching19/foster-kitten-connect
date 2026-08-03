@@ -80,20 +80,24 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Foster Kitten Tracker" },
+      { title: "Foster Kitten Tracker | Every Batch in One Place" },
       {
         name: "description",
         content:
-          "Track foster momma cats and kittens: feedings, weights, bathroom logs and litter changes.",
+          "Track foster momma cats and their kittens: batches, feedings, weights, bathroom logs and litter changes.",
       },
-      { property: "og:title", content: "Foster Kitten Tracker" },
+      { property: "og:title", content: "Foster Kitten Tracker | Every Batch in One Place" },
       {
         property: "og:description",
-        content: "Track foster momma cats and kittens in one place.",
+        content: "Track foster momma cats and their kittens: batches, feedings, weights, bathroom logs and litter changes.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Foster Kitten Tracker | Every Batch in One Place" },
+      { name: "twitter:description", content: "Track foster momma cats and their kittens: batches, feedings, weights, bathroom logs and litter changes." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/HApiCWym4RVYcaKRDGcuR8vi38Q2/social-images/social-1785793786997-social-image.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/HApiCWym4RVYcaKRDGcuR8vi38Q2/social-images/social-1785793786997-social-image.webp" },
     ],
     links: [
       {
