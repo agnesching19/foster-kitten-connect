@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { PageHeader } from '@/components/foster/layout/PageHeader'
 import { Card } from '@/components/foster/ui/Card'
 import { NewLitterDialog } from '@/components/foster/litters/NewLitterDialog'
+import { KittenDot } from '@/components/foster/ui/KittenDot'
 import { littersQueryOptions, type LitterRow } from '@/lib/foster-queries'
 
 type Filter = 'all' | 'active' | 'completed'
@@ -167,7 +168,18 @@ function BatchCard({ litter }: { litter: LitterRow }) {
 
           <div className="mt-4 rounded-xl bg-gray-50 px-3 py-3">
             <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">The litter</p>
-            <p className="text-sm leading-relaxed text-ink">{litter.kittens.length ? litter.kittens.map((k) => k.name).join(' · ') : 'No kittens recorded'}</p>
+            {litter.kittens.length ? (
+              <ul className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm leading-relaxed text-ink">
+                {litter.kittens.map((k) => (
+                  <li key={k.id} className="flex items-center gap-1.5">
+                    <KittenDot colour={k.tag_colour} />
+                    <span>{k.name}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm leading-relaxed text-ink">No kittens recorded</p>
+            )}
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-2">

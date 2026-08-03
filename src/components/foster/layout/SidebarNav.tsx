@@ -1,10 +1,9 @@
 import { Link, useLocation } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { littersQueryOptions, pickCurrentLitter } from '@/lib/foster-queries'
+import { KittenDot } from '@/components/foster/ui/KittenDot'
 import { getNavLinkClass, navItems, settingsNavItem } from './navItems'
 import { AuthStatus } from './AuthStatus'
-
-const dotColors = ['bg-brand-400', 'bg-brand-500', 'bg-amber-400', 'bg-orange-400']
 
 export function SidebarNav() {
   const pathname = useLocation({ select: (location) => location.pathname })
@@ -58,12 +57,9 @@ export function SidebarNav() {
         </p>
         {kittens.length ? (
           <ul className="space-y-2">
-            {kittens.map((kitten, index) => (
+            {kittens.map((kitten) => (
               <li key={kitten.id} className="flex items-center gap-2">
-                <span
-                  className={`h-2.5 w-2.5 shrink-0 rounded-full ${dotColors[index % dotColors.length]}`}
-                  aria-hidden
-                />
+                <KittenDot colour={kitten.tag_colour} />
                 <span className="truncate text-sm text-ink">{kitten.name}</span>
               </li>
             ))}

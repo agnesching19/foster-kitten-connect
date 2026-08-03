@@ -5,6 +5,7 @@ import { Badge } from '@/components/foster/ui/Badge'
 import { Button } from '@/components/foster/ui/Button'
 import { Card, CardHeader } from '@/components/foster/ui/Card'
 import { EmptyState } from '@/components/foster/ui/EmptyState'
+import { KittenDot } from '@/components/foster/ui/KittenDot'
 import {
   daysBetween,
   littersQueryOptions,
@@ -73,6 +74,7 @@ export function WeightsPage() {
                     className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3"
                   >
                     <div className="flex items-center gap-3">
+                      <KittenDot colour={weight.kittens?.tag_colour ?? null} size="md" />
                       <Badge label={weight.kittens?.name ?? 'Kitten'} color="brand" size="md" />
                     </div>
                     <div className="text-right">

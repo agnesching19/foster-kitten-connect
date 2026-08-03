@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query'
 import { supabase } from '@/integrations/supabase/client'
+import type { TagColour } from '@/components/foster/ui/KittenDot'
 
 export interface LitterRow {
   id: string
@@ -11,7 +12,7 @@ export interface LitterRow {
   status: 'active' | 'completed'
   external_record: string | null
   album_url: string | null
-  kittens: { id: string; name: string; sort_order: number }[]
+  kittens: { id: string; name: string; sort_order: number; tag_colour: TagColour | null }[]
 }
 
 export const littersQueryOptions = queryOptions({
@@ -20,7 +21,7 @@ export const littersQueryOptions = queryOptions({
     const { data, error } = await supabase
       .from('litters')
       .select(
-        'id, mother_name, litter_name, date_of_birth, arrived, left_date, status, external_record, album_url, kittens(id, name, sort_order)',
+        'id, mother_name, litter_name, date_of_birth, arrived, left_date, status, external_record, album_url, kittens(id, name, sort_order, tag_colour)',
       )
       .order('arrived', { ascending: false })
     if (error) throw error
@@ -42,6 +43,7 @@ export interface KittenRow {
   name: string
   sort_order: number
   litter_id: string
+  tag_colour: TagColour | null
 }
 
 export const kittensQueryOptions = (litterId: string | undefined) =>
@@ -51,7 +53,7 @@ export const kittensQueryOptions = (litterId: string | undefined) =>
     queryFn: async (): Promise<KittenRow[]> => {
       const { data, error } = await supabase
         .from('kittens')
-        .select('id, name, sort_order, litter_id')
+        .select('id, name, sort_order, litter_id, tag_colour')
         .eq('litter_id', litterId!)
         .order('sort_order', { ascending: true })
         .order('name', { ascending: true })
@@ -66,6 +68,7 @@ export interface FeedingRow {
   time: string
   food: string
   meal_number: number | null
+  notes: string | null
 }
 
 export const feedingsQueryOptions = (litterId: string | undefined) =>
@@ -75,7 +78,7 @@ export const feedingsQueryOptions = (litterId: string | undefined) =>
     queryFn: async (): Promise<FeedingRow[]> => {
       const { data, error } = await supabase
         .from('feedings')
-        .select('id, date, time, food, meal_number')
+        .select('id, date, time, food, meal_number, notes')
         .eq('litter_id', litterId!)
         .order('date', { ascending: false })
         .order('time', { ascending: true })
@@ -90,7 +93,7 @@ export interface PoopRow {
   time: string
   note: string | null
   kitten_id: string | null
-  kittens: { name: string } | null
+  kittens: { name: string; tag_colour: TagColour | null } | null
 }
 
 export const poopsQueryOptions = (litterId: string | undefined) =>
@@ -100,7 +103,7 @@ export const poopsQueryOptions = (litterId: string | undefined) =>
     queryFn: async (): Promise<PoopRow[]> => {
       const { data, error } = await supabase
         .from('poop_entries')
-        .select('id, date, time, note, kitten_id, kittens(name)')
+        .select('id, date, time, note, kitten_id, kittens(name, tag_colour)')
         .eq('litter_id', litterId!)
         .order('date', { ascending: false })
         .order('time', { ascending: false })
@@ -113,6 +116,7 @@ export interface LitterChangeRow {
   id: string
   date: string
   time: string
+  notes: string | null
 }
 
 export const litterChangesQueryOptions = (litterId: string | undefined) =>
@@ -122,7 +126,7 @@ export const litterChangesQueryOptions = (litterId: string | undefined) =>
     queryFn: async (): Promise<LitterChangeRow[]> => {
       const { data, error } = await supabase
         .from('litter_changes')
-        .select('id, date, time')
+        .select('id, date, time, notes')
         .eq('litter_id', litterId!)
         .order('date', { ascending: false })
         .order('time', { ascending: false })
@@ -135,7 +139,12 @@ export interface WeighInRow {
   id: string
   date: string
   time: string
-  weights: { kitten_id: string; grams: number; kittens: { name: string } | null }[]
+  notes: string | null
+  weights: {
+    kitten_id: string
+    grams: number
+    kittens: { name: string; tag_colour: TagColour | null } | null
+  }[]
 }
 
 export const weighInsQueryOptions = (litterId: string | undefined) =>
@@ -145,7 +154,7 @@ export const weighInsQueryOptions = (litterId: string | undefined) =>
     queryFn: async (): Promise<WeighInRow[]> => {
       const { data, error } = await supabase
         .from('weigh_ins')
-        .select('id, date, time, weights(kitten_id, grams, kittens(name))')
+        .select('id, date, time, notes, weights(kitten_id, grams, kittens(name, tag_colour))')
         .eq('litter_id', litterId!)
         .order('date', { ascending: false })
         .order('time', { ascending: false })
