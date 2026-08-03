@@ -1,7 +1,7 @@
 import { Link, useLocation } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { littersQueryOptions, pickCurrentLitter } from '@/lib/foster-queries'
-import { getNavLinkClass, navItems } from './navItems'
+import { getNavLinkClass, navItems, settingsNavItem } from './navItems'
 import { AuthStatus } from './AuthStatus'
 
 const dotColors = ['bg-brand-400', 'bg-brand-500', 'bg-amber-400', 'bg-orange-400']
@@ -37,6 +37,18 @@ export function SidebarNav() {
               </li>
             )
           })}
+        </ul>
+
+        <ul className="mt-4 space-y-1 border-t border-border pt-4">
+          <li>
+            <Link
+              to={settingsNavItem.to}
+              className={getNavLinkClass(pathname.startsWith(settingsNavItem.to), 'sidebar')}
+            >
+              {settingsNavItem.icon(pathname.startsWith(settingsNavItem.to))}
+              <span>{settingsNavItem.label}</span>
+            </Link>
+          </li>
         </ul>
       </nav>
 
