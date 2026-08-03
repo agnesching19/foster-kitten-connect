@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/foster/ui/Button'
 import { Card, CardHeader } from '@/components/foster/ui/Card'
 import { EmptyState } from '@/components/foster/ui/EmptyState'
+import { KittenDot, TAG_COLOURS, type TagColour } from '@/components/foster/ui/KittenDot'
 import { kittensQueryOptions, type KittenRow } from '@/lib/foster-queries'
 
 const inputClass =
@@ -14,14 +15,46 @@ const inputClass =
 const iconButtonClass =
   'flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-white text-sm text-muted transition hover:bg-brand-50 hover:text-ink disabled:opacity-40 disabled:pointer-events-none'
 
+function ColourSelect({
+  value,
+  onChange,
+  label,
+}: {
+  value: TagColour | ''
+  onChange: (value: TagColour | '') => void
+  label: string
+}) {
+  return (
+    <label className="flex items-center gap-2 sm:w-44">
+      <span className="sr-only">{label}</span>
+      <KittenDot colour={value || null} size="md" />
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value as TagColour | '')}
+        className={inputClass}
+        aria-label={label}
+      >
+        <option value="">No colour</option>
+        {TAG_COLOURS.map((colour) => (
+          <option key={colour} value={colour} className="capitalize">
+            {colour[0]!.toUpperCase() + colour.slice(1)}
+          </option>
+        ))}
+      </select>
+    </label>
+  )
+}
+
 export function KittensSection({ litterId }: { litterId: string }) {
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const { data: kittens = [], isLoading } = useQuery(kittensQueryOptions(litterId))
 
   const [newName, setNewName] = useState('')
+  const [newColour, setNewColour] = useState<TagColour | ''>('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState('')
+  const [editingColour, setEditingColour] = useState<TagColour | ''>('')
   const [pendingDelete, setPendingDelete] = useState<KittenRow | null>(null)
 
   async function refresh() {
@@ -32,18 +65,25 @@ export function KittensSection({ litterId }: { litterId: string }) {
   }
 
   const addKitten = useMutation({
-    mutationFn: async (name: string) => {
+    mutationFn: async ({ name, tagColour }: { name: string; tagColour: TagColour | '' }) => {
       if (!user) throw new Error('You need to be signed in to add a kitten.')
       const nextOrder = kittens.length
         ? Math.max(...kittens.map((k) => k.sort_order)) + 1
         : 1
       const { error } = await supabase
         .from('kittens')
-        .insert({ user_id: user.id, litter_id: litterId, name, sort_order: nextOrder })
+        .insert({
+          user_id: user.id,
+          litter_id: litterId,
+          name,
+          sort_order: nextOrder,
+          tag_colour: tagColour || null,
+        })
       if (error) throw error
     },
     onSuccess: async () => {
       setNewName('')
+      setNewColour('')
       await refresh()
       toast.success('Kitten added')
     },
@@ -51,8 +91,19 @@ export function KittensSection({ litterId }: { litterId: string }) {
   })
 
   const renameKitten = useMutation({
-    mutationFn: async ({ id, name }: { id: string; name: string }) => {
-      const { error } = await supabase.from('kittens').update({ name }).eq('id', id)
+    mutationFn: async ({
+      id,
+      name,
+      tagColour,
+    }: {
+      id: string
+      name: string
+      tagColour: TagColour | ''
+    }) => {
+      const { error } = await supabase
+        .from('kittens')
+        .update({ name, tag_colour: tagColour || null })
+        .eq('id', id)
       if (error) throw error
     },
     onSuccess: async () => {
@@ -108,7 +159,7 @@ export function KittensSection({ litterId }: { litterId: string }) {
               event.preventDefault()
               const name = newName.trim()
               if (!name) return
-              addKitten.mutate(name)
+              addKitten.mutate({ name, tagColour: newColour })
             }}
           >
             <label className="flex-1">
@@ -120,6 +171,7 @@ export function KittensSection({ litterId }: { litterId: string }) {
                 className={inputClass}
               />
             </label>
+            <ColourSelect value={newColour} onChange={setNewColour} label="Tag colour" />
             <Button type="submit" size="md" disabled={addKitten.isPending || !newName.trim()}>
               {addKitten.isPending ? 'Adding…' : 'Add kitten'}
             </Button>
@@ -142,6 +194,7 @@ export function KittensSection({ litterId }: { litterId: string }) {
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-sm font-semibold text-brand-800">
                   {index + 1}
                 </span>
+                <KittenDot colour={kitten.tag_colour} size="md" />
 
                 {editingId === kitten.id ? (
                   <form
@@ -150,7 +203,7 @@ export function KittensSection({ litterId }: { litterId: string }) {
                       event.preventDefault()
                       const name = editingName.trim()
                       if (!name) return
-                      renameKitten.mutate({ id: kitten.id, name })
+                      renameKitten.mutate({ id: kitten.id, name, tagColour: editingColour })
                     }}
                   >
                     <input
@@ -159,6 +212,11 @@ export function KittensSection({ litterId }: { litterId: string }) {
                       onChange={(event) => setEditingName(event.target.value)}
                       className={inputClass}
                       aria-label={`Rename ${kitten.name}`}
+                    />
+                    <ColourSelect
+                      value={editingColour}
+                      onChange={setEditingColour}
+                      label={`Tag colour for ${kitten.name}`}
                     />
                     <div className="flex gap-2">
                       <Button type="submit" size="md" disabled={renameKitten.isPending}>
@@ -204,6 +262,7 @@ export function KittensSection({ litterId }: { litterId: string }) {
                         onClick={() => {
                           setEditingId(kitten.id)
                           setEditingName(kitten.name)
+                          setEditingColour(kitten.tag_colour ?? '')
                         }}
                       >
                         ✎

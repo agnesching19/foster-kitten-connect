@@ -4,6 +4,7 @@ import { Badge } from '@/components/foster/ui/Badge'
 import { Button } from '@/components/foster/ui/Button'
 import { Card, CardHeader } from '@/components/foster/ui/Card'
 import { EmptyState } from '@/components/foster/ui/EmptyState'
+import { KittenDot } from '@/components/foster/ui/KittenDot'
 import {
   groupByDate,
   littersQueryOptions,
@@ -67,10 +68,13 @@ export function PoopsPage() {
                         <p className="text-sm text-muted">{entry.note ? entry.note : 'No note'}</p>
                       </div>
                     </div>
-                    <Badge
-                      label={entry.kittens?.name ?? mother}
-                      color={entry.kitten_id ? 'neutral' : 'brand'}
-                    />
+                    <span className="flex items-center gap-1.5">
+                      {entry.kitten_id ? <KittenDot colour={entry.kittens?.tag_colour ?? null} /> : null}
+                      <Badge
+                        label={entry.kittens?.name ?? mother}
+                        color={entry.kitten_id ? 'neutral' : 'brand'}
+                      />
+                    </span>
                   </li>
                 ))}
               </ul>
