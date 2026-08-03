@@ -100,7 +100,7 @@ export function LegacyImportCard() {
         ['feedings', result.feedings.length],
         ['poop entries', result.poops.length],
         ['litter changes', result.litterChanges.length],
-        ['weigh-ins', result.weighIns.length],
+        ['weigh-in sessions', result.weighIns.length],
         [
           'kitten weights',
           result.weighIns.reduce((sum, weighIn) => sum + weighIn.weights.length, 0),
@@ -185,6 +185,13 @@ export function LegacyImportCard() {
           <p className="text-sm font-semibold text-ink">
             Detected as: {result.parserLabel}
           </p>
+
+          {result.sheetsSeen.length ? (
+            <p className="text-xs text-muted">Sheets used: {result.sheetsSeen.join(', ')}</p>
+          ) : null}
+          {result.ignoredSheets.length ? (
+            <p className="text-xs text-muted">Ignored: {result.ignoredSheets.join(', ')}</p>
+          ) : null}
 
           <ul className="grid gap-1 text-sm text-muted sm:grid-cols-2">
             {counts.map(([label, count]) => (
