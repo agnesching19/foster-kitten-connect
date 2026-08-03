@@ -59,6 +59,8 @@ export interface LegacyParseResult {
   /** Column header -> detected role, for the preview panel. */
   columnRoles: { header: string; role: string }[]
   sheetsSeen: string[]
+  /** Tabs/files deliberately skipped (Chart, unrecognised sheets). */
+  ignoredSheets: string[]
 }
 
 export interface SpreadsheetParser {
@@ -83,6 +85,7 @@ export function emptyResult(parserId: string, parserLabel: string): LegacyParseR
     skipped: [],
     columnRoles: [],
     sheetsSeen: [],
+    ignoredSheets: [],
   }
 }
 
