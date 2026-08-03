@@ -17,14 +17,28 @@ interface PoopDialogProps {
   onClose: () => void
   litterId: string | undefined
   entry?: PoopRow | null
+  motherName?: string | null
+  /** Optional entry point hint: a Momma-specific launcher defaults to mother. */
+  defaultSubject?: 'mother' | 'kitten'
 }
 
-export function PoopDialog({ open, onClose, litterId, entry }: PoopDialogProps) {
+// Remembers the last subject picked during this browser session.
+let lastSubject: 'mother' | 'kitten' = 'kitten'
+
+export function PoopDialog({
+  open,
+  onClose,
+  litterId,
+  entry,
+  motherName,
+  defaultSubject,
+}: PoopDialogProps) {
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const { data: kittens = [] } = useQuery(kittensQueryOptions(litterId))
   const [date, setDate] = useState(todayIso())
   const [time, setTime] = useState(nowTime())
+  const [subject, setSubject] = useState<'mother' | 'kitten'>('kitten')
   const [kittenId, setKittenId] = useState('')
   const [note, setNote] = useState('')
 
@@ -32,15 +46,22 @@ export function PoopDialog({ open, onClose, litterId, entry }: PoopDialogProps) 
     if (!open) return
     setDate(entry?.date ?? todayIso())
     setTime(entry?.time.slice(0, 5) ?? nowTime())
+    setSubject(entry?.subject_type ?? defaultSubject ?? lastSubject)
     setKittenId(entry?.kitten_id ?? '')
     setNote(entry?.note ?? '')
-  }, [open, entry])
+  }, [open, entry, defaultSubject])
 
   const mutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error('You need to be signed in.')
       if (!litterId) throw new Error('Add a litter first.')
-      const payload = { date, time, kitten_id: kittenId || null, note: note.trim() || null }
+      const payload = {
+        date,
+        time,
+        subject_type: subject,
+        kitten_id: subject === 'kitten' ? kittenId || null : null,
+        note: note.trim() || null,
+      }
       const { error } = entry
         ? await supabase.from('poop_entries').update(payload).eq('id', entry.id)
         : await supabase
@@ -49,6 +70,7 @@ export function PoopDialog({ open, onClose, litterId, entry }: PoopDialogProps) 
       if (error) throw error
     },
     onSuccess: async () => {
+      lastSubject = subject
       await queryClient.invalidateQueries({ queryKey: ['poops', litterId] })
       toast.success(entry ? 'Entry updated' : 'Poop logged')
       onClose()
@@ -61,7 +83,11 @@ export function PoopDialog({ open, onClose, litterId, entry }: PoopDialogProps) 
       open={open}
       onClose={onClose}
       title={entry ? 'Edit entry' : 'Log poop'}
-      subtitle="Kitten is optional — leave it blank if unknown"
+      subtitle={
+        subject === 'mother'
+          ? 'Recording a poop for the mother cat'
+          : 'Kitten is optional — leave it blank if unknown'
+      }
     >
       <form
         className="grid gap-4 sm:grid-cols-2"
@@ -79,6 +105,19 @@ export function PoopDialog({ open, onClose, litterId, entry }: PoopDialogProps) 
           <input type="time" required value={time} onChange={(e) => setTime(e.target.value)} className={inputClass} />
         </label>
         <label className="sm:col-span-2">
+          <span className="mb-1 block text-sm font-medium text-ink">Subject *</span>
+          <select
+            required
+            value={subject}
+            onChange={(e) => setSubject(e.target.value as 'mother' | 'kitten')}
+            className={inputClass}
+          >
+            <option value="mother">{motherName ? `Mother (${motherName})` : 'Mother'}</option>
+            <option value="kitten">Kitten</option>
+          </select>
+        </label>
+        {subject === 'kitten' ? (
+          <label className="sm:col-span-2">
           <span className="mb-1 block text-sm font-medium text-ink">Kitten</span>
           <select value={kittenId} onChange={(e) => setKittenId(e.target.value)} className={inputClass}>
             <option value="">Not identified</option>
@@ -88,7 +127,8 @@ export function PoopDialog({ open, onClose, litterId, entry }: PoopDialogProps) 
               </option>
             ))}
           </select>
-        </label>
+          </label>
+        ) : null}
         <label className="sm:col-span-2">
           <span className="mb-1 block text-sm font-medium text-ink">Notes</span>
           <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} className={inputClass} placeholder="Optional" />
