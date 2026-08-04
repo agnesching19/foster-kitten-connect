@@ -13,7 +13,9 @@ import { ConfirmDialog } from '@/components/foster/settings/ConfirmDialog'
 import {
   litterChangesQueryOptions,
   littersQueryOptions,
+  logAuthorName,
   pickCurrentLitter,
+  profilesQueryOptions,
   type LitterChangeRow,
 } from '@/lib/foster-queries'
 import { formatRelativeDay } from '@/utils/formatDate'
@@ -27,6 +29,7 @@ export function LitterPage() {
   const { data: litters = [] } = useQuery(littersQueryOptions)
   const litter = pickCurrentLitter(litters)
   const { data: changes = [], isLoading } = useQuery(litterChangesQueryOptions(litter?.id))
+  const { data: profiles = [] } = useQuery(profilesQueryOptions)
   const lastChange = changes[0]
 
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -118,9 +121,7 @@ export function LitterPage() {
         </Card>
 
         <section aria-label="Change history">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">
-            History
-          </h2>
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">History</h2>
           {isLoading ? (
             <Card>
               <p className="text-sm text-muted">Loading history…</p>
@@ -135,13 +136,14 @@ export function LitterPage() {
                         🧹
                       </span>
                       <div className="min-w-0">
-                        <p className="font-semibold text-ink">
-                          {formatRelativeDay(change.date)}
-                        </p>
+                        <p className="font-semibold text-ink">{formatRelativeDay(change.date)}</p>
                         <p className="text-sm text-muted">{change.time.slice(0, 5)}</p>
                         {change.notes ? (
                           <p className="truncate text-xs text-muted">{change.notes}</p>
                         ) : null}
+                        <p className="truncate text-xs text-muted">
+                          Added by {logAuthorName(profiles, change.user_id)}
+                        </p>
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-1">

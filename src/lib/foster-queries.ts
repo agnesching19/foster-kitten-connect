@@ -38,6 +38,25 @@ export function pickCurrentLitter(litters: LitterRow[]): LitterRow | undefined {
   return litters.find((litter) => litter.status === 'active') ?? litters[0]
 }
 
+export interface ProfileRow {
+  id: string
+  display_name: string
+}
+
+export const profilesQueryOptions = queryOptions({
+  queryKey: ['profiles'],
+  queryFn: async (): Promise<ProfileRow[]> => {
+    const { data, error } = await supabase.from('profiles').select('id, display_name')
+    if (error) throw error
+    return (data ?? []) as ProfileRow[]
+  },
+  staleTime: 5 * 60 * 1000,
+})
+
+export function logAuthorName(profiles: ProfileRow[], userId: string): string {
+  return profiles.find((profile) => profile.id === userId)?.display_name ?? 'Foster carer'
+}
+
 export interface KittenRow {
   id: string
   name: string
@@ -64,6 +83,7 @@ export const kittensQueryOptions = (litterId: string | undefined) =>
 
 export interface FeedingRow {
   id: string
+  user_id: string
   date: string
   time: string
   food: string
@@ -78,7 +98,7 @@ export const feedingsQueryOptions = (litterId: string | undefined) =>
     queryFn: async (): Promise<FeedingRow[]> => {
       const { data, error } = await supabase
         .from('feedings')
-        .select('id, date, time, food, meal_number, notes')
+        .select('id, user_id, date, time, food, meal_number, notes')
         .eq('litter_id', litterId!)
         .order('date', { ascending: false })
         .order('time', { ascending: false })
@@ -89,6 +109,7 @@ export const feedingsQueryOptions = (litterId: string | undefined) =>
 
 export interface PoopRow {
   id: string
+  user_id: string
   date: string
   time: string
   note: string | null
@@ -104,7 +125,7 @@ export const poopsQueryOptions = (litterId: string | undefined) =>
     queryFn: async (): Promise<PoopRow[]> => {
       const { data, error } = await supabase
         .from('poop_entries')
-        .select('id, date, time, note, kitten_id, subject_type, kittens(name, tag_colour)')
+        .select('id, user_id, date, time, note, kitten_id, subject_type, kittens(name, tag_colour)')
         .eq('litter_id', litterId!)
         .order('date', { ascending: false })
         .order('time', { ascending: false })
@@ -115,6 +136,7 @@ export const poopsQueryOptions = (litterId: string | undefined) =>
 
 export interface LitterChangeRow {
   id: string
+  user_id: string
   date: string
   time: string
   notes: string | null
@@ -127,7 +149,7 @@ export const litterChangesQueryOptions = (litterId: string | undefined) =>
     queryFn: async (): Promise<LitterChangeRow[]> => {
       const { data, error } = await supabase
         .from('litter_changes')
-        .select('id, date, time, notes')
+        .select('id, user_id, date, time, notes')
         .eq('litter_id', litterId!)
         .order('date', { ascending: false })
         .order('time', { ascending: false })
@@ -138,6 +160,7 @@ export const litterChangesQueryOptions = (litterId: string | undefined) =>
 
 export interface WeighInRow {
   id: string
+  user_id: string
   date: string
   time: string
   notes: string | null
@@ -155,7 +178,9 @@ export const weighInsQueryOptions = (litterId: string | undefined) =>
     queryFn: async (): Promise<WeighInRow[]> => {
       const { data, error } = await supabase
         .from('weigh_ins')
-        .select('id, date, time, notes, weights(kitten_id, grams, kittens(name, tag_colour))')
+        .select(
+          'id, user_id, date, time, notes, weights(kitten_id, grams, kittens(name, tag_colour))',
+        )
         .eq('litter_id', litterId!)
         .order('date', { ascending: false })
         .order('time', { ascending: false })

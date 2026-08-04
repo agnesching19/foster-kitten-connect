@@ -16,6 +16,7 @@ const inputClass =
 export function AuthPage() {
   const [mode, setMode] = useState<Mode>('signin')
   const [email, setEmail] = useState('')
+  const [displayName, setDisplayName] = useState('')
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const { user, loading } = useAuth()
@@ -34,7 +35,10 @@ export function AuthPage() {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin },
+          options: {
+            emailRedirectTo: window.location.origin,
+            data: { display_name: displayName.trim() },
+          },
         })
         if (error) throw error
         if (data.session) {
@@ -66,7 +70,10 @@ export function AuthPage() {
       />
 
       <Card className="mx-auto max-w-md" padding="lg">
-        <div className="mb-4 flex rounded-xl border border-border bg-white p-1" aria-label="Auth mode">
+        <div
+          className="mb-4 flex rounded-xl border border-border bg-white p-1"
+          aria-label="Auth mode"
+        >
           {(['signin', 'signup'] as const).map((option) => (
             <button
               key={option}
@@ -80,6 +87,20 @@ export function AuthPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
+          {mode === 'signup' ? (
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-ink">Display name</span>
+              <input
+                type="text"
+                required
+                maxLength={80}
+                autoComplete="name"
+                value={displayName}
+                onChange={(event) => setDisplayName(event.target.value)}
+                className={inputClass}
+              />
+            </label>
+          ) : null}
           <label className="block">
             <span className="mb-1 block text-sm font-medium text-ink">Email</span>
             <input

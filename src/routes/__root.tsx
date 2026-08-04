@@ -95,16 +95,33 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "Foster Kitten Tracker | Every Batch in One Place" },
-      { name: "twitter:description", content: "Track foster momma cats and their kittens: batches, feedings, weights, bathroom logs and litter changes." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/HApiCWym4RVYcaKRDGcuR8vi38Q2/social-images/social-1785793786997-social-image.webp" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/HApiCWym4RVYcaKRDGcuR8vi38Q2/social-images/social-1785793786997-social-image.webp" },
+      {
+        name: "twitter:description",
+        content:
+          "Track foster momma cats and their kittens: batches, feedings, weights, bathroom logs and litter changes.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://storage.googleapis.com/gpt-engineer-file-uploads/HApiCWym4RVYcaKRDGcuR8vi38Q2/social-images/social-1785793786997-social-image.webp",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://storage.googleapis.com/gpt-engineer-file-uploads/HApiCWym4RVYcaKRDGcuR8vi38Q2/social-images/social-1785793786997-social-image.webp",
+      },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      {
+        rel: "icon",
+        href: "/favicon.ico?v=2",
+        type: "image/x-icon",
+        sizes: "256x256",
+      },
     ],
   }),
   shellComponent: RootShell,

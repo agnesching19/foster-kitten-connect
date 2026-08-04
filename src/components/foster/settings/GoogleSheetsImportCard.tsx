@@ -1,49 +1,52 @@
-import { useState } from 'react'
-import { toast } from 'sonner'
-import { Button } from '@/components/foster/ui/Button'
-import { Card, CardHeader } from '@/components/foster/ui/Card'
-import {
-  findTemplate,
-  sheetTemplates,
-  validateSheetUrl,
-} from '@/lib/data-transfer/sheets'
+import { useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/foster/ui/Button";
+import { Card, CardHeader } from "@/components/foster/ui/Card";
+import { findTemplate, sheetTemplates, validateSheetUrl } from "@/lib/data-transfer/sheets";
 
 const inputClass =
-  'min-h-11 w-full rounded-xl border border-border bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100'
+  "min-h-11 w-full rounded-xl border border-border bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100";
 
-export function GoogleSheetsImportCard() {
-  const [url, setUrl] = useState('')
-  const [templateId, setTemplateId] = useState(sheetTemplates[0]!.id)
-  const [error, setError] = useState<string | null>(null)
-  const [checking, setChecking] = useState(false)
+export function GoogleSheetsImportCard({ embedded = false }: { embedded?: boolean }) {
+  const [url, setUrl] = useState("");
+  const [templateId, setTemplateId] = useState(sheetTemplates[0]!.id);
+  const [error, setError] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
 
-  const template = sheetTemplates.find((item) => item.id === templateId)!
+  const template = sheetTemplates.find((item) => item.id === templateId)!;
 
   async function validate() {
-    const urlError = validateSheetUrl(url)
+    const urlError = validateSheetUrl(url);
     if (urlError) {
-      setError(urlError)
-      return
+      setError(urlError);
+      return;
     }
-    setError(null)
-    setChecking(true)
+    setError(null);
+    setChecking(true);
     try {
-      const adapter = findTemplate(url) ?? template
-      await adapter.buildPreview(url)
+      const adapter = findTemplate(url) ?? template;
+      await adapter.buildPreview(url);
     } catch (caught) {
-      setError((caught as Error).message)
-      toast.error((caught as Error).message)
+      setError((caught as Error).message);
+      toast.error((caught as Error).message);
     } finally {
-      setChecking(false)
+      setChecking(false);
     }
   }
 
-  return (
-    <Card>
-      <CardHeader
-        title="Import from Google Sheets"
-        subtitle="Recommended migration path. Paste the link to a spreadsheet that follows the Foster Kitten Tracker template — it is validated and previewed before anything is imported."
-      />
+  const content = (
+    <>
+      {embedded ? (
+        <p className="mb-3 text-sm text-muted">
+          Paste a link to a spreadsheet that follows the Foster Kitten Tracker template. It is
+          validated and previewed before anything is imported.
+        </p>
+      ) : (
+        <CardHeader
+          title="Import from Google Sheets"
+          subtitle="Recommended migration path. Paste the link to a spreadsheet that follows the Foster Kitten Tracker template — it is validated and previewed before anything is imported."
+        />
+      )}
 
       <div className="grid gap-3">
         <label>
@@ -68,8 +71,8 @@ export function GoogleSheetsImportCard() {
             type="url"
             value={url}
             onChange={(event) => {
-              setUrl(event.target.value)
-              setError(null)
+              setUrl(event.target.value);
+              setError(null);
             }}
             placeholder="https://docs.google.com/spreadsheets/d/…"
             className={inputClass}
@@ -85,15 +88,17 @@ export function GoogleSheetsImportCard() {
 
       <div className="mt-3 flex flex-wrap gap-2">
         <Button size="md" onClick={() => void validate()} disabled={checking}>
-          {checking ? 'Validating…' : 'Validate spreadsheet'}
+          {checking ? "Validating…" : "Validate spreadsheet"}
         </Button>
       </div>
 
       <p className="mt-3 text-xs text-muted">
         Sheet reading is not switched on yet. Until then, export each tab as CSV (File → Download →
-        CSV) and use the Import CSV card below — the same validation, preview and duplicate handling
+        CSV) and use the CSV or ZIP tab — the same validation, preview and duplicate handling
         applies.
       </p>
-    </Card>
-  )
+    </>
+  );
+
+  return embedded ? <div>{content}</div> : <Card>{content}</Card>;
 }

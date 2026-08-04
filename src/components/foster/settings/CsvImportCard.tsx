@@ -1,95 +1,101 @@
-import { useRef, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
-import { Button } from '@/components/foster/ui/Button'
-import { Card, CardHeader } from '@/components/foster/ui/Card'
-import { useAuth } from '@/hooks/useAuth'
+import { useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Button } from "@/components/foster/ui/Button";
+import { Card, CardHeader } from "@/components/foster/ui/Card";
+import { useAuth } from "@/hooks/useAuth";
 import {
   buildImportPreview,
   runImport,
   type ConflictStrategy,
   type ImportPreview,
   type ImportSummary,
-} from '@/lib/data-transfer/import'
-import { tableSpecs } from '@/lib/data-transfer/tables'
-import { ConfirmDialog } from './ConfirmDialog'
-import { ImportPreviewPanel } from './ImportPreviewPanel'
-import { ProgressBar } from './ProgressBar'
+} from "@/lib/data-transfer/import";
+import { tableSpecs } from "@/lib/data-transfer/tables";
+import { ConfirmDialog } from "./ConfirmDialog";
+import { ImportPreviewPanel } from "./ImportPreviewPanel";
+import { ProgressBar } from "./ProgressBar";
 
 interface CsvImportCardProps {
-  title?: string
-  description?: string
-  accept?: string
-  buttonLabel?: string
+  title?: string;
+  description?: string;
+  accept?: string;
+  buttonLabel?: string;
+  embedded?: boolean;
 }
 
 export function CsvImportCard({
-  title = 'Import CSV',
-  description = 'Import one or more CSV files previously exported by this app. Files are validated and previewed before anything is written.',
-  accept = '.csv,.zip',
-  buttonLabel = 'Choose files',
+  title = "Import CSV",
+  description = "Import one or more CSV files previously exported by this app. Files are validated and previewed before anything is written.",
+  accept = ".csv,.zip",
+  buttonLabel = "Choose files",
+  embedded = false,
 }: CsvImportCardProps) {
-  const { user } = useAuth()
-  const queryClient = useQueryClient()
-  const inputRef = useRef<HTMLInputElement>(null)
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const [preview, setPreview] = useState<ImportPreview | null>(null)
-  const [strategy, setStrategy] = useState<ConflictStrategy>('skip')
-  const [validating, setValidating] = useState(false)
-  const [progress, setProgress] = useState<{ step: string; percent: number } | null>(null)
-  const [confirmOpen, setConfirmOpen] = useState(false)
-  const [summary, setSummary] = useState<ImportSummary | null>(null)
+  const [preview, setPreview] = useState<ImportPreview | null>(null);
+  const [strategy, setStrategy] = useState<ConflictStrategy>("skip");
+  const [validating, setValidating] = useState(false);
+  const [progress, setProgress] = useState<{ step: string; percent: number } | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [summary, setSummary] = useState<ImportSummary | null>(null);
 
   function reset() {
-    setPreview(null)
-    setProgress(null)
-    setSummary(null)
-    setStrategy('skip')
-    if (inputRef.current) inputRef.current.value = ''
+    setPreview(null);
+    setProgress(null);
+    setSummary(null);
+    setStrategy("skip");
+    if (inputRef.current) inputRef.current.value = "";
   }
 
   async function handleFiles(files: FileList | null) {
-    if (!files?.length) return
-    setValidating(true)
-    setSummary(null)
+    if (!files?.length) return;
+    setValidating(true);
+    setSummary(null);
     try {
-      const result = await buildImportPreview([...files])
-      setPreview(result)
-      if (!result.totalRows) toast.error('No importable rows were found in those files.')
+      const result = await buildImportPreview([...files]);
+      setPreview(result);
+      if (!result.totalRows) toast.error("No importable rows were found in those files.");
     } catch (error) {
-      toast.error((error as Error).message || 'Could not read those files')
+      toast.error((error as Error).message || "Could not read those files");
     } finally {
-      setValidating(false)
+      setValidating(false);
     }
   }
 
   async function startImport() {
-    if (!preview || !user) return
-    setConfirmOpen(false)
-    setProgress({ step: 'Starting…', percent: 0 })
+    if (!preview || !user) return;
+    setConfirmOpen(false);
+    setProgress({ step: "Starting…", percent: 0 });
     try {
-      const result = await runImport(preview, { userId: user.id, strategy }, setProgress)
-      setSummary(result)
-      setPreview(null)
-      if (inputRef.current) inputRef.current.value = ''
-      await queryClient.invalidateQueries()
-      toast.success(`Imported ${result.totalInserted} records`)
+      const result = await runImport(preview, { userId: user.id, strategy }, setProgress);
+      setSummary(result);
+      setPreview(null);
+      if (inputRef.current) inputRef.current.value = "";
+      await queryClient.invalidateQueries();
+      toast.success(`Imported ${result.totalInserted} records`);
     } catch (error) {
-      toast.error((error as Error).message || 'Import failed')
+      toast.error((error as Error).message || "Import failed");
     } finally {
-      setProgress(null)
+      setProgress(null);
     }
   }
 
-  const hasConflicts = Boolean(preview?.existingLitterIds.length)
+  const hasConflicts = Boolean(preview?.existingLitterIds.length);
 
-  return (
-    <Card>
-      <CardHeader title={title} subtitle={description} />
+  const content = (
+    <>
+      {embedded ? (
+        <p className="mb-3 text-sm text-muted">{description}</p>
+      ) : (
+        <CardHeader title={title} subtitle={description} />
+      )}
 
       <p className="mb-3 text-xs text-muted">
-        Expected file names: {tableSpecs.map((spec) => spec.file).join(', ')} — or a ZIP export
-        from this app.
+        Expected file names: {tableSpecs.map((spec) => spec.file).join(", ")} — or a ZIP export from
+        this app.
       </p>
 
       <input
@@ -107,7 +113,7 @@ export function CsvImportCard({
           onClick={() => inputRef.current?.click()}
           disabled={validating || Boolean(progress) || !user}
         >
-          {validating ? 'Validating…' : buttonLabel}
+          {validating ? "Validating…" : buttonLabel}
         </Button>
         {preview || summary ? (
           <Button size="md" variant="secondary" onClick={reset} disabled={Boolean(progress)}>
@@ -134,8 +140,8 @@ export function CsvImportCard({
               size="md"
               disabled={!preview.totalRows || Boolean(progress)}
               onClick={() => {
-                if (hasConflicts && strategy !== 'skip') setConfirmOpen(true)
-                else void startImport()
+                if (hasConflicts && strategy !== "skip") setConfirmOpen(true);
+                else void startImport();
               }}
             >
               Import {preview.totalRows} rows
@@ -172,16 +178,20 @@ export function CsvImportCard({
 
       <ConfirmDialog
         open={confirmOpen}
-        title={strategy === 'replace' ? 'Replace existing records?' : 'Merge into existing litters?'}
-        description={
-          strategy === 'replace'
-            ? 'Kittens, feedings, bathroom entries, litter changes, weigh-ins, weights and notes for the matching litters will be deleted and re-imported. This cannot be undone.'
-            : 'Matching records will be updated with the values from your files.'
+        title={
+          strategy === "replace" ? "Replace existing records?" : "Merge into existing litters?"
         }
-        confirmLabel={strategy === 'replace' ? 'Replace data' : 'Merge data'}
+        description={
+          strategy === "replace"
+            ? "Kittens, feedings, bathroom entries, litter changes, weigh-ins, weights and notes for the matching litters will be deleted and re-imported. This cannot be undone."
+            : "Matching records will be updated with the values from your files."
+        }
+        confirmLabel={strategy === "replace" ? "Replace data" : "Merge data"}
         onConfirm={() => void startImport()}
         onCancel={() => setConfirmOpen(false)}
       />
-    </Card>
-  )
+    </>
+  );
+
+  return embedded ? <div>{content}</div> : <Card>{content}</Card>;
 }

@@ -1,21 +1,26 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/integrations/supabase/client'
 import { PageHeader } from '@/components/foster/layout/PageHeader'
 import { Badge } from '@/components/foster/ui/Badge'
 import { Button } from '@/components/foster/ui/Button'
-import { Card, CardHeader } from '@/components/foster/ui/Card'
+import { Card } from '@/components/foster/ui/Card'
 import { EmptyState } from '@/components/foster/ui/EmptyState'
 import { KittenDot } from '@/components/foster/ui/KittenDot'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { PoopDialog } from '@/components/foster/dialogs/PoopDialog'
 import { ConfirmDialog } from '@/components/foster/settings/ConfirmDialog'
 import {
   groupByDate,
   littersQueryOptions,
+  logAuthorName,
   pickCurrentLitter,
   poopsQueryOptions,
+  profilesQueryOptions,
   type PoopRow,
+  type ProfileRow,
 } from '@/lib/foster-queries'
 import { formatRelativeDay } from '@/utils/formatDate'
 
@@ -27,11 +32,21 @@ export function PoopsPage() {
   const { data: litters = [], isLoading: littersLoading } = useQuery(littersQueryOptions)
   const litter = pickCurrentLitter(litters)
   const { data: entries = [], isLoading } = useQuery(poopsQueryOptions(litter?.id))
-  const days = groupByDate(entries)
+  const { data: profiles = [] } = useQuery(profilesQueryOptions)
+  const days = useMemo(() => groupByDate(entries), [entries])
+  const months = useMemo(() => [...new Set(days.map((day) => day.date.slice(0, 7)))], [days])
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<PoopRow | null>(null)
   const [pendingDelete, setPendingDelete] = useState<PoopRow | null>(null)
+  const [selectedMonth, setSelectedMonth] = useState('')
+  const [openDays, setOpenDays] = useState<Record<string, boolean>>({})
+
+  const activeMonth = months.includes(selectedMonth) ? selectedMonth : (months[0] ?? '')
+  const visibleDays = days.filter((day) => day.date.startsWith(activeMonth))
+  const visibleEntryCount = visibleDays.reduce((total, day) => total + day.items.length, 0)
+  const isDayOpen = (date: string, index: number) => openDays[date] ?? index < 2
+  const allDaysOpen = visibleDays.every((day, index) => isDayOpen(day.date, index))
 
   const remove = useMutation({
     mutationFn: async (id: string) => {
@@ -88,68 +103,66 @@ export function PoopsPage() {
           <p className="text-sm text-muted">Loading entries…</p>
         </Card>
       ) : days.length ? (
-        <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
-          {days.map((day) => (
-            <Card key={day.date}>
-              <CardHeader
-                title={formatRelativeDay(day.date)}
-                subtitle={`${day.items.length} entr${day.items.length === 1 ? 'y' : 'ies'}`}
-              />
-              <ul className="divide-y divide-border/70">
-                {day.items.map((entry) => (
-                  <li
-                    key={entry.id}
-                    className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-3 gap-y-1 py-3 first:pt-0 last:pb-0"
-                  >
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-lg">
-                      💩
-                    </span>
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                        <p className="text-base font-semibold tabular-nums text-ink">
-                          {entry.time.slice(0, 5)}
-                        </p>
-                        {entry.subject_type === 'mother' ? (
-                          <Badge label={`🐱 Momma${litter ? ` (${litter.mother_name})` : ''}`} color="neutral" />
-                        ) : entry.kitten_id ? (
-                          <span className="flex items-center gap-1.5">
-                            <KittenDot colour={entry.kittens?.tag_colour ?? null} />
-                            <Badge label={entry.kittens?.name ?? 'Kitten'} color="neutral" />
-                          </span>
-                        ) : (
-                          <Badge label="Not identified" color="neutral" />
-                        )}
-                      </div>
-                      {entry.note ? (
-                        <p className="mt-0.5 text-sm text-muted">{entry.note}</p>
-                      ) : null}
-                    </div>
-                    <div className="flex shrink-0 items-center gap-1">
-                      <button
-                        type="button"
-                        className={iconButtonClass}
-                        aria-label="Edit entry"
-                        onClick={() => {
-                          setEditing(entry)
-                          setDialogOpen(true)
-                        }}
-                      >
-                        ✎
-                      </button>
-                      <button
-                        type="button"
-                        className={iconButtonClass}
-                        aria-label="Delete entry"
-                        onClick={() => setPendingDelete(entry)}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </li>
+        <div className="space-y-4 lg:space-y-6">
+          <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface-raised p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-4">
+            <div className="flex min-w-0 items-center gap-3">
+              <label htmlFor="poop-month" className="shrink-0 text-sm font-medium text-ink">
+                Month
+              </label>
+              <select
+                id="poop-month"
+                value={activeMonth}
+                onChange={(event) => setSelectedMonth(event.target.value)}
+                className="min-h-11 min-w-0 flex-1 rounded-xl border border-border bg-white px-3 py-2 text-sm font-medium text-ink outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 sm:w-44 sm:flex-none"
+              >
+                {months.map((month) => (
+                  <option key={month} value={month}>
+                    {formatMonth(month)}
+                  </option>
                 ))}
-              </ul>
-            </Card>
-          ))}
+              </select>
+              <p className="hidden text-sm text-muted md:block">
+                {visibleDays.length} day{visibleDays.length === 1 ? '' : 's'} · {visibleEntryCount}{' '}
+                entr{visibleEntryCount === 1 ? 'y' : 'ies'}
+              </p>
+            </div>
+            <button
+              type="button"
+              className="min-h-11 shrink-0 rounded-xl px-3 text-sm font-semibold text-brand-700 transition hover:bg-brand-50"
+              onClick={() =>
+                setOpenDays((current) => ({
+                  ...current,
+                  ...Object.fromEntries(visibleDays.map((day) => [day.date, !allDaysOpen])),
+                }))
+              }
+            >
+              {allDaysOpen ? 'Collapse all' : 'Expand all'}
+            </button>
+          </div>
+
+          <div className="grid items-start gap-3 lg:grid-cols-2 lg:gap-4">
+            {visibleDays.map((day, index) => {
+              const open = isDayOpen(day.date, index)
+              return (
+                <PoopDayCard
+                  key={day.date}
+                  date={day.date}
+                  entries={day.items}
+                  profiles={profiles}
+                  motherName={litter?.mother_name ?? null}
+                  open={open}
+                  onOpenChange={(nextOpen) =>
+                    setOpenDays((current) => ({ ...current, [day.date]: nextOpen }))
+                  }
+                  onEdit={(entry) => {
+                    setEditing(entry)
+                    setDialogOpen(true)
+                  }}
+                  onDelete={setPendingDelete}
+                />
+              )
+            })}
+          </div>
         </div>
       ) : (
         <Card>
@@ -162,4 +175,111 @@ export function PoopsPage() {
       )}
     </div>
   )
+}
+
+function PoopDayCard({
+  date,
+  entries,
+  profiles,
+  motherName,
+  open,
+  onOpenChange,
+  onEdit,
+  onDelete,
+}: {
+  date: string
+  entries: PoopRow[]
+  profiles: ProfileRow[]
+  motherName: string | null
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onEdit: (entry: PoopRow) => void
+  onDelete: (entry: PoopRow) => void
+}) {
+  return (
+    <Collapsible open={open} onOpenChange={onOpenChange}>
+      <Card>
+        <CollapsibleTrigger asChild>
+          <button
+            type="button"
+            className="flex min-h-11 w-full items-center justify-between gap-3 text-left"
+          >
+            <span>
+              <span className="block font-semibold text-ink">{formatRelativeDay(date)}</span>
+              <span className="mt-0.5 block text-sm text-muted">
+                {entries.length} entr{entries.length === 1 ? 'y' : 'ies'}
+              </span>
+            </span>
+            <ChevronDown
+              aria-hidden
+              className={`h-5 w-5 shrink-0 text-muted transition-transform ${open ? 'rotate-180' : ''}`}
+            />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <ul className="mt-3 divide-y divide-border/70 border-t border-border/70">
+            {entries.map((entry) => (
+              <li
+                key={entry.id}
+                className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-3 gap-y-1 py-3 last:pb-0"
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-lg">
+                  💩
+                </span>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <p className="text-base font-semibold tabular-nums text-ink">
+                      {entry.time.slice(0, 5)}
+                    </p>
+                    {entry.subject_type === 'mother' ? (
+                      <Badge
+                        label={`🐱 Momma${motherName ? ` (${motherName})` : ''}`}
+                        color="neutral"
+                      />
+                    ) : entry.kitten_id ? (
+                      <span className="flex items-center gap-1.5">
+                        <KittenDot colour={entry.kittens?.tag_colour ?? null} />
+                        <Badge label={entry.kittens?.name ?? 'Kitten'} color="neutral" />
+                      </span>
+                    ) : (
+                      <Badge label="Not identified" color="neutral" />
+                    )}
+                  </div>
+                  {entry.note ? <p className="mt-0.5 text-sm text-muted">{entry.note}</p> : null}
+                  <p className="mt-1 text-xs text-muted">
+                    Added by {logAuthorName(profiles, entry.user_id)}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  <button
+                    type="button"
+                    className={iconButtonClass}
+                    aria-label="Edit entry"
+                    onClick={() => onEdit(entry)}
+                  >
+                    ✎
+                  </button>
+                  <button
+                    type="button"
+                    className={iconButtonClass}
+                    aria-label="Delete entry"
+                    onClick={() => onDelete(entry)}
+                  >
+                    ✕
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
+  )
+}
+
+function formatMonth(month: string) {
+  return new Intl.DateTimeFormat('en-GB', {
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(`${month}-01T12:00:00`))
 }

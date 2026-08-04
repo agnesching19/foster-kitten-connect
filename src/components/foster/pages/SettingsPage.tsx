@@ -1,13 +1,14 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { PageHeader } from '@/components/foster/layout/PageHeader'
 import { BackupCard } from '@/components/foster/settings/BackupCard'
-import { CsvImportCard } from '@/components/foster/settings/CsvImportCard'
 import { ExportDataCard } from '@/components/foster/settings/ExportDataCard'
-import { GoogleSheetsImportCard } from '@/components/foster/settings/GoogleSheetsImportCard'
+import { ImportDataCard, type ImportMethod } from '@/components/foster/settings/ImportDataCard'
 import { LegacyImportCard } from '@/components/foster/settings/LegacyImportCard'
+import { ProfileCard } from '@/components/foster/settings/ProfileCard'
 
 export function SettingsPage() {
-  const csvRef = useRef<HTMLDivElement>(null)
+  const importRef = useRef<HTMLDivElement>(null)
+  const [importMethod, setImportMethod] = useState<ImportMethod>('sheets')
 
   return (
     <div>
@@ -17,14 +18,19 @@ export function SettingsPage() {
       />
 
       <div className="grid gap-4">
-        <GoogleSheetsImportCard />
-        <LegacyImportCard />
-        <div ref={csvRef} className="scroll-mt-24">
-          <CsvImportCard />
+        <ProfileCard />
+        <div ref={importRef} className="scroll-mt-24">
+          <ImportDataCard method={importMethod} onMethodChange={setImportMethod} />
         </div>
+        <LegacyImportCard />
         <ExportDataCard />
         <BackupCard
-          onRestore={() => csvRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          onRestore={() => {
+            setImportMethod('csv')
+            requestAnimationFrame(() =>
+              importRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+            )
+          }}
         />
       </div>
     </div>
