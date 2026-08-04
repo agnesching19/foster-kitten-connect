@@ -5,10 +5,12 @@ import { toast } from 'sonner'
 import { supabase } from '@/integrations/supabase/client'
 import { PageHeader } from '@/components/foster/layout/PageHeader'
 import { Card } from '@/components/foster/ui/Card'
+import { CatAvatar } from '@/components/foster/ui/CatAvatar'
 import { KittensSection } from '@/components/foster/kittens/KittensSection'
 import { NewLitterDialog } from '@/components/foster/litters/NewLitterDialog'
 import { ConfirmDialog } from '@/components/foster/settings/ConfirmDialog'
 import { littersQueryOptions, type LitterRow } from '@/lib/foster-queries'
+import { removeCatAvatars } from '@/lib/avatar-storage'
 import { formatDate } from '@/utils/formatDate'
 
 export const Route = createFileRoute('/litters/$litterId')({
@@ -76,6 +78,9 @@ function LitterDetailPage() {
       <PageHeader
         title={litter.litter_name || litter.mother_name}
         subtitle={`Arrived ${formatDate(litter.arrived)}${litter.left_date ? ` · Left ${formatDate(litter.left_date)}` : ''}`}
+        avatar={
+          <CatAvatar name={litter.mother_name} avatarPath={litter.mother_avatar_path} size="lg" />
+        }
         action={<LitterActions litter={litter} />}
       />
       <KittensSection litterId={litter.id} />
@@ -104,6 +109,14 @@ function LitterActions({ litter }: { litter: LitterRow }) {
     mutationFn: async () => {
       const { error } = await supabase.from('litters').delete().eq('id', litter.id)
       if (error) throw error
+      try {
+        await removeCatAvatars([
+          litter.mother_avatar_path,
+          ...litter.kittens.map((kitten) => kitten.avatar_path),
+        ])
+      } catch (removeError) {
+        console.warn('Could not remove all litter avatar files', removeError)
+      }
     },
     onSuccess: async () => {
       setConfirmOpen(false)

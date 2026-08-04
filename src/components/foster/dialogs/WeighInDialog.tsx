@@ -10,7 +10,7 @@ import {
   nowTime,
   todayIso,
 } from '@/components/foster/ui/FormDialog'
-import { KittenDot } from '@/components/foster/ui/KittenDot'
+import { KittenAvatar } from '@/components/foster/ui/KittenAvatar'
 import { daysBetween, kittensQueryOptions, type WeighInRow } from '@/lib/foster-queries'
 
 interface WeighInDialogProps {
@@ -72,7 +72,13 @@ export function WeighInDialog({
       } else {
         const { data, error } = await supabase
           .from('weigh_ins')
-          .insert({ litter_id: litterId, user_id: user.id, date, time, notes: notes.trim() || null })
+          .insert({
+            litter_id: litterId,
+            user_id: user.id,
+            date,
+            time,
+            notes: notes.trim() || null,
+          })
           .select('id')
           .single()
         if (error) throw error
@@ -113,11 +119,23 @@ export function WeighInDialog({
       >
         <label>
           <span className="mb-1 block text-sm font-medium text-ink">Date *</span>
-          <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className={inputClass} />
+          <input
+            type="date"
+            required
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className={inputClass}
+          />
         </label>
         <label>
           <span className="mb-1 block text-sm font-medium text-ink">Time *</span>
-          <input type="time" required value={time} onChange={(e) => setTime(e.target.value)} className={inputClass} />
+          <input
+            type="time"
+            required
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+            className={inputClass}
+          />
         </label>
         <label className="sm:col-span-2">
           <span className="mb-1 block text-sm font-medium text-ink">Days old</span>
@@ -134,16 +152,19 @@ export function WeighInDialog({
             <div className="grid gap-2 sm:grid-cols-2">
               {kittens.map((kitten) => (
                 <label key={kitten.id} className="flex items-center gap-2">
-                  <KittenDot colour={kitten.tag_colour} size="md" />
+                  <KittenAvatar
+                    name={kitten.name}
+                    avatarPath={kitten.avatar_path}
+                    colour={kitten.tag_colour}
+                    size="sm"
+                  />
                   <span className="w-24 shrink-0 truncate text-sm text-ink">{kitten.name}</span>
                   <input
                     type="number"
                     min={0}
                     inputMode="numeric"
                     value={grams[kitten.id] ?? ''}
-                    onChange={(e) =>
-                      setGrams((prev) => ({ ...prev, [kitten.id]: e.target.value }))
-                    }
+                    onChange={(e) => setGrams((prev) => ({ ...prev, [kitten.id]: e.target.value }))}
                     className={inputClass}
                     placeholder="g"
                     aria-label={`Weight for ${kitten.name}`}
@@ -160,9 +181,19 @@ export function WeighInDialog({
 
         <label className="sm:col-span-2">
           <span className="mb-1 block text-sm font-medium text-ink">Notes</span>
-          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className={inputClass} placeholder="Optional" />
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={2}
+            className={inputClass}
+            placeholder="Optional"
+          />
         </label>
-        <DialogActions busy={mutation.isPending} onCancel={onClose} saveLabel={session ? 'Save changes' : 'Save weigh-in'} />
+        <DialogActions
+          busy={mutation.isPending}
+          onCancel={onClose}
+          saveLabel={session ? 'Save changes' : 'Save weigh-in'}
+        />
       </form>
     </FormDialog>
   )

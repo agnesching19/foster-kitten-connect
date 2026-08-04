@@ -1,7 +1,7 @@
 import { Link, useLocation } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { littersQueryOptions, pickCurrentLitter } from '@/lib/foster-queries'
-import { KittenDot } from '@/components/foster/ui/KittenDot'
+import { KittenAvatar } from '@/components/foster/ui/KittenAvatar'
 import { getNavLinkClass, navItems, settingsNavItem } from './navItems'
 import { AuthStatus } from './AuthStatus'
 
@@ -19,14 +19,15 @@ export function SidebarNav() {
           Foster Tracker
         </p>
         <p className="mt-1 text-base font-semibold text-ink">All foster batches</p>
-        <p className="text-sm text-muted">{litters.length} batches · {totalCats} cats</p>
+        <p className="text-sm text-muted">
+          {litters.length} batches · {totalCats} cats
+        </p>
       </div>
 
       <nav aria-label="Main navigation" className="flex-1 px-3 py-4">
         <ul className="space-y-1">
           {navItems.map((item) => {
-            const isActive =
-              item.to === '/' ? pathname === '/' : pathname.startsWith(item.to)
+            const isActive = item.to === '/' ? pathname === '/' : pathname.startsWith(item.to)
             return (
               <li key={item.to}>
                 <Link to={item.to} className={getNavLinkClass(isActive, 'sidebar')}>
@@ -59,7 +60,12 @@ export function SidebarNav() {
           <ul className="space-y-2">
             {kittens.map((kitten) => (
               <li key={kitten.id} className="flex items-center gap-2">
-                <KittenDot colour={kitten.tag_colour} />
+                <KittenAvatar
+                  name={kitten.name}
+                  avatarPath={kitten.avatar_path}
+                  colour={kitten.tag_colour}
+                  size="sm"
+                />
                 <span className="truncate text-sm text-ink">{kitten.name}</span>
               </li>
             ))}

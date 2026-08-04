@@ -5,6 +5,7 @@ import type { TagColour } from '@/components/foster/ui/KittenDot'
 export interface LitterRow {
   id: string
   mother_name: string
+  mother_avatar_path: string | null
   litter_name: string | null
   date_of_birth: string | null
   arrived: string
@@ -12,7 +13,13 @@ export interface LitterRow {
   status: 'active' | 'completed'
   external_record: string | null
   album_url: string | null
-  kittens: { id: string; name: string; sort_order: number; tag_colour: TagColour | null }[]
+  kittens: {
+    id: string
+    name: string
+    sort_order: number
+    tag_colour: TagColour | null
+    avatar_path: string | null
+  }[]
 }
 
 export const littersQueryOptions = queryOptions({
@@ -21,7 +28,7 @@ export const littersQueryOptions = queryOptions({
     const { data, error } = await supabase
       .from('litters')
       .select(
-        'id, mother_name, litter_name, date_of_birth, arrived, left_date, status, external_record, album_url, kittens(id, name, sort_order, tag_colour)',
+        'id, mother_name, mother_avatar_path, litter_name, date_of_birth, arrived, left_date, status, external_record, album_url, kittens(id, name, sort_order, tag_colour, avatar_path)',
       )
       .order('arrived', { ascending: false })
     if (error) throw error
@@ -63,6 +70,7 @@ export interface KittenRow {
   sort_order: number
   litter_id: string
   tag_colour: TagColour | null
+  avatar_path: string | null
 }
 
 export const kittensQueryOptions = (litterId: string | undefined) =>
@@ -72,7 +80,7 @@ export const kittensQueryOptions = (litterId: string | undefined) =>
     queryFn: async (): Promise<KittenRow[]> => {
       const { data, error } = await supabase
         .from('kittens')
-        .select('id, name, sort_order, litter_id, tag_colour')
+        .select('id, name, sort_order, litter_id, tag_colour, avatar_path')
         .eq('litter_id', litterId!)
         .order('sort_order', { ascending: true })
         .order('name', { ascending: true })
@@ -115,7 +123,7 @@ export interface PoopRow {
   note: string | null
   kitten_id: string | null
   subject_type: 'mother' | 'kitten'
-  kittens: { name: string; tag_colour: TagColour | null } | null
+  kittens: { name: string; tag_colour: TagColour | null; avatar_path: string | null } | null
 }
 
 export const poopsQueryOptions = (litterId: string | undefined) =>
@@ -125,7 +133,9 @@ export const poopsQueryOptions = (litterId: string | undefined) =>
     queryFn: async (): Promise<PoopRow[]> => {
       const { data, error } = await supabase
         .from('poop_entries')
-        .select('id, user_id, date, time, note, kitten_id, subject_type, kittens(name, tag_colour)')
+        .select(
+          'id, user_id, date, time, note, kitten_id, subject_type, kittens(name, tag_colour, avatar_path)',
+        )
         .eq('litter_id', litterId!)
         .order('date', { ascending: false })
         .order('time', { ascending: false })
@@ -167,7 +177,7 @@ export interface WeighInRow {
   weights: {
     kitten_id: string
     grams: number
-    kittens: { name: string; tag_colour: TagColour | null } | null
+    kittens: { name: string; tag_colour: TagColour | null; avatar_path: string | null } | null
   }[]
 }
 
@@ -179,7 +189,7 @@ export const weighInsQueryOptions = (litterId: string | undefined) =>
       const { data, error } = await supabase
         .from('weigh_ins')
         .select(
-          'id, user_id, date, time, notes, weights(kitten_id, grams, kittens(name, tag_colour))',
+          'id, user_id, date, time, notes, weights(kitten_id, grams, kittens(name, tag_colour, avatar_path))',
         )
         .eq('litter_id', litterId!)
         .order('date', { ascending: false })

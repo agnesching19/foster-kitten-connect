@@ -7,7 +7,9 @@ import { Button } from '@/components/foster/ui/Button'
 import { Card, CardHeader } from '@/components/foster/ui/Card'
 import { EmptyState } from '@/components/foster/ui/EmptyState'
 import { KittenDot, TAG_COLOURS, type TagColour } from '@/components/foster/ui/KittenDot'
+import { KittenAvatar } from '@/components/foster/ui/KittenAvatar'
 import { kittensQueryOptions, type KittenRow } from '@/lib/foster-queries'
+import { removeCatAvatars, uploadCatAvatar } from '@/lib/avatar-storage'
 
 const inputClass =
   'min-h-11 w-full rounded-xl border border-border bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100'
@@ -55,6 +57,8 @@ export function KittensSection({ litterId }: { litterId: string }) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState('')
   const [editingColour, setEditingColour] = useState<TagColour | ''>('')
+  const [editingAvatar, setEditingAvatar] = useState<File | null>(null)
+  const [removeAvatar, setRemoveAvatar] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<KittenRow | null>(null)
 
   async function refresh() {
@@ -67,18 +71,14 @@ export function KittensSection({ litterId }: { litterId: string }) {
   const addKitten = useMutation({
     mutationFn: async ({ name, tagColour }: { name: string; tagColour: TagColour | '' }) => {
       if (!user) throw new Error('You need to be signed in to add a kitten.')
-      const nextOrder = kittens.length
-        ? Math.max(...kittens.map((k) => k.sort_order)) + 1
-        : 1
-      const { error } = await supabase
-        .from('kittens')
-        .insert({
-          user_id: user.id,
-          litter_id: litterId,
-          name,
-          sort_order: nextOrder,
-          tag_colour: tagColour || null,
-        })
+      const nextOrder = kittens.length ? Math.max(...kittens.map((k) => k.sort_order)) + 1 : 1
+      const { error } = await supabase.from('kittens').insert({
+        user_id: user.id,
+        litter_id: litterId,
+        name,
+        sort_order: nextOrder,
+        tag_colour: tagColour || null,
+      })
       if (error) throw error
     },
     onSuccess: async () => {
@@ -90,24 +90,51 @@ export function KittensSection({ litterId }: { litterId: string }) {
     onError: (error: Error) => toast.error(error.message || 'Could not add the kitten'),
   })
 
-  const renameKitten = useMutation({
+  const updateKitten = useMutation({
     mutationFn: async ({
-      id,
+      kitten,
       name,
       tagColour,
+      avatar,
+      removeExistingAvatar,
     }: {
-      id: string
+      kitten: KittenRow
       name: string
       tagColour: TagColour | ''
+      avatar: File | null
+      removeExistingAvatar: boolean
     }) => {
+      if (!user) throw new Error('You need to be signed in to edit a kitten.')
+
+      let avatarPath = removeExistingAvatar ? null : kitten.avatar_path
+      let uploadedPath: string | null = null
+
+      if (avatar) {
+        uploadedPath = await uploadCatAvatar(avatar, `${user.id}/kittens/${kitten.id}`)
+        avatarPath = uploadedPath
+      }
+
       const { error } = await supabase
         .from('kittens')
-        .update({ name, tag_colour: tagColour || null })
-        .eq('id', id)
-      if (error) throw error
+        .update({ name, tag_colour: tagColour || null, avatar_path: avatarPath })
+        .eq('id', kitten.id)
+      if (error) {
+        if (uploadedPath) await removeCatAvatars([uploadedPath])
+        throw error
+      }
+
+      if (kitten.avatar_path && kitten.avatar_path !== avatarPath) {
+        try {
+          await removeCatAvatars([kitten.avatar_path])
+        } catch (removeError) {
+          console.warn('Could not remove the previous kitten avatar', removeError)
+        }
+      }
     },
     onSuccess: async () => {
       setEditingId(null)
+      setEditingAvatar(null)
+      setRemoveAvatar(false)
       await refresh()
       toast.success('Kitten updated')
     },
@@ -115,9 +142,16 @@ export function KittensSection({ litterId }: { litterId: string }) {
   })
 
   const deleteKitten = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from('kittens').delete().eq('id', id)
+    mutationFn: async (kitten: KittenRow) => {
+      const { error } = await supabase.from('kittens').delete().eq('id', kitten.id)
       if (error) throw error
+      if (kitten.avatar_path) {
+        try {
+          await removeCatAvatars([kitten.avatar_path])
+        } catch (removeError) {
+          console.warn('Could not remove the kitten avatar', removeError)
+        }
+      }
     },
     onSuccess: async () => {
       setPendingDelete(null)
@@ -147,10 +181,7 @@ export function KittensSection({ litterId }: { litterId: string }) {
   return (
     <section aria-label="Kittens">
       <Card>
-        <CardHeader
-          title="Kittens"
-          subtitle={`${kittens.length} recorded in this litter`}
-        />
+        <CardHeader title="Kittens" subtitle={`${kittens.length} recorded in this litter`} />
 
         {user ? (
           <form
@@ -194,42 +225,82 @@ export function KittensSection({ litterId }: { litterId: string }) {
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-sm font-semibold text-brand-800">
                   {index + 1}
                 </span>
-                <KittenDot colour={kitten.tag_colour} size="md" />
+                <KittenAvatar
+                  name={kitten.name}
+                  avatarPath={kitten.avatar_path}
+                  colour={kitten.tag_colour}
+                />
 
                 {editingId === kitten.id ? (
                   <form
-                    className="flex flex-1 flex-col gap-2 sm:flex-row"
+                    className="flex flex-1 flex-col gap-2"
                     onSubmit={(event) => {
                       event.preventDefault()
                       const name = editingName.trim()
                       if (!name) return
-                      renameKitten.mutate({ id: kitten.id, name, tagColour: editingColour })
+                      updateKitten.mutate({
+                        kitten,
+                        name,
+                        tagColour: editingColour,
+                        avatar: editingAvatar,
+                        removeExistingAvatar: removeAvatar,
+                      })
                     }}
                   >
-                    <input
-                      autoFocus
-                      value={editingName}
-                      onChange={(event) => setEditingName(event.target.value)}
-                      className={inputClass}
-                      aria-label={`Rename ${kitten.name}`}
-                    />
-                    <ColourSelect
-                      value={editingColour}
-                      onChange={setEditingColour}
-                      label={`Tag colour for ${kitten.name}`}
-                    />
-                    <div className="flex gap-2">
-                      <Button type="submit" size="md" disabled={renameKitten.isPending}>
-                        Save
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="md"
-                        onClick={() => setEditingId(null)}
-                      >
-                        Cancel
-                      </Button>
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <input
+                        autoFocus
+                        value={editingName}
+                        onChange={(event) => setEditingName(event.target.value)}
+                        className={inputClass}
+                        aria-label={`Rename ${kitten.name}`}
+                      />
+                      <ColourSelect
+                        value={editingColour}
+                        onChange={setEditingColour}
+                        label={`Tag colour for ${kitten.name}`}
+                      />
+                      <div className="flex gap-2">
+                        <Button type="submit" size="md" disabled={updateKitten.isPending}>
+                          {updateKitten.isPending ? 'Saving…' : 'Save'}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="md"
+                          onClick={() => setEditingId(null)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3 rounded-xl bg-gray-50 px-3 py-2">
+                      <label className="text-sm font-medium text-ink">
+                        Avatar
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,image/gif"
+                          className="ml-3 max-w-56 text-sm text-muted file:mr-2 file:rounded-lg file:border-0 file:bg-brand-100 file:px-3 file:py-2 file:font-medium file:text-brand-800"
+                          onChange={(event) => {
+                            setEditingAvatar(event.target.files?.[0] ?? null)
+                            setRemoveAvatar(false)
+                          }}
+                        />
+                      </label>
+                      {kitten.avatar_path && !editingAvatar ? (
+                        <button
+                          type="button"
+                          className="text-sm font-medium text-red-600 hover:text-red-700"
+                          onClick={() => setRemoveAvatar((current) => !current)}
+                        >
+                          {removeAvatar ? 'Keep current photo' : 'Remove photo'}
+                        </button>
+                      ) : null}
+                      {removeAvatar ? (
+                        <span className="text-xs text-muted">
+                          Photo will be removed when saved.
+                        </span>
+                      ) : null}
                     </div>
                   </form>
                 ) : (
@@ -263,6 +334,8 @@ export function KittensSection({ litterId }: { litterId: string }) {
                           setEditingId(kitten.id)
                           setEditingName(kitten.name)
                           setEditingColour(kitten.tag_colour ?? '')
+                          setEditingAvatar(null)
+                          setRemoveAvatar(false)
                         }}
                       >
                         ✎
@@ -310,7 +383,7 @@ export function KittensSection({ litterId }: { litterId: string }) {
                 size="md"
                 fullWidth
                 disabled={deleteKitten.isPending}
-                onClick={() => deleteKitten.mutate(pendingDelete.id)}
+                onClick={() => deleteKitten.mutate(pendingDelete)}
               >
                 {deleteKitten.isPending ? 'Deleting…' : 'Delete'}
               </Button>

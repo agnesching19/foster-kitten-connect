@@ -8,7 +8,7 @@ import { Badge } from '@/components/foster/ui/Badge'
 import { Button } from '@/components/foster/ui/Button'
 import { Card } from '@/components/foster/ui/Card'
 import { EmptyState } from '@/components/foster/ui/EmptyState'
-import { KittenDot } from '@/components/foster/ui/KittenDot'
+import { KittenAvatar } from '@/components/foster/ui/KittenAvatar'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { PoopDialog } from '@/components/foster/dialogs/PoopDialog'
 import { ConfirmDialog } from '@/components/foster/settings/ConfirmDialog'
@@ -238,7 +238,12 @@ function PoopDayCard({
                       />
                     ) : entry.kitten_id ? (
                       <span className="flex items-center gap-1.5">
-                        <KittenDot colour={entry.kittens?.tag_colour ?? null} />
+                        <KittenAvatar
+                          name={entry.kittens?.name ?? 'Kitten'}
+                          avatarPath={entry.kittens?.avatar_path ?? null}
+                          colour={entry.kittens?.tag_colour ?? null}
+                          size="sm"
+                        />
                         <Badge label={entry.kittens?.name ?? 'Kitten'} color="neutral" />
                       </span>
                     ) : (

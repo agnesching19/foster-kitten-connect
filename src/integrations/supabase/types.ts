@@ -95,6 +95,7 @@ export type Database = {
       }
       kittens: {
         Row: {
+          avatar_path: string | null
           created_at: string
           id: string
           litter_id: string
@@ -105,6 +106,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          avatar_path?: string | null
           created_at?: string
           id?: string
           litter_id: string
@@ -115,6 +117,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          avatar_path?: string | null
           created_at?: string
           id?: string
           litter_id?: string
@@ -185,6 +188,7 @@ export type Database = {
           id: string
           left_date: string | null
           litter_name: string | null
+          mother_avatar_path: string | null
           mother_name: string
           status: Database['public']['Enums']['litter_status']
           updated_at: string
@@ -199,6 +203,7 @@ export type Database = {
           id?: string
           left_date?: string | null
           litter_name?: string | null
+          mother_avatar_path?: string | null
           mother_name: string
           status?: Database['public']['Enums']['litter_status']
           updated_at?: string
@@ -213,6 +218,7 @@ export type Database = {
           id?: string
           left_date?: string | null
           litter_name?: string | null
+          mother_avatar_path?: string | null
           mother_name?: string
           status?: Database['public']['Enums']['litter_status']
           updated_at?: string
