@@ -22,6 +22,7 @@ import {
   type ProfileRow,
 } from '@/lib/foster-queries'
 import { formatRelativeDay } from '@/utils/formatDate'
+import { useLitterAccess } from '@/hooks/useLitterAccess'
 
 const iconButtonClass =
   'flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-white text-sm text-muted transition hover:bg-brand-50 hover:text-ink'
@@ -30,6 +31,7 @@ export function FeedingsPage() {
   const queryClient = useQueryClient()
   const { data: litters = [], isLoading: littersLoading } = useQuery(littersQueryOptions)
   const litter = pickCurrentLitter(litters)
+  const { canEdit } = useLitterAccess(litter)
   const { data: feedings = [], isLoading } = useQuery(feedingsQueryOptions(litter?.id))
   const { data: profiles = [] } = useQuery(profilesQueryOptions)
   const days = useMemo(() => groupByDate(feedings), [feedings])
@@ -66,16 +68,18 @@ export function FeedingsPage() {
         title="Feedings"
         subtitle={litter ? `${litter.mother_name}'s daily pouches` : 'Daily pouches'}
         action={
-          <Button
-            size="md"
-            className="shrink-0"
-            onClick={() => {
-              setEditing(null)
-              setDialogOpen(true)
-            }}
-          >
-            + Log
-          </Button>
+          canEdit ? (
+            <Button
+              size="md"
+              className="shrink-0"
+              onClick={() => {
+                setEditing(null)
+                setDialogOpen(true)
+              }}
+            >
+              + Log
+            </Button>
+          ) : null
         }
       />
 
@@ -147,6 +151,7 @@ export function FeedingsPage() {
                   date={day.date}
                   feedings={day.items}
                   profiles={profiles}
+                  canEdit={canEdit}
                   open={open}
                   onOpenChange={(nextOpen) =>
                     setOpenDays((current) => ({ ...current, [day.date]: nextOpen }))
@@ -180,6 +185,7 @@ function FeedingDayCard({
   date,
   feedings,
   profiles,
+  canEdit,
   open,
   onOpenChange,
   onEdit,
@@ -188,6 +194,7 @@ function FeedingDayCard({
   date: string
   feedings: FeedingRow[]
   profiles: ProfileRow[]
+  canEdit: boolean
   open: boolean
   onOpenChange: (open: boolean) => void
   onEdit: (feeding: FeedingRow) => void
@@ -238,24 +245,26 @@ function FeedingDayCard({
                     Added by {logAuthorName(profiles, feeding.user_id)}
                   </p>
                 </div>
-                <div className="flex shrink-0 items-center gap-1">
-                  <button
-                    type="button"
-                    className={iconButtonClass}
-                    aria-label="Edit feeding"
-                    onClick={() => onEdit(feeding)}
-                  >
-                    ✎
-                  </button>
-                  <button
-                    type="button"
-                    className={iconButtonClass}
-                    aria-label="Delete feeding"
-                    onClick={() => onDelete(feeding)}
-                  >
-                    ✕
-                  </button>
-                </div>
+                {canEdit ? (
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      type="button"
+                      className={iconButtonClass}
+                      aria-label="Edit feeding"
+                      onClick={() => onEdit(feeding)}
+                    >
+                      ✎
+                    </button>
+                    <button
+                      type="button"
+                      className={iconButtonClass}
+                      aria-label="Delete feeding"
+                      onClick={() => onDelete(feeding)}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : null}
               </li>
             ))}
           </ul>

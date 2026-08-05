@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { PageHeader } from '@/components/foster/layout/PageHeader'
 import { BackupCard } from '@/components/foster/settings/BackupCard'
+import { CollaborationCard } from '@/components/foster/settings/CollaborationCard'
 import { ExportDataCard } from '@/components/foster/settings/ExportDataCard'
 import { ImportDataCard, type ImportMethod } from '@/components/foster/settings/ImportDataCard'
 import { LegacyImportCard } from '@/components/foster/settings/LegacyImportCard'
@@ -19,6 +20,7 @@ export function SettingsPage() {
 
       <div className="grid gap-4">
         <ProfileCard />
+        <CollaborationCard />
         <div ref={importRef} className="scroll-mt-24">
           <ImportDataCard method={importMethod} onMethodChange={setImportMethod} />
         </div>

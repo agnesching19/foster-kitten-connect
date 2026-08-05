@@ -47,7 +47,7 @@ function ColourSelect({
   )
 }
 
-export function KittensSection({ litterId }: { litterId: string }) {
+export function KittensSection({ litterId, canEdit }: { litterId: string; canEdit: boolean }) {
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const { data: kittens = [], isLoading } = useQuery(kittensQueryOptions(litterId))
@@ -183,7 +183,7 @@ export function KittensSection({ litterId }: { litterId: string }) {
       <Card>
         <CardHeader title="Kittens" subtitle={`${kittens.length} recorded in this litter`} />
 
-        {user ? (
+        {canEdit ? (
           <form
             className="mb-4 flex flex-col gap-2 sm:flex-row"
             onSubmit={(event) => {
@@ -209,7 +209,7 @@ export function KittensSection({ litterId }: { litterId: string }) {
           </form>
         ) : (
           <p className="mb-4 rounded-xl bg-gray-50 px-3 py-3 text-sm text-muted">
-            Sign in to add or edit kittens.
+            You have read-only access to this litter.
           </p>
         )}
 
@@ -306,50 +306,52 @@ export function KittensSection({ litterId }: { litterId: string }) {
                 ) : (
                   <>
                     <p className="min-w-0 flex-1 truncate font-medium text-ink">{kitten.name}</p>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        className={iconButtonClass}
-                        aria-label={`Move ${kitten.name} up`}
-                        disabled={index === 0 || moveKitten.isPending || !user}
-                        onClick={() => moveKitten.mutate({ index, direction: -1 })}
-                      >
-                        ↑
-                      </button>
-                      <button
-                        type="button"
-                        className={iconButtonClass}
-                        aria-label={`Move ${kitten.name} down`}
-                        disabled={index === kittens.length - 1 || moveKitten.isPending || !user}
-                        onClick={() => moveKitten.mutate({ index, direction: 1 })}
-                      >
-                        ↓
-                      </button>
-                      <button
-                        type="button"
-                        className={iconButtonClass}
-                        aria-label={`Edit ${kitten.name}`}
-                        disabled={!user}
-                        onClick={() => {
-                          setEditingId(kitten.id)
-                          setEditingName(kitten.name)
-                          setEditingColour(kitten.tag_colour ?? '')
-                          setEditingAvatar(null)
-                          setRemoveAvatar(false)
-                        }}
-                      >
-                        ✎
-                      </button>
-                      <button
-                        type="button"
-                        className={iconButtonClass}
-                        aria-label={`Delete ${kitten.name}`}
-                        disabled={!user}
-                        onClick={() => setPendingDelete(kitten)}
-                      >
-                        ✕
-                      </button>
-                    </div>
+                    {canEdit ? (
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          className={iconButtonClass}
+                          aria-label={`Move ${kitten.name} up`}
+                          disabled={index === 0 || moveKitten.isPending || !user}
+                          onClick={() => moveKitten.mutate({ index, direction: -1 })}
+                        >
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          className={iconButtonClass}
+                          aria-label={`Move ${kitten.name} down`}
+                          disabled={index === kittens.length - 1 || moveKitten.isPending || !user}
+                          onClick={() => moveKitten.mutate({ index, direction: 1 })}
+                        >
+                          ↓
+                        </button>
+                        <button
+                          type="button"
+                          className={iconButtonClass}
+                          aria-label={`Edit ${kitten.name}`}
+                          disabled={!user}
+                          onClick={() => {
+                            setEditingId(kitten.id)
+                            setEditingName(kitten.name)
+                            setEditingColour(kitten.tag_colour ?? '')
+                            setEditingAvatar(null)
+                            setRemoveAvatar(false)
+                          }}
+                        >
+                          ✎
+                        </button>
+                        <button
+                          type="button"
+                          className={iconButtonClass}
+                          aria-label={`Delete ${kitten.name}`}
+                          disabled={!user}
+                          onClick={() => setPendingDelete(kitten)}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : null}
                   </>
                 )}
               </li>

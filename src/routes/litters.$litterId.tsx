@@ -12,6 +12,7 @@ import { ConfirmDialog } from '@/components/foster/settings/ConfirmDialog'
 import { littersQueryOptions, type LitterRow } from '@/lib/foster-queries'
 import { removeCatAvatars } from '@/lib/avatar-storage'
 import { formatDate } from '@/utils/formatDate'
+import { useLitterAccess } from '@/hooks/useLitterAccess'
 
 export const Route = createFileRoute('/litters/$litterId')({
   head: () => ({
@@ -50,6 +51,7 @@ function LitterDetailPage() {
   const { litterId } = Route.useParams()
   const { data: litters = [], isLoading } = useQuery(littersQueryOptions)
   const litter = litters.find((item) => item.id === litterId)
+  const { canEdit, isOwner } = useLitterAccess(litter)
 
   if (isLoading) {
     return (
@@ -81,9 +83,9 @@ function LitterDetailPage() {
         avatar={
           <CatAvatar name={litter.mother_name} avatarPath={litter.mother_avatar_path} size="lg" />
         }
-        action={<LitterActions litter={litter} />}
+        action={isOwner ? <LitterActions litter={litter} /> : null}
       />
-      <KittensSection litterId={litter.id} />
+      <KittensSection litterId={litter.id} canEdit={canEdit} />
     </div>
   )
 }

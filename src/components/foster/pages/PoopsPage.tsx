@@ -23,6 +23,7 @@ import {
   type ProfileRow,
 } from '@/lib/foster-queries'
 import { formatRelativeDay } from '@/utils/formatDate'
+import { useLitterAccess } from '@/hooks/useLitterAccess'
 
 const iconButtonClass =
   'flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-white text-sm text-muted transition hover:bg-brand-50 hover:text-ink'
@@ -31,6 +32,7 @@ export function PoopsPage() {
   const queryClient = useQueryClient()
   const { data: litters = [], isLoading: littersLoading } = useQuery(littersQueryOptions)
   const litter = pickCurrentLitter(litters)
+  const { canEdit } = useLitterAccess(litter)
   const { data: entries = [], isLoading } = useQuery(poopsQueryOptions(litter?.id))
   const { data: profiles = [] } = useQuery(profilesQueryOptions)
   const days = useMemo(() => groupByDate(entries), [entries])
@@ -67,16 +69,18 @@ export function PoopsPage() {
         title="Poops"
         subtitle="Bathroom log"
         action={
-          <Button
-            size="md"
-            className="shrink-0"
-            onClick={() => {
-              setEditing(null)
-              setDialogOpen(true)
-            }}
-          >
-            + Log
-          </Button>
+          canEdit ? (
+            <Button
+              size="md"
+              className="shrink-0"
+              onClick={() => {
+                setEditing(null)
+                setDialogOpen(true)
+              }}
+            >
+              + Log
+            </Button>
+          ) : null
         }
       />
 
@@ -150,6 +154,7 @@ export function PoopsPage() {
                   entries={day.items}
                   profiles={profiles}
                   motherName={litter?.mother_name ?? null}
+                  canEdit={canEdit}
                   open={open}
                   onOpenChange={(nextOpen) =>
                     setOpenDays((current) => ({ ...current, [day.date]: nextOpen }))
@@ -182,6 +187,7 @@ function PoopDayCard({
   entries,
   profiles,
   motherName,
+  canEdit,
   open,
   onOpenChange,
   onEdit,
@@ -191,6 +197,7 @@ function PoopDayCard({
   entries: PoopRow[]
   profiles: ProfileRow[]
   motherName: string | null
+  canEdit: boolean
   open: boolean
   onOpenChange: (open: boolean) => void
   onEdit: (entry: PoopRow) => void
@@ -285,24 +292,26 @@ function PoopDayCard({
                           Added by {logAuthorName(profiles, entry.user_id)}
                         </p>
                       </div>
-                      <div className="flex shrink-0 items-center gap-1">
-                        <button
-                          type="button"
-                          className={iconButtonClass}
-                          aria-label="Edit entry"
-                          onClick={() => onEdit(entry)}
-                        >
-                          ✎
-                        </button>
-                        <button
-                          type="button"
-                          className={iconButtonClass}
-                          aria-label="Delete entry"
-                          onClick={() => onDelete(entry)}
-                        >
-                          ✕
-                        </button>
-                      </div>
+                      {canEdit ? (
+                        <div className="flex shrink-0 items-center gap-1">
+                          <button
+                            type="button"
+                            className={iconButtonClass}
+                            aria-label="Edit entry"
+                            onClick={() => onEdit(entry)}
+                          >
+                            ✎
+                          </button>
+                          <button
+                            type="button"
+                            className={iconButtonClass}
+                            aria-label="Delete entry"
+                            onClick={() => onDelete(entry)}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : null}
                     </li>
                   ))}
                 </ul>

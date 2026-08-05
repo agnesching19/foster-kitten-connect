@@ -4,6 +4,7 @@ import type { TagColour } from '@/components/foster/ui/KittenDot'
 
 export interface LitterRow {
   id: string
+  user_id: string
   mother_name: string
   mother_avatar_path: string | null
   litter_name: string | null
@@ -28,7 +29,7 @@ export const littersQueryOptions = queryOptions({
     const { data, error } = await supabase
       .from('litters')
       .select(
-        'id, mother_name, mother_avatar_path, litter_name, date_of_birth, arrived, left_date, status, external_record, album_url, kittens(id, name, sort_order, tag_colour, avatar_path)',
+        'id, user_id, mother_name, mother_avatar_path, litter_name, date_of_birth, arrived, left_date, status, external_record, album_url, kittens(id, name, sort_order, tag_colour, avatar_path)',
       )
       .order('arrived', { ascending: false })
     if (error) throw error

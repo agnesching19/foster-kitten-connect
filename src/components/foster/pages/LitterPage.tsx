@@ -19,6 +19,7 @@ import {
   type LitterChangeRow,
 } from '@/lib/foster-queries'
 import { formatRelativeDay } from '@/utils/formatDate'
+import { useLitterAccess } from '@/hooks/useLitterAccess'
 
 const iconButtonClass =
   'flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-white text-sm text-muted transition hover:bg-brand-50 hover:text-ink'
@@ -28,6 +29,7 @@ export function LitterPage() {
   const queryClient = useQueryClient()
   const { data: litters = [] } = useQuery(littersQueryOptions)
   const litter = pickCurrentLitter(litters)
+  const { canEdit } = useLitterAccess(litter)
   const { data: changes = [], isLoading } = useQuery(litterChangesQueryOptions(litter?.id))
   const { data: profiles = [] } = useQuery(profilesQueryOptions)
   const lastChange = changes[0]
@@ -110,14 +112,16 @@ export function LitterPage() {
           <p className="text-3xl font-bold tabular-nums text-brand-700 md:text-4xl">
             {lastChange?.time.slice(0, 5) ?? '—'}
           </p>
-          <Button
-            fullWidth
-            className="mt-4 md:max-w-none"
-            disabled={!litter || logNow.isPending}
-            onClick={() => setConfirmOpen(true)}
-          >
-            Log litter change now
-          </Button>
+          {canEdit ? (
+            <Button
+              fullWidth
+              className="mt-4 md:max-w-none"
+              disabled={!litter || logNow.isPending}
+              onClick={() => setConfirmOpen(true)}
+            >
+              Log litter change now
+            </Button>
+          ) : null}
         </Card>
 
         <section aria-label="Change history">
@@ -146,27 +150,29 @@ export function LitterPage() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex shrink-0 items-center gap-1">
-                      <button
-                        type="button"
-                        className={iconButtonClass}
-                        aria-label="Edit litter change"
-                        onClick={() => {
-                          setEditing(change)
-                          setDialogOpen(true)
-                        }}
-                      >
-                        ✎
-                      </button>
-                      <button
-                        type="button"
-                        className={iconButtonClass}
-                        aria-label="Delete litter change"
-                        onClick={() => setPendingDelete(change)}
-                      >
-                        ✕
-                      </button>
-                    </div>
+                    {canEdit ? (
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          type="button"
+                          className={iconButtonClass}
+                          aria-label="Edit litter change"
+                          onClick={() => {
+                            setEditing(change)
+                            setDialogOpen(true)
+                          }}
+                        >
+                          ✎
+                        </button>
+                        <button
+                          type="button"
+                          className={iconButtonClass}
+                          aria-label="Delete litter change"
+                          onClick={() => setPendingDelete(change)}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : null}
                   </div>
                 </Card>
               ))}

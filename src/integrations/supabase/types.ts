@@ -178,6 +178,35 @@ export type Database = {
           },
         ]
       }
+      litter_collaborators: {
+        Row: {
+          created_at: string
+          litter_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          litter_id: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          litter_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'litter_collaborators_litter_id_fkey'
+            columns: ['litter_id']
+            isOneToOne: false
+            referencedRelation: 'litters'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       litters: {
         Row: {
           album_url: string | null

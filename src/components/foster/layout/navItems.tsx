@@ -105,6 +105,7 @@ export const navItems: NavItem[] = [
             fillRule="evenodd"
             d="M12 2.25a.75.75 0 01.75.75v16.19l2.47-2.47a.75.75 0 111.06 1.06l-3.75 3.75a.75.75 0 01-1.06 0l-3.75-3.75a.75.75 0 111.06-1.06l2.47 2.47V3a.75.75 0 01.75-.75z"
             clipRule="evenodd"
+            transform="rotate(180 12 12)"
           />
         ) : (
           <path
@@ -193,8 +194,6 @@ function getNavLinkClasses(isActive: boolean, variant: 'bottom' | 'sidebar') {
   return [
     'flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5',
     'text-sm font-medium transition-colors',
-    isActive
-      ? 'bg-brand-100 text-brand-800'
-      : 'text-muted hover:bg-brand-50 hover:text-ink',
+    isActive ? 'bg-brand-100 text-brand-800' : 'text-muted hover:bg-brand-50 hover:text-ink',
   ].join(' ')
 }

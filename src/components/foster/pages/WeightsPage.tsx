@@ -4,7 +4,6 @@ import { ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/integrations/supabase/client'
 import { PageHeader } from '@/components/foster/layout/PageHeader'
-import { Badge } from '@/components/foster/ui/Badge'
 import { Button } from '@/components/foster/ui/Button'
 import { Card, CardHeader } from '@/components/foster/ui/Card'
 import { EmptyState } from '@/components/foster/ui/EmptyState'
@@ -23,6 +22,7 @@ import {
   type WeighInRow,
 } from '@/lib/foster-queries'
 import { formatRelativeDay } from '@/utils/formatDate'
+import { useLitterAccess } from '@/hooks/useLitterAccess'
 
 const iconButtonClass =
   'flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-white text-sm text-muted transition hover:bg-brand-50 hover:text-ink'
@@ -31,6 +31,7 @@ export function WeightsPage() {
   const queryClient = useQueryClient()
   const { data: litters = [] } = useQuery(littersQueryOptions)
   const litter = pickCurrentLitter(litters)
+  const { canEdit } = useLitterAccess(litter)
   const { data: weighIns = [], isLoading } = useQuery(weighInsQueryOptions(litter?.id))
   const { data: profiles = [] } = useQuery(profilesQueryOptions)
   const dob = litter?.date_of_birth ?? null
@@ -96,16 +97,18 @@ export function WeightsPage() {
         title="Weights"
         subtitle="Kitten growth tracking"
         action={
-          <Button
-            size="md"
-            className="shrink-0"
-            onClick={() => {
-              setEditing(null)
-              setDialogOpen(true)
-            }}
-          >
-            + Weigh
-          </Button>
+          canEdit ? (
+            <Button
+              size="md"
+              className="shrink-0"
+              onClick={() => {
+                setEditing(null)
+                setDialogOpen(true)
+              }}
+            >
+              + Weigh
+            </Button>
+          ) : null
         }
       />
 
@@ -213,53 +216,52 @@ export function WeightsPage() {
                           />
                         </button>
                       </CollapsibleTrigger>
-                      <div className="flex shrink-0 items-center gap-1">
-                        <button
-                          type="button"
-                          className={iconButtonClass}
-                          aria-label="Edit weigh-in"
-                          onClick={() => {
-                            const original = weighIns.find((item) => item.id === session.id) ?? null
-                            setEditing(original)
-                            setDialogOpen(true)
-                          }}
-                        >
-                          ✎
-                        </button>
-                        <button
-                          type="button"
-                          className={iconButtonClass}
-                          aria-label="Delete weigh-in"
-                          onClick={() =>
-                            setPendingDelete(
-                              weighIns.find((item) => item.id === session.id) ?? null,
-                            )
-                          }
-                        >
-                          ✕
-                        </button>
-                      </div>
+                      {canEdit ? (
+                        <div className="flex shrink-0 items-center gap-1">
+                          <button
+                            type="button"
+                            className={iconButtonClass}
+                            aria-label="Edit weigh-in"
+                            onClick={() => {
+                              const original =
+                                weighIns.find((item) => item.id === session.id) ?? null
+                              setEditing(original)
+                              setDialogOpen(true)
+                            }}
+                          >
+                            ✎
+                          </button>
+                          <button
+                            type="button"
+                            className={iconButtonClass}
+                            aria-label="Delete weigh-in"
+                            onClick={() =>
+                              setPendingDelete(
+                                weighIns.find((item) => item.id === session.id) ?? null,
+                              )
+                            }
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : null}
                     </div>
                     <CollapsibleContent>
                       <ul className="mt-3 grid gap-2 border-t border-border/70 pt-3 sm:grid-cols-2">
                         {session.weights.map((weight) => (
                           <li
                             key={weight.kitten_id}
-                            className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3"
+                            className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl bg-gray-50 px-3 py-3"
                           >
-                            <div className="flex items-center gap-3">
-                              <KittenAvatar
-                                name={weight.kittens?.name ?? 'Kitten'}
-                                avatarPath={weight.kittens?.avatar_path ?? null}
-                                colour={weight.kittens?.tag_colour ?? null}
-                              />
-                              <Badge
-                                label={weight.kittens?.name ?? 'Kitten'}
-                                color="brand"
-                                size="md"
-                              />
-                            </div>
-                            <div className="text-right">
+                            <KittenAvatar
+                              name={weight.kittens?.name ?? 'Kitten'}
+                              avatarPath={weight.kittens?.avatar_path ?? null}
+                              colour={weight.kittens?.tag_colour ?? null}
+                            />
+                            <p className="min-w-0 text-sm font-medium leading-snug text-ink">
+                              {weight.kittens?.name ?? 'Kitten'}
+                            </p>
+                            <div className="shrink-0 text-right">
                               <p className="font-semibold tabular-nums text-ink">
                                 {weight.grams}
                                 <span className="ml-0.5 text-sm font-normal text-muted">g</span>

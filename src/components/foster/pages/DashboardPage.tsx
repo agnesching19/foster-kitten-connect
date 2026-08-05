@@ -221,16 +221,19 @@ function BatchCard({ litter }: { litter: LitterRow }) {
               The litter
             </p>
             {litter.kittens.length ? (
-              <ul className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm leading-relaxed text-ink">
+              <ul className="flex flex-wrap items-center gap-2 text-sm leading-relaxed text-ink">
                 {litter.kittens.map((k) => (
-                  <li key={k.id} className="flex items-center gap-1.5">
+                  <li
+                    key={k.id}
+                    className="flex items-center gap-2 rounded-lg bg-white px-2 py-1.5"
+                  >
                     <KittenAvatar
                       name={k.name}
                       avatarPath={k.avatar_path}
                       colour={k.tag_colour}
                       size="sm"
                     />
-                    <span>{k.name}</span>
+                    <span className="leading-snug">{k.name}</span>
                   </li>
                 ))}
               </ul>
