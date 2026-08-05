@@ -1,4 +1,9 @@
-import { emptyResult, type LegacyParseResult, type LegacySheet, type SpreadsheetParser } from './types'
+import {
+  emptyResult,
+  type LegacyParseResult,
+  type LegacySheet,
+  type SpreadsheetParser,
+} from './types'
 import { isTicked, normaliseHeader, parseGrams, parseLooseDate, parseLooseTime } from './values'
 
 export type SheetKind = 'momma' | 'kitten-weights' | 'chart' | 'unknown'
@@ -9,7 +14,7 @@ function hasWord(header: string, ...words: string[]): boolean {
   return words.some((word) => header.includes(word))
 }
 
-/** True for a "BKP 💩" style backup column that must never be treated as a weight. */
+/** True for a "BKP 💩" kitten-poop column that must never be treated as a weight. */
 export function isBackupColumn(rawHeader: string): boolean {
   const header = normaliseHeader(rawHeader)
   return hasWord(header, 'bkp', 'backup', 'back up')
@@ -19,7 +24,16 @@ function looksLikeMomma(sheet: LegacySheet): boolean {
   return sheet.headers.some((header) => {
     if (POOP_EMOJI.test(header)) return true
     const normalised = normaliseHeader(header)
-    return hasWord(normalised, 'food', 'feed', 'fed', 'formula', 'poop', 'litter change', 'litter box')
+    return hasWord(
+      normalised,
+      'food',
+      'feed',
+      'fed',
+      'formula',
+      'poop',
+      'litter change',
+      'litter box',
+    )
   })
 }
 
@@ -48,7 +62,8 @@ export function classifySheet(sheet: LegacySheet): SheetKind {
   return 'unknown'
 }
 
-type MommaRole = 'date' | 'time' | 'feeding' | 'poop' | 'backup-poop' | 'litter-change' | 'notes' | 'ignore'
+type MommaRole =
+  'date' | 'time' | 'feeding' | 'poop' | 'backup-poop' | 'litter-change' | 'notes' | 'ignore'
 
 interface MommaColumn {
   header: string
@@ -56,6 +71,12 @@ interface MommaColumn {
   /** Time implied by a column header such as "7am" or "Breakfast (6:00)". */
   impliedTime: string | null
   mealNumber: number | null
+  /** A shared "Pouch >3" cell contains pouch 4, 5, 6... in entry order. */
+  isOverflowMeal: boolean
+}
+
+function isOverflowMealHeader(rawHeader: string): boolean {
+  return />+\s*3|3\s*\+|(?:more|greater)\s+than\s+3|after\s+3/i.test(rawHeader)
 }
 
 function mommaColumns(sheet: LegacySheet): MommaColumn[] {
@@ -63,14 +84,21 @@ function mommaColumns(sheet: LegacySheet): MommaColumn[] {
   return sheet.headers.map((rawHeader) => {
     const header = normaliseHeader(rawHeader)
     const impliedTime = parseLooseTime(rawHeader) ?? null
-    const base = { header: rawHeader, impliedTime, mealNumber: null as number | null }
+    const base = {
+      header: rawHeader,
+      impliedTime,
+      mealNumber: null as number | null,
+      isOverflowMeal: false,
+    }
 
     if (!header && !POOP_EMOJI.test(rawHeader)) return { ...base, role: 'ignore' as MommaRole }
     if (isBackupColumn(rawHeader)) return { ...base, role: 'backup-poop' as MommaRole }
     if (POOP_EMOJI.test(rawHeader)) return { ...base, role: 'poop' as MommaRole }
     if (hasWord(header, 'date', 'day of', 'dato') || header === 'day' || header === 'days')
       return { ...base, role: 'date' as MommaRole }
-    if (hasWord(header, 'litter change', 'litter box', 'litter tray', 'box change', 'litter changed'))
+    if (
+      hasWord(header, 'litter change', 'litter box', 'litter tray', 'box change', 'litter changed')
+    )
       return { ...base, role: 'litter-change' as MommaRole }
     if (hasWord(header, 'poop', 'poo', 'stool', 'bathroom', 'toilet'))
       return { ...base, role: 'poop' as MommaRole }
@@ -95,7 +123,12 @@ function mommaColumns(sheet: LegacySheet): MommaColumn[] {
       impliedTime
     ) {
       mealCounter += 1
-      return { ...base, role: 'feeding' as MommaRole, mealNumber: mealCounter }
+      return {
+        ...base,
+        role: 'feeding' as MommaRole,
+        mealNumber: mealCounter,
+        isOverflowMeal: isOverflowMealHeader(rawHeader),
+      }
     }
     if (hasWord(header, 'time', 'clock', 'when')) return { ...base, role: 'time' as MommaRole }
     return { ...base, role: 'ignore' as MommaRole }
@@ -114,13 +147,41 @@ function stripLeadingTime(value: string): string {
   return value.replace(/^\d{1,2}([:.]\d{2})?\s*(am|pm)?\s*[-–—:]?\s*/i, '').trim()
 }
 
+function normalisePoopNote(value: string): string {
+  return value
+    .replace(/[()]/g, '')
+    .replace(/\bx\s+(\d+)/gi, 'x$1')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+}
+
+function parseKittenPoopEntry(entry: string): {
+  time: string | null
+  note: string | null
+  kittenName: string | null
+} {
+  const timeText = entry.match(/\b\d{1,2}[:.]\d{2}(?=\D|$)/)?.[0] ?? null
+  const time = timeText ? parseLooseTime(timeText) : null
+  const beforeTime = timeText ? entry.slice(0, entry.indexOf(timeText)).trim() : ''
+  const kittenName = beforeTime && !/^\?+$/.test(beforeTime) ? beforeTime : null
+  const note = normalisePoopNote(
+    entry
+      .replace(timeText ?? '', '')
+      .replace(kittenName ?? '', '')
+      .replace(/^\s*[?:;–—-]+\s*|\s*[;,–—-]+\s*$/g, '')
+      .replace(/^ish$/i, ''),
+  )
+
+  return { time, note: note || null, kittenName }
+}
+
 function parseMommaSheet(sheet: LegacySheet, result: LegacyParseResult) {
   const columns = mommaColumns(sheet)
   for (const column of columns) {
     if (!result.columnRoles.some((entry) => entry.header === column.header)) {
       result.columnRoles.push({
         header: column.header,
-        role: column.role === 'backup-poop' ? 'backup poop (ignored)' : column.role,
+        role: column.role === 'backup-poop' ? 'kitten poop' : column.role,
       })
     }
   }
@@ -130,6 +191,7 @@ function parseMommaSheet(sheet: LegacySheet, result: LegacyParseResult) {
   const notesColumns = columns.filter((column) => column.role === 'notes')
   const feedingColumns = columns.filter((column) => column.role === 'feeding')
   const poopColumns = columns.filter((column) => column.role === 'poop')
+  const kittenPoopColumns = columns.filter((column) => column.role === 'backup-poop')
   const changeColumns = columns.filter((column) => column.role === 'litter-change')
 
   if (!dateColumn) {
@@ -159,19 +221,23 @@ function parseMommaSheet(sheet: LegacySheet, result: LegacyParseResult) {
     lastDate = date
 
     const rowTime = parseLooseTime(cell(timeColumn))
-    const notes = notesColumns.map((column) => cell(column)).filter(Boolean).join(' — ') || null
+    const notes =
+      notesColumns
+        .map((column) => cell(column))
+        .filter(Boolean)
+        .join(' — ') || null
 
     for (const column of feedingColumns) {
       const value = cell(column)
       if (!value) continue
-      for (const entry of splitEntries(value)) {
+      for (const [entryIndex, entry] of splitEntries(value).entries()) {
         const entryTime = parseLooseTime(entry)
         const food = stripLeadingTime(entry) || (isTicked(entry) ? 'Fed' : entry)
         result.feedings.push({
           date,
           time: entryTime ?? column.impliedTime ?? rowTime ?? '12:00:00',
           food: food || 'Fed',
-          meal_number: column.mealNumber,
+          meal_number: column.isOverflowMeal ? 4 + entryIndex : column.mealNumber,
           notes: null,
         })
       }
@@ -183,12 +249,29 @@ function parseMommaSheet(sheet: LegacySheet, result: LegacyParseResult) {
       for (const entry of splitEntries(value)) {
         if (/^n(o|one)?$/i.test(entry)) continue
         const entryTime = parseLooseTime(entry)
-        const note = stripLeadingTime(entry)
+        const note = normalisePoopNote(stripLeadingTime(entry))
         result.poops.push({
           date,
           time: entryTime ?? column.impliedTime ?? rowTime ?? '12:00:00',
           note: note && !isTicked(note) ? note : null,
           kittenName: null,
+          subjectType: 'mother',
+        })
+      }
+    }
+
+    for (const column of kittenPoopColumns) {
+      const value = cell(column)
+      if (!value) continue
+      for (const entry of splitEntries(value)) {
+        if (/^n(o|one)?$/i.test(entry)) continue
+        const parsed = parseKittenPoopEntry(entry)
+        result.poops.push({
+          date,
+          time: parsed.time ?? column.impliedTime ?? rowTime ?? '12:00:00',
+          note: parsed.note,
+          kittenName: parsed.kittenName,
+          subjectType: 'kitten',
         })
       }
     }
@@ -210,7 +293,11 @@ function parseMommaSheet(sheet: LegacySheet, result: LegacyParseResult) {
   })
 }
 
-function parseWeightsSheet(sheet: LegacySheet, result: LegacyParseResult, kittenNames: Set<string>) {
+function parseWeightsSheet(
+  sheet: LegacySheet,
+  result: LegacyParseResult,
+  kittenNames: Set<string>,
+) {
   const dateHeader =
     sheet.headers.find((header) => {
       const normalised = normaliseHeader(header)
@@ -236,7 +323,9 @@ function parseWeightsSheet(sheet: LegacySheet, result: LegacyParseResult, kitten
     if (isBackupColumn(header) || POOP_EMOJI.test(header)) return false
     const normalised = normaliseHeader(header)
     if (!normalised) return false
-    if (hasWord(normalised, 'day', 'age', 'total', 'average', 'avg', 'sum', 'diff', 'gain', 'change'))
+    if (
+      hasWord(normalised, 'day', 'age', 'total', 'average', 'avg', 'sum', 'diff', 'gain', 'change')
+    )
       return false
     return sheet.rows.some((row) => parseGrams(row[header] ?? '') !== null)
   })
@@ -252,7 +341,7 @@ function parseWeightsSheet(sheet: LegacySheet, result: LegacyParseResult, kitten
           : notesHeaders.includes(header)
             ? 'notes'
             : isBackupColumn(header)
-              ? 'backup poop (ignored)'
+              ? 'kitten poop'
               : 'ignore'
     result.columnRoles.push({ header, role })
   }
@@ -284,7 +373,10 @@ function parseWeightsSheet(sheet: LegacySheet, result: LegacyParseResult, kitten
     if (!weights.length) return
 
     for (const weight of weights) kittenNames.add(weight.name)
-    const notes = notesHeaders.map((header) => (row[header] ?? '').trim()).filter(Boolean).join(' — ')
+    const notes = notesHeaders
+      .map((header) => (row[header] ?? '').trim())
+      .filter(Boolean)
+      .join(' — ')
 
     result.weighIns.push({
       date,
@@ -296,11 +388,13 @@ function parseWeightsSheet(sheet: LegacySheet, result: LegacyParseResult, kitten
 }
 
 function cleanKittenName(header: string): string {
-  return header
-    .replace(/\((?:g|grams?|kg|weight)\)/gi, '')
-    .replace(/\b(weight|weigh|grams?|wt)\b/gi, '')
-    .replace(/[-–—:]+$/, '')
-    .trim() || header.trim()
+  return (
+    header
+      .replace(/\((?:g|grams?|kg|weight)\)/gi, '')
+      .replace(/\b(weight|weigh|grams?|wt)\b/gi, '')
+      .replace(/[-–—:]+$/, '')
+      .trim() || header.trim()
+  )
 }
 
 /**

@@ -196,6 +196,19 @@ function PoopDayCard({
   onEdit: (entry: PoopRow) => void
   onDelete: (entry: PoopRow) => void
 }) {
+  const groups = [
+    {
+      key: 'mother',
+      label: `Momma${motherName ? ` (${motherName})` : ''}`,
+      entries: entries.filter((entry) => entry.subject_type === 'mother'),
+    },
+    {
+      key: 'kitten',
+      label: 'Kittens',
+      entries: entries.filter((entry) => entry.subject_type === 'kitten'),
+    },
+  ].filter((group) => group.entries.length)
+
   return (
     <Collapsible open={open} onOpenChange={onOpenChange}>
       <Card>
@@ -217,65 +230,85 @@ function PoopDayCard({
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <ul className="mt-3 divide-y divide-border/70 border-t border-border/70">
-            {entries.map((entry) => (
-              <li
-                key={entry.id}
-                className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-3 gap-y-1 py-3 last:pb-0"
+          <div className="mt-3 space-y-4 border-t border-border/70 pt-3">
+            {groups.map((group) => (
+              <section
+                key={group.key}
+                className={`overflow-hidden rounded-xl border ${
+                  group.key === 'mother' ? 'border-amber-200' : 'border-brand-200'
+                }`}
               >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-lg">
-                  💩
-                </span>
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <p className="text-base font-semibold tabular-nums text-ink">
-                      {entry.time.slice(0, 5)}
-                    </p>
-                    {entry.subject_type === 'mother' ? (
-                      <Badge
-                        label={`🐱 Momma${motherName ? ` (${motherName})` : ''}`}
-                        color="neutral"
-                      />
-                    ) : entry.kitten_id ? (
-                      <span className="flex items-center gap-1.5">
-                        <KittenAvatar
-                          name={entry.kittens?.name ?? 'Kitten'}
-                          avatarPath={entry.kittens?.avatar_path ?? null}
-                          colour={entry.kittens?.tag_colour ?? null}
-                          size="sm"
-                        />
-                        <Badge label={entry.kittens?.name ?? 'Kitten'} color="neutral" />
+                <div
+                  className={`flex items-center justify-between gap-3 px-3 py-2.5 ${
+                    group.key === 'mother' ? 'bg-amber-100/70' : 'bg-brand-50'
+                  }`}
+                >
+                  <h3 className="text-sm font-semibold text-ink">{group.label}</h3>
+                  <span className="text-xs text-muted">
+                    {group.entries.length} entr{group.entries.length === 1 ? 'y' : 'ies'}
+                  </span>
+                </div>
+                <ul className="divide-y divide-border/70 bg-white px-3">
+                  {group.entries.map((entry) => (
+                    <li
+                      key={entry.id}
+                      className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-3 gap-y-1 py-3 last:pb-4"
+                    >
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-lg">
+                        💩
                       </span>
-                    ) : (
-                      <Badge label="Not identified" color="neutral" />
-                    )}
-                  </div>
-                  {entry.note ? <p className="mt-0.5 text-sm text-muted">{entry.note}</p> : null}
-                  <p className="mt-1 text-xs text-muted">
-                    Added by {logAuthorName(profiles, entry.user_id)}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-1">
-                  <button
-                    type="button"
-                    className={iconButtonClass}
-                    aria-label="Edit entry"
-                    onClick={() => onEdit(entry)}
-                  >
-                    ✎
-                  </button>
-                  <button
-                    type="button"
-                    className={iconButtonClass}
-                    aria-label="Delete entry"
-                    onClick={() => onDelete(entry)}
-                  >
-                    ✕
-                  </button>
-                </div>
-              </li>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <p className="text-base font-semibold tabular-nums text-ink">
+                            {entry.time.slice(0, 5)}
+                          </p>
+                          {entry.subject_type === 'mother' ? (
+                            <Badge label="Momma" color="neutral" />
+                          ) : entry.kitten_id ? (
+                            <span className="flex items-center gap-1.5">
+                              <KittenAvatar
+                                name={entry.kittens?.name ?? 'Kitten'}
+                                avatarPath={entry.kittens?.avatar_path ?? null}
+                                colour={entry.kittens?.tag_colour ?? null}
+                                size="sm"
+                              />
+                              <Badge label={entry.kittens?.name ?? 'Kitten'} color="neutral" />
+                            </span>
+                          ) : (
+                            <Badge label="Not identified" color="neutral" />
+                          )}
+                        </div>
+                        {entry.note ? (
+                          <p className="mt-0.5 text-sm text-muted">{formatPoopNote(entry.note)}</p>
+                        ) : null}
+                        <p className="mt-1 text-xs text-muted">
+                          Added by {logAuthorName(profiles, entry.user_id)}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          type="button"
+                          className={iconButtonClass}
+                          aria-label="Edit entry"
+                          onClick={() => onEdit(entry)}
+                        >
+                          ✎
+                        </button>
+                        <button
+                          type="button"
+                          className={iconButtonClass}
+                          aria-label="Delete entry"
+                          onClick={() => onDelete(entry)}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
             ))}
-          </ul>
+          </div>
         </CollapsibleContent>
       </Card>
     </Collapsible>
@@ -287,4 +320,12 @@ function formatMonth(month: string) {
     month: 'long',
     year: 'numeric',
   }).format(new Date(`${month}-01T12:00:00`))
+}
+
+function formatPoopNote(note: string) {
+  return note
+    .replace(/[()]/g, '')
+    .replace(/\bx\s+(\d+)/gi, 'x$1')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
 }

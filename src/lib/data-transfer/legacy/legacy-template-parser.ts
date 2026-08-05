@@ -47,7 +47,10 @@ function classify(rawHeader: string, samples: string[]): Column {
 
   const weightMatch = rawHeader.match(/^(.*?)[\s(]*(weight|weigh|grams?|g|kg|wt)\)?$/i)
   if (has(header, 'weight', 'weigh', 'grams', 'gram') || weightMatch) {
-    const name = (weightMatch?.[1] ?? '').trim().replace(/[-–—:]+$/, '').trim()
+    const name = (weightMatch?.[1] ?? '')
+      .trim()
+      .replace(/[-–—:]+$/, '')
+      .trim()
     return {
       header: rawHeader,
       role: 'weight',
@@ -175,6 +178,7 @@ export const legacyTemplateParser: SpreadsheetParser = {
             time: parseLooseTime(poop) ?? time,
             note: /^[a-z\s]{4,}$/i.test(poop) && !isTicked(poop) ? poop : notes,
             kittenName,
+            subjectType: 'kitten',
           })
           matched = true
         }

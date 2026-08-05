@@ -229,18 +229,11 @@ function FeedingDayCard({
                       {feeding.time.slice(0, 5)}
                     </p>
                     {feeding.meal_number != null ? (
-                      <Badge
-                        label={
-                          feeding.meal_number > 3 ? 'Pouch 4+' : `Pouch ${feeding.meal_number}`
-                        }
-                        color="brand"
-                      />
+                      <Badge label={`Pouch ${feeding.meal_number}`} color="brand" />
                     ) : null}
                   </div>
                   <p className="mt-0.5 text-sm capitalize text-muted">{feeding.food}</p>
-                  {feeding.notes ? (
-                    <p className="mt-0.5 text-xs text-muted">{feeding.notes}</p>
-                  ) : null}
+                  {feeding.notes && <p className="mt-0.5 text-xs text-muted">{feeding.notes}</p>}
                   <p className="mt-1 text-xs text-muted">
                     Added by {logAuthorName(profiles, feeding.user_id)}
                   </p>

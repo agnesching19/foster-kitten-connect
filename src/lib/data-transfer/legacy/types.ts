@@ -19,6 +19,7 @@ export interface PoopDraft {
   time: string
   note: string | null
   kittenName: string | null
+  subjectType: 'mother' | 'kitten'
 }
 
 export interface LitterChangeDraft {

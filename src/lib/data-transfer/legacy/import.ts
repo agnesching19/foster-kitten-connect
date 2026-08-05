@@ -107,7 +107,8 @@ export async function runLegacyImport(
       date: row.date,
       time: row.time,
       note: row.note,
-      kitten_id: row.kittenName ? byName.get(row.kittenName.toLowerCase()) ?? null : null,
+      subject_type: row.subjectType,
+      kitten_id: row.kittenName ? (byName.get(row.kittenName.toLowerCase()) ?? null) : null,
     })),
   )
 
@@ -123,9 +124,7 @@ export async function runLegacyImport(
     const batch = result.weighIns.slice(start, start + 100)
     const { data, error } = await supabase
       .from('weigh_ins')
-      .insert(
-        batch.map((row) => ({ ...base, date: row.date, time: row.time, notes: row.notes })),
-      )
+      .insert(batch.map((row) => ({ ...base, date: row.date, time: row.time, notes: row.notes })))
       .select('id')
     if (error) throw error
     const ids = (data ?? []).map((row) => row.id)
@@ -136,7 +135,10 @@ export async function runLegacyImport(
       for (const weight of row.weights) {
         const kittenId = byName.get(weight.kittenName.toLowerCase())
         if (!kittenId) {
-          skipped.set('unmatched kitten weights', (skipped.get('unmatched kitten weights') ?? 0) + 1)
+          skipped.set(
+            'unmatched kitten weights',
+            (skipped.get('unmatched kitten weights') ?? 0) + 1,
+          )
           continue
         }
         weightRows.push({

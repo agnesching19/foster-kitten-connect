@@ -42,7 +42,13 @@ export const currentExportParser: SpreadsheetParser = {
             notes: row['notes'] || null,
           })
         } else if (spec.table === 'poop_entries') {
-          result.poops.push({ date, time, note: row['note'] || null, kittenName: null })
+          result.poops.push({
+            date,
+            time,
+            note: row['note'] || null,
+            kittenName: null,
+            subjectType: row['subject_type'] === 'mother' ? 'mother' : 'kitten',
+          })
         } else if (spec.table === 'litter_changes') {
           result.litterChanges.push({ date, time, notes: row['notes'] || null })
         } else if (spec.table === 'daily_notes' && row['note']) {
