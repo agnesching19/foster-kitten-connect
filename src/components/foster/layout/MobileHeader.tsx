@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useLocation } from '@tanstack/react-router'
 import { littersQueryOptions, pickCurrentLitter } from '@/lib/foster-queries'
 import { AuthStatus } from './AuthStatus'
+import { liveCamsNavItem } from './navItems'
 
 export function MobileHeader() {
   const { data: litters = [] } = useQuery(littersQueryOptions)
@@ -24,6 +25,16 @@ export function MobileHeader() {
         </div>
         <div className="flex items-center gap-3">
           <AuthStatus variant="mobile" />
+          <a
+            href={liveCamsNavItem.href}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Open live kitten cameras"
+            title="Live cams"
+            className="flex h-9 w-9 items-center justify-center rounded-xl text-muted transition hover:bg-brand-100 hover:text-ink"
+          >
+            {liveCamsNavItem.icon}
+          </a>
           <Link
             to={isSettings ? '/' : '/settings'}
             aria-label={isSettings ? 'Close settings' : 'Settings'}

@@ -6,7 +6,12 @@ import { Card } from '@/components/foster/ui/Card'
 import { NewLitterDialog } from '@/components/foster/litters/NewLitterDialog'
 import { KittenAvatar } from '@/components/foster/ui/KittenAvatar'
 import { CatAvatar } from '@/components/foster/ui/CatAvatar'
-import { littersQueryOptions, type LitterRow } from '@/lib/foster-queries'
+import {
+  dashboardQuickViewQueryOptions,
+  littersQueryOptions,
+  pickCurrentLitter,
+  type LitterRow,
+} from '@/lib/foster-queries'
 
 type Filter = 'all' | 'active' | 'completed'
 
@@ -20,20 +25,23 @@ function formatDate(date: string) {
   return dateFormat.format(new Date(`${date}T12:00:00`))
 }
 
+function todayIso() {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+}
+
 export function DashboardPage() {
   const [filter, setFilter] = useState<Filter>('all')
   const [query, setQuery] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const { data: litters = [], isLoading } = useQuery(littersQueryOptions)
-
-  const totalKittens = litters.reduce((sum, litter) => sum + litter.kittens.length, 0)
-  const activeLitters = litters.filter((litter) => litter.status === 'active')
-  const earliestArrival = litters.length
-    ? litters.reduce(
-        (min, litter) => (litter.arrived < min ? litter.arrived : min),
-        litters[0]!.arrived,
-      )
-    : null
+  const currentLitter = pickCurrentLitter(litters)
+  const today = todayIso()
+  const { data: quickView } = useQuery(dashboardQuickViewQueryOptions(currentLitter?.id, today))
+  const heaviestKitten = quickView?.latestWeights.reduce<DashboardQuickViewWeight | undefined>(
+    (heaviest, weight) => (!heaviest || weight.grams > heaviest.grams ? weight : heaviest),
+    undefined,
+  )
 
   const visibleLitters = useMemo(() => {
     const search = query.trim().toLowerCase()
@@ -50,7 +58,7 @@ export function DashboardPage() {
   return (
     <div>
       <PageHeader
-        title="Foster dashboard"
+        title="Kitty dashboard"
         subtitle="Every batch, past and present, in one place"
         action={
           <button
@@ -67,32 +75,55 @@ export function DashboardPage() {
 
       <NewLitterDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
 
-      <section aria-label="Foster summary" className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Metric
-          label="Total cats fostered"
-          value={String(totalKittens + litters.length)}
-          note="Mamas + kittens"
-          icon="♥"
-        />
-        <Metric
-          label="Batches"
-          value={String(litters.length)}
-          note={earliestArrival ? `Since ${formatDate(earliestArrival)}` : 'No batches yet'}
-          icon="⌂"
-        />
-        <Metric
-          label="Currently in care"
-          value={String(activeLitters.reduce((sum, litter) => sum + litter.kittens.length + 1, 0))}
-          note={`${activeLitters.length} active batch${activeLitters.length === 1 ? '' : 'es'}`}
-          icon="●"
-          active
-        />
-        <Metric
-          label="Kittens fostered"
-          value={String(totalKittens)}
-          note="Across all batches"
-          icon="✦"
-        />
+      <section aria-labelledby="quick-view-title" className="mb-6">
+        <div className="mb-3 flex items-baseline justify-between gap-3">
+          <h2 id="quick-view-title" className="text-lg font-semibold text-ink">
+            Quick view
+          </h2>
+          <p className="truncate text-sm text-muted">
+            {currentLitter
+              ? currentLitter.litter_name || currentLitter.mother_name
+              : 'No active batch'}
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <QuickViewCard
+            to="/feedings"
+            label="Meals today"
+            value={String(quickView?.mealsToday ?? 0)}
+            note={quickView?.mealsToday === 1 ? 'feeding logged today' : 'feedings logged today'}
+            icon="🍼"
+            active
+          />
+          <QuickViewCard
+            to="/weights"
+            label="Heaviest kitten"
+            value={heaviestKitten?.kittens?.name ?? '—'}
+            note={
+              heaviestKitten
+                ? `${heaviestKitten.grams}g · ${formatDate(heaviestKitten.date)}`
+                : 'No weigh-ins yet'
+            }
+            icon="↗"
+          />
+          <QuickViewCard
+            to="/litter"
+            label="Last litter change"
+            value={
+              quickView?.latestLitterChange
+                ? quickView.latestLitterChange.date === today
+                  ? 'Today'
+                  : formatDate(quickView.latestLitterChange.date)
+                : '—'
+            }
+            note={
+              quickView?.latestLitterChange
+                ? `at ${quickView.latestLitterChange.time.slice(0, 5)}`
+                : 'No changes logged yet'
+            }
+            icon="◷"
+          />
+        </div>
       </section>
 
       <section className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -156,13 +187,21 @@ export function DashboardPage() {
   )
 }
 
-function Metric({
+type DashboardQuickViewWeight = {
+  date: string
+  grams: number
+  kittens: { name: string } | null
+}
+
+function QuickViewCard({
+  to,
   label,
   value,
   note,
   icon,
   active = false,
 }: {
+  to: '/feedings' | '/weights' | '/litter'
   label: string
   value: string
   note: string
@@ -170,11 +209,14 @@ function Metric({
   active?: boolean
 }) {
   return (
-    <Card className={active ? 'border-brand-200 bg-brand-50' : ''}>
+    <Link
+      to={to}
+      className={`rounded-2xl border bg-surface-raised p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${active ? 'border-brand-200 bg-brand-50' : 'border-border'}`}
+    >
       <div className="flex items-start justify-between gap-2">
-        <div>
+        <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">{label}</p>
-          <p className="mt-2 text-3xl font-bold tracking-tight text-ink">{value}</p>
+          <p className="mt-2 truncate text-2xl font-bold tracking-tight text-ink">{value}</p>
           <p className="mt-1 text-xs text-muted">{note}</p>
         </div>
         <span
@@ -184,7 +226,7 @@ function Metric({
           {icon}
         </span>
       </div>
-    </Card>
+    </Link>
   )
 }
 
@@ -215,68 +257,63 @@ function BatchCard({ litter }: { litter: LitterRow }) {
               <span className="ml-1 text-sm text-muted">kittens</span>
             </p>
           </div>
-
-          <div className="mt-4 rounded-xl bg-gray-50 px-3 py-3">
-            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">
-              The litter
-            </p>
-            {litter.kittens.length ? (
-              <ul className="flex flex-wrap items-center gap-2 text-sm leading-relaxed text-ink">
-                {litter.kittens.map((k) => (
-                  <li
-                    key={k.id}
-                    className="flex items-center gap-2 rounded-lg bg-white px-2 py-1.5"
-                  >
-                    <KittenAvatar
-                      name={k.name}
-                      avatarPath={k.avatar_path}
-                      colour={k.tag_colour}
-                      size="sm"
-                    />
-                    <span className="leading-snug">{k.name}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm leading-relaxed text-ink">No kittens recorded</p>
-            )}
-          </div>
-
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            {isActive ? (
-              <Link
-                to="/litters/$litterId"
-                params={{ litterId: litter.id }}
-                className="inline-flex min-h-10 items-center rounded-xl bg-brand-500 px-4 text-sm font-semibold text-white transition hover:bg-brand-600"
-              >
-                Open batch →
-              </Link>
-            ) : (
-              <Link
-                to="/litters/$litterId"
-                params={{ litterId: litter.id }}
-                className="inline-flex min-h-10 items-center rounded-xl px-3 text-sm font-semibold text-brand-700 hover:bg-brand-50"
-              >
-                Open batch →
-              </Link>
-            )}
-            {litter.album_url ? (
-              <a
-                href={litter.album_url}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex min-h-10 items-center rounded-xl px-3 text-sm font-semibold text-brand-700 hover:bg-brand-50"
-              >
-                View album ↗
-              </a>
-            ) : null}
-            {litter.external_record ? (
-              <span className="ml-auto truncate text-xs text-muted" title={litter.external_record}>
-                Record: {litter.external_record}
-              </span>
-            ) : null}
-          </div>
         </div>
+      </div>
+
+      <div className="mt-4 w-full rounded-xl bg-gray-50 px-3 py-3">
+        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">The litter</p>
+        {litter.kittens.length ? (
+          <ul className="flex flex-wrap items-center gap-2 text-sm leading-relaxed text-ink">
+            {litter.kittens.map((k) => (
+              <li key={k.id} className="flex items-center gap-2 rounded-lg bg-white px-2 py-1.5">
+                <KittenAvatar
+                  name={k.name}
+                  avatarPath={k.avatar_path}
+                  colour={k.tag_colour}
+                  size="sm"
+                />
+                <span className="leading-snug">{k.name}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm leading-relaxed text-ink">No kittens recorded</p>
+        )}
+      </div>
+
+      <div className="mt-4 flex w-full flex-wrap items-center gap-2">
+        {isActive ? (
+          <Link
+            to="/litters/$litterId"
+            params={{ litterId: litter.id }}
+            className="inline-flex min-h-10 items-center rounded-xl bg-brand-500 px-4 text-sm font-semibold text-white transition hover:bg-brand-600"
+          >
+            Open batch →
+          </Link>
+        ) : (
+          <Link
+            to="/litters/$litterId"
+            params={{ litterId: litter.id }}
+            className="inline-flex min-h-10 items-center rounded-xl px-3 text-sm font-semibold text-brand-700 hover:bg-brand-50"
+          >
+            Open batch →
+          </Link>
+        )}
+        {litter.album_url ? (
+          <a
+            href={litter.album_url}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex min-h-10 items-center rounded-xl px-3 text-sm font-semibold text-brand-700 hover:bg-brand-50"
+          >
+            View album ↗
+          </a>
+        ) : null}
+        {litter.external_record ? (
+          <span className="ml-auto truncate text-xs text-muted" title={litter.external_record}>
+            Record: {litter.external_record}
+          </span>
+        ) : null}
       </div>
     </Card>
   )

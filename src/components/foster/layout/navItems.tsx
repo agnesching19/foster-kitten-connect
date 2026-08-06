@@ -182,6 +182,27 @@ export const settingsNavItem: NavItem = {
   ),
 }
 
+export const liveCamsNavItem = {
+  href: 'https://kittycams.bosh.me/',
+  label: 'Live cams',
+  icon: (
+    <svg
+      aria-hidden
+      className="h-6 w-6 shrink-0"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.75}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M15.75 10.5l4.72-2.36a.75.75 0 011.08.67v6.38a.75.75 0 01-1.08.67l-4.72-2.36m-9 4.5h6a3 3 0 003-3V9a3 3 0 00-3-3h-6a3 3 0 00-3 3v6a3 3 0 003 3z"
+      />
+    </svg>
+  ),
+}
+
 function getNavLinkClasses(isActive: boolean, variant: 'bottom' | 'sidebar') {
   if (variant === 'bottom') {
     return [

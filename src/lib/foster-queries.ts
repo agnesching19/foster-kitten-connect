@@ -46,6 +46,70 @@ export function pickCurrentLitter(litters: LitterRow[]): LitterRow | undefined {
   return litters.find((litter) => litter.status === 'active') ?? litters[0]
 }
 
+export interface DashboardQuickView {
+  mealsToday: number
+  latestLitterChange: { date: string; time: string } | null
+  latestWeights: {
+    date: string
+    grams: number
+    kittens: { name: string } | null
+  }[]
+}
+
+export const dashboardQuickViewQueryOptions = (litterId: string | undefined, today: string) =>
+  queryOptions({
+    queryKey: ['dashboard-quick-view', litterId, today],
+    enabled: Boolean(litterId),
+    queryFn: async (): Promise<DashboardQuickView> => {
+      const [mealsResult, litterChangeResult, weighInResult] = await Promise.all([
+        supabase
+          .from('feedings')
+          .select('id', { count: 'exact', head: true })
+          .eq('litter_id', litterId!)
+          .eq('date', today),
+        supabase
+          .from('litter_changes')
+          .select('date, time')
+          .eq('litter_id', litterId!)
+          .order('date', { ascending: false })
+          .order('time', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from('weigh_ins')
+          .select('date, time, weights(kitten_id, grams, kittens(name))')
+          .eq('litter_id', litterId!)
+          .order('date', { ascending: false })
+          .order('time', { ascending: false }),
+      ])
+
+      const error = mealsResult.error ?? litterChangeResult.error ?? weighInResult.error
+      if (error) throw error
+
+      const latestWeights = new Map<
+        string,
+        { date: string; grams: number; kittens: { name: string } | null }
+      >()
+      for (const weighIn of weighInResult.data ?? []) {
+        for (const weight of weighIn.weights ?? []) {
+          if (!latestWeights.has(weight.kitten_id)) {
+            latestWeights.set(weight.kitten_id, {
+              date: weighIn.date,
+              grams: weight.grams,
+              kittens: weight.kittens,
+            })
+          }
+        }
+      }
+
+      return {
+        mealsToday: mealsResult.count ?? 0,
+        latestLitterChange: litterChangeResult.data,
+        latestWeights: [...latestWeights.values()],
+      }
+    },
+  })
+
 export interface ProfileRow {
   id: string
   display_name: string

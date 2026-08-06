@@ -2,7 +2,7 @@ import { Link, useLocation } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { littersQueryOptions, pickCurrentLitter } from '@/lib/foster-queries'
 import { KittenAvatar } from '@/components/foster/ui/KittenAvatar'
-import { getNavLinkClass, navItems, settingsNavItem } from './navItems'
+import { getNavLinkClass, liveCamsNavItem, navItems, settingsNavItem } from './navItems'
 import { AuthStatus } from './AuthStatus'
 
 export function SidebarNav() {
@@ -48,6 +48,20 @@ export function SidebarNav() {
               {settingsNavItem.icon(pathname.startsWith(settingsNavItem.to))}
               <span>{settingsNavItem.label}</span>
             </Link>
+          </li>
+          <li>
+            <a
+              href={liveCamsNavItem.href}
+              target="_blank"
+              rel="noreferrer"
+              className={getNavLinkClass(false, 'sidebar')}
+            >
+              {liveCamsNavItem.icon}
+              <span>{liveCamsNavItem.label}</span>
+              <span className="ml-auto text-xs" aria-hidden>
+                ↗
+              </span>
+            </a>
           </li>
         </ul>
       </nav>
