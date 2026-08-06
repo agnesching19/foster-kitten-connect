@@ -82,12 +82,12 @@ function first(columns: Column[], role: Role): Column | undefined {
 }
 
 /**
- * Parser for the historical "Foster Kitten Tracker" Google Sheets layout:
+ * Parser for the historical "Kitty Tracker" Google Sheets layout:
  * one row per event/day with loosely named columns.
  */
 export const legacyTemplateParser: SpreadsheetParser = {
   id: 'legacy-foster-tracker',
-  label: 'Legacy Foster Kitten Tracker spreadsheet',
+  label: 'Legacy Kitty Tracker spreadsheet',
   description:
     'Row-per-entry sheets with columns such as Date, Time, Food, Poop, Litter change, Weight and Notes — column names and order are detected automatically.',
   detect: (sheets) => {

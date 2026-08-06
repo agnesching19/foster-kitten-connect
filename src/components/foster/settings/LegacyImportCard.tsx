@@ -5,10 +5,7 @@ import { Button } from '@/components/foster/ui/Button'
 import { Card, CardHeader } from '@/components/foster/ui/Card'
 import { useAuth } from '@/hooks/useAuth'
 import { littersQueryOptions } from '@/lib/foster-queries'
-import {
-  runLegacyImport,
-  type LegacyImportSummary,
-} from '@/lib/data-transfer/legacy/import'
+import { runLegacyImport, type LegacyImportSummary } from '@/lib/data-transfer/legacy/import'
 import { sheetsFromFiles, sheetsFromGoogleUrl } from '@/lib/data-transfer/legacy/load'
 import type { LegacySheet } from '@/lib/data-transfer/legacy/types'
 import { pickParser } from '@/lib/data-transfer/legacy/registry'
@@ -55,7 +52,9 @@ export function LegacyImportCard() {
       if (!totalRecords(parsed)) {
         toast.error('No recognisable records were found in that spreadsheet.')
       } else if (parser.id === 'current-export') {
-        toast.message('This looks like an export from this app — the Import CSV card below keeps IDs intact.')
+        toast.message(
+          'This looks like an export from this app — the Import CSV card below keeps IDs intact.',
+        )
       }
     } catch (error) {
       toast.error((error as Error).message || 'Could not read that spreadsheet')
@@ -96,7 +95,7 @@ export function LegacyImportCard() {
   }
 
   const counts = result
-    ? [
+    ? ([
         ['feedings', result.feedings.length],
         ['poop entries', result.poops.length],
         ['litter changes', result.litterChanges.length],
@@ -106,20 +105,22 @@ export function LegacyImportCard() {
           result.weighIns.reduce((sum, weighIn) => sum + weighIn.weights.length, 0),
         ],
         ['notes', result.notes.length],
-      ] as [string, number][]
+      ] as [string, number][])
     : []
 
   const skippedGroups = result
-    ? [...result.skipped.reduce((map, entry) => {
-        map.set(entry.reason, (map.get(entry.reason) ?? 0) + 1)
-        return map
-      }, new Map<string, number>())]
+    ? [
+        ...result.skipped.reduce((map, entry) => {
+          map.set(entry.reason, (map.get(entry.reason) ?? 0) + 1)
+          return map
+        }, new Map<string, number>()),
+      ]
     : []
 
   return (
     <Card>
       <CardHeader
-        title="Import existing Foster Kitten Tracker spreadsheet"
+        title="Import existing Kitty Tracker spreadsheet"
         subtitle="One-time migration for your historical workbooks. Paste a Google Sheets link to read the whole workbook, or upload several exported CSVs at once — the Momma and Kitten weights sheets are detected automatically, Chart and unknown sheets are ignored."
       />
 
@@ -182,9 +183,7 @@ export function LegacyImportCard() {
 
       {result ? (
         <div className="mt-4 grid gap-3 rounded-xl border border-border bg-surface p-4">
-          <p className="text-sm font-semibold text-ink">
-            Detected as: {result.parserLabel}
-          </p>
+          <p className="text-sm font-semibold text-ink">Detected as: {result.parserLabel}</p>
 
           {result.sheetsSeen.length ? (
             <p className="text-xs text-muted">Sheets used: {result.sheetsSeen.join(', ')}</p>

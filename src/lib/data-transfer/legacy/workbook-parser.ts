@@ -398,13 +398,13 @@ function cleanKittenName(header: string): string {
 }
 
 /**
- * Parser for the historical "Foster Kitten Tracker" workbook: a Momma tab with
+ * Parser for the historical "Kitty Tracker" workbook: a Momma tab with
  * one row per day (feedings, 💩, litter changes, notes), a Kitten weights tab
  * with one column per kitten, and a Chart tab that is ignored.
  */
 export const workbookParser: SpreadsheetParser = {
   id: 'legacy-foster-workbook',
-  label: 'Foster Kitten Tracker workbook (Momma + Kitten weights)',
+  label: 'Kitty Tracker workbook (Momma + Kitten weights)',
   description:
     'Multi-sheet historical workbooks. The Momma tab supplies feedings, 💩 entries, litter changes and notes; the Kitten weights tab supplies weigh-in sessions. Chart and unknown tabs are ignored.',
   detect: (sheets) => {

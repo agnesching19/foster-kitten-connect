@@ -25,7 +25,6 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
   const [date, setDate] = useState(todayIso())
   const [time, setTime] = useState(nowTime())
   const [food, setFood] = useState('')
-  const [mealNumber, setMealNumber] = useState('')
   const [notes, setNotes] = useState('')
 
   useEffect(() => {
@@ -33,7 +32,6 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
     setDate(feeding?.date ?? todayIso())
     setTime(feeding?.time.slice(0, 5) ?? nowTime())
     setFood(feeding?.food ?? '')
-    setMealNumber(feeding?.meal_number != null ? String(feeding.meal_number) : '')
     setNotes(feeding?.notes ?? '')
   }, [open, feeding])
 
@@ -45,12 +43,13 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
         date,
         time,
         food: food.trim(),
-        meal_number: mealNumber ? Number(mealNumber) : null,
         notes: notes.trim() || null,
       }
       const { error } = feeding
         ? await supabase.from('feedings').update(payload).eq('id', feeding.id)
-        : await supabase.from('feedings').insert({ ...payload, litter_id: litterId, user_id: user.id })
+        : await supabase
+            .from('feedings')
+            .insert({ ...payload, litter_id: litterId, user_id: user.id })
       if (error) throw error
     },
     onSuccess: async () => {
@@ -77,25 +76,49 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
       >
         <label>
           <span className="mb-1 block text-sm font-medium text-ink">Date *</span>
-          <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className={inputClass} />
+          <input
+            type="date"
+            required
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className={inputClass}
+          />
         </label>
         <label>
           <span className="mb-1 block text-sm font-medium text-ink">Time *</span>
-          <input type="time" required value={time} onChange={(e) => setTime(e.target.value)} className={inputClass} />
+          <input
+            type="time"
+            required
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+            className={inputClass}
+          />
         </label>
-        <label>
+        <label className="sm:col-span-2">
           <span className="mb-1 block text-sm font-medium text-ink">Food *</span>
-          <input required value={food} onChange={(e) => setFood(e.target.value)} className={inputClass} placeholder="e.g. chicken pouch" />
-        </label>
-        <label>
-          <span className="mb-1 block text-sm font-medium text-ink">Meal number</span>
-          <input type="number" min={1} max={12} value={mealNumber} onChange={(e) => setMealNumber(e.target.value)} className={inputClass} placeholder="Optional" />
+          <input
+            required
+            value={food}
+            onChange={(e) => setFood(e.target.value)}
+            className={inputClass}
+            placeholder="e.g. chicken pouch"
+          />
         </label>
         <label className="sm:col-span-2">
           <span className="mb-1 block text-sm font-medium text-ink">Notes</span>
-          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className={inputClass} placeholder="Optional" />
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={2}
+            className={inputClass}
+            placeholder="Optional"
+          />
         </label>
-        <DialogActions busy={mutation.isPending} onCancel={onClose} saveLabel={feeding ? 'Save changes' : 'Save feeding'} />
+        <DialogActions
+          busy={mutation.isPending}
+          onCancel={onClose}
+          saveLabel={feeding ? 'Save changes' : 'Save feeding'}
+        />
       </form>
     </FormDialog>
   )

@@ -16,7 +16,7 @@ export function SidebarNav() {
     <aside className="hidden md:flex md:w-64 md:shrink-0 md:flex-col md:border-r md:border-border md:bg-surface-raised lg:w-72">
       <div className="border-b border-border px-5 py-5">
         <p className="text-xs font-semibold uppercase tracking-wider text-brand-600">
-          Foster Tracker
+          Kitty Tracker
         </p>
         <p className="mt-1 text-base font-semibold text-ink">All foster batches</p>
         <p className="text-sm text-muted">

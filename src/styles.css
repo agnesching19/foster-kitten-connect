@@ -1,6 +1,6 @@
-@import "tailwindcss" source(none);
+@import 'tailwindcss' source(none);
 @source "../src";
-@import "tw-animate-css";
+@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -143,7 +143,7 @@
   }
 }
 
-/* --- Foster Tracker brand tokens (ported UI) --- */
+/* --- Kitty Tracker brand tokens (ported UI) --- */
 @theme {
   --color-brand-50: #fff7ed;
   --color-brand-100: #ffedd5;
@@ -171,7 +171,13 @@ body {
   background-color: var(--color-surface);
   color: var(--color-ink);
   -webkit-font-smoothing: antialiased;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
 }
 
 @media (min-width: 768px) {

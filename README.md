@@ -1,4 +1,4 @@
-# Foster Kitten Connect
+# Kitty Tracker
 
 A mobile-first, responsive web app for tracking foster cats across batches—including feedings, poops, weights, and litter changes.
 

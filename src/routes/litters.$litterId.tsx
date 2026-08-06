@@ -17,13 +17,12 @@ import { useLitterAccess } from '@/hooks/useLitterAccess'
 export const Route = createFileRoute('/litters/$litterId')({
   head: () => ({
     meta: [
-      { title: 'Litter details | Foster Kitten Tracker' },
+      { title: 'Litter details | Kitty Tracker' },
       {
         name: 'description',
-        content:
-          'Manage a foster litter: view arrival details and add, rename, reorder or remove kittens.',
+        content: 'Manage a foster litter: view arrival details and add, rename or remove kittens.',
       },
-      { property: 'og:title', content: 'Litter details | Foster Kitten Tracker' },
+      { property: 'og:title', content: 'Litter details | Kitty Tracker' },
       {
         property: 'og:description',
         content: 'Manage the kittens in a foster litter and keep their details up to date.',

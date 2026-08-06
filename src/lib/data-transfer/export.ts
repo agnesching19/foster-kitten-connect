@@ -46,10 +46,7 @@ export async function buildExportZip(
 
   let weighInIds: string[] = []
   if (litterIds) {
-    const { data, error } = await supabase
-      .from('weigh_ins')
-      .select('id')
-      .in('litter_id', litterIds)
+    const { data, error } = await supabase.from('weigh_ins').select('id').in('litter_id', litterIds)
     if (error) throw error
     weighInIds = (data ?? []).map((row) => row.id)
   }
@@ -87,7 +84,7 @@ export async function buildExportZip(
 
   const stamp = new Date().toISOString().slice(0, 10)
   const scope = litterIds ? `litters-${litterIds.length}` : 'all-data'
-  return { filename: `foster-tracker-${scope}-${stamp}.zip`, blob, counts }
+  return { filename: `kitty-tracker-${scope}-${stamp}.zip`, blob, counts }
 }
 
 export function downloadBlob(blob: Blob, filename: string) {

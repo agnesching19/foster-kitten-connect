@@ -8,7 +8,7 @@ import { parseLooseDate, parseLooseTime } from './values'
  */
 export const currentExportParser: SpreadsheetParser = {
   id: 'current-export',
-  label: 'Foster Tracker export (this app)',
+  label: 'Kitty Tracker export (this app)',
   description:
     'CSV/ZIP bundles exported by this app. These are handled by the "Import CSV" card, which preserves IDs and relationships.',
   detect: (sheets) =>

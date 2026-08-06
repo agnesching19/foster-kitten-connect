@@ -3,8 +3,7 @@ import { getNavLinkClass, navItems } from './navItems'
 
 function useIsActive() {
   const pathname = useLocation({ select: (location) => location.pathname })
-  return (to: string) =>
-    to === '/' ? pathname === '/' : pathname.startsWith(to)
+  return (to: string) => (to === '/' ? pathname === '/' : pathname.startsWith(to))
 }
 
 export function BottomNav() {
@@ -13,7 +12,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Main navigation"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface-raised/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="border-b border-border bg-surface-raised/95 backdrop-blur-md md:hidden"
     >
       <ul className="mx-auto flex max-w-lg items-stretch justify-around px-1 sm:max-w-none sm:px-4">
         {navItems.map((item) => {

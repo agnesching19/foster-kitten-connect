@@ -15,7 +15,7 @@ const inputClass =
   'min-h-11 w-full rounded-xl border border-border bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100'
 
 const iconButtonClass =
-  'flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-white text-sm text-muted transition hover:bg-brand-50 hover:text-ink disabled:opacity-40 disabled:pointer-events-none'
+  'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border bg-white text-lg text-muted transition hover:bg-brand-50 hover:text-ink disabled:opacity-40 disabled:pointer-events-none'
 
 function ColourSelect({
   value,
@@ -161,23 +161,6 @@ export function KittensSection({ litterId, canEdit }: { litterId: string; canEdi
     onError: (error: Error) => toast.error(error.message || 'Could not remove the kitten'),
   })
 
-  const moveKitten = useMutation({
-    mutationFn: async ({ index, direction }: { index: number; direction: -1 | 1 }) => {
-      const target = index + direction
-      const a = kittens[index]
-      const b = kittens[target]
-      if (!a || !b) return
-      const results = await Promise.all([
-        supabase.from('kittens').update({ sort_order: b.sort_order }).eq('id', a.id),
-        supabase.from('kittens').update({ sort_order: a.sort_order }).eq('id', b.id),
-      ])
-      const failed = results.find((r) => r.error)
-      if (failed?.error) throw failed.error
-    },
-    onSuccess: refresh,
-    onError: (error: Error) => toast.error(error.message || 'Could not reorder kittens'),
-  })
-
   return (
     <section aria-label="Kittens">
       <Card>
@@ -220,7 +203,7 @@ export function KittensSection({ litterId, canEdit }: { litterId: string; canEdi
             {kittens.map((kitten, index) => (
               <li
                 key={kitten.id}
-                className="flex items-center gap-3 rounded-xl border border-border bg-white px-3 py-2"
+                className={`flex min-w-0 items-center gap-2 rounded-xl border border-border bg-white px-3 py-2 sm:gap-3 ${editingId === kitten.id ? 'flex-wrap sm:flex-nowrap' : ''}`}
               >
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-sm font-semibold text-brand-800">
                   {index + 1}
@@ -233,7 +216,7 @@ export function KittensSection({ litterId, canEdit }: { litterId: string; canEdi
 
                 {editingId === kitten.id ? (
                   <form
-                    className="flex flex-1 flex-col gap-2"
+                    className="flex min-w-0 basis-full flex-col gap-2 sm:basis-auto"
                     onSubmit={(event) => {
                       event.preventDefault()
                       const name = editingName.trim()
@@ -260,7 +243,7 @@ export function KittensSection({ litterId, canEdit }: { litterId: string; canEdi
                         onChange={setEditingColour}
                         label={`Tag colour for ${kitten.name}`}
                       />
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         <Button type="submit" size="md" disabled={updateKitten.isPending}>
                           {updateKitten.isPending ? 'Saving…' : 'Save'}
                         </Button>
@@ -275,12 +258,12 @@ export function KittensSection({ litterId, canEdit }: { litterId: string; canEdi
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-3 rounded-xl bg-gray-50 px-3 py-2">
-                      <label className="text-sm font-medium text-ink">
+                      <label className="min-w-0 flex-1 text-sm font-medium text-ink">
                         Avatar
                         <input
                           type="file"
                           accept="image/jpeg,image/png,image/webp,image/gif"
-                          className="ml-3 max-w-56 text-sm text-muted file:mr-2 file:rounded-lg file:border-0 file:bg-brand-100 file:px-3 file:py-2 file:font-medium file:text-brand-800"
+                          className="mt-2 block w-full min-w-0 text-sm text-muted file:mr-2 file:rounded-lg file:border-0 file:bg-brand-100 file:px-3 file:py-2 file:font-medium file:text-brand-800 sm:ml-3 sm:mt-0 sm:inline sm:w-auto sm:max-w-56"
                           onChange={(event) => {
                             setEditingAvatar(event.target.files?.[0] ?? null)
                             setRemoveAvatar(false)
@@ -307,25 +290,7 @@ export function KittensSection({ litterId, canEdit }: { litterId: string; canEdi
                   <>
                     <p className="min-w-0 flex-1 truncate font-medium text-ink">{kitten.name}</p>
                     {canEdit ? (
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          className={iconButtonClass}
-                          aria-label={`Move ${kitten.name} up`}
-                          disabled={index === 0 || moveKitten.isPending || !user}
-                          onClick={() => moveKitten.mutate({ index, direction: -1 })}
-                        >
-                          ↑
-                        </button>
-                        <button
-                          type="button"
-                          className={iconButtonClass}
-                          aria-label={`Move ${kitten.name} down`}
-                          disabled={index === kittens.length - 1 || moveKitten.isPending || !user}
-                          onClick={() => moveKitten.mutate({ index, direction: 1 })}
-                        >
-                          ↓
-                        </button>
+                      <div className="flex shrink-0 items-center gap-2">
                         <button
                           type="button"
                           className={iconButtonClass}

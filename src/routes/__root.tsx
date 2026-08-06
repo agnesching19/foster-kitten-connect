@@ -1,19 +1,18 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import {
-
   Link,
   createRootRouteWithContext,
   useRouter,
   HeadContent,
   Scripts,
-} from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+} from '@tanstack/react-router'
+import { useEffect, type ReactNode } from 'react'
 
-import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
-import { AppLayout } from "@/components/foster/layout/AppLayout";
-import { AuthProvider } from "@/hooks/useAuth";
-import { Toaster } from "@/components/ui/sonner";
+import appCss from '../styles.css?url'
+import { reportLovableError } from '../lib/lovable-error-reporting'
+import { AppLayout } from '@/components/foster/layout/AppLayout'
+import { AuthProvider } from '@/hooks/useAuth'
+import { Toaster } from '@/components/ui/sonner'
 
 function NotFoundComponent() {
   return (
@@ -34,15 +33,15 @@ function NotFoundComponent() {
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
-  console.error(error);
-  const router = useRouter();
+  console.error(error)
+  const router = useRouter()
   useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
+    reportLovableError(error, { boundary: 'tanstack_root_error_component' })
+  }, [error])
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -56,8 +55,8 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
-              router.invalidate();
-              reset();
+              router.invalidate()
+              reset()
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
@@ -72,55 +71,59 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Foster Kitten Tracker | Every Batch in One Place" },
+      { charSet: 'utf-8' },
       {
-        name: "description",
-        content:
-          "Track foster momma cats and their kittens: batches, feedings, weights, bathroom logs and litter changes.",
+        name: 'viewport',
+        content: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no',
       },
-      { property: "og:title", content: "Foster Kitten Tracker | Every Batch in One Place" },
+      { title: 'Kitty Tracker | Every Batch in One Place' },
       {
-        property: "og:description",
-        content: "Track foster momma cats and their kittens: batches, feedings, weights, bathroom logs and litter changes.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
-      { name: "twitter:title", content: "Foster Kitten Tracker | Every Batch in One Place" },
-      {
-        name: "twitter:description",
+        name: 'description',
         content:
-          "Track foster momma cats and their kittens: batches, feedings, weights, bathroom logs and litter changes.",
+          'Track foster momma cats and their kittens: batches, feedings, weights, bathroom logs and litter changes.',
+      },
+      { property: 'og:title', content: 'Kitty Tracker | Every Batch in One Place' },
+      {
+        property: 'og:description',
+        content:
+          'Track foster momma cats and their kittens: batches, feedings, weights, bathroom logs and litter changes.',
+      },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'twitter:site', content: '@Lovable' },
+      { name: 'twitter:title', content: 'Kitty Tracker | Every Batch in One Place' },
+      {
+        name: 'twitter:description',
+        content:
+          'Track foster momma cats and their kittens: batches, feedings, weights, bathroom logs and litter changes.',
       },
       {
-        property: "og:image",
+        property: 'og:image',
         content:
-          "https://storage.googleapis.com/gpt-engineer-file-uploads/HApiCWym4RVYcaKRDGcuR8vi38Q2/social-images/social-1785793786997-social-image.webp",
+          'https://storage.googleapis.com/gpt-engineer-file-uploads/HApiCWym4RVYcaKRDGcuR8vi38Q2/social-images/social-1785793786997-social-image.webp',
       },
       {
-        name: "twitter:image",
+        name: 'twitter:image',
         content:
-          "https://storage.googleapis.com/gpt-engineer-file-uploads/HApiCWym4RVYcaKRDGcuR8vi38Q2/social-images/social-1785793786997-social-image.webp",
+          'https://storage.googleapis.com/gpt-engineer-file-uploads/HApiCWym4RVYcaKRDGcuR8vi38Q2/social-images/social-1785793786997-social-image.webp',
       },
     ],
     links: [
       {
-        rel: "stylesheet",
+        rel: 'stylesheet',
         href: appCss,
       },
       {
-        rel: "icon",
-        href: "/favicon.ico?v=2",
-        type: "image/x-icon",
-        sizes: "256x256",
+        rel: 'icon',
+        href: '/favicon.ico?v=2',
+        type: 'image/x-icon',
+        sizes: '256x256',
       },
     ],
   }),
@@ -128,7 +131,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
   errorComponent: ErrorComponent,
-});
+})
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
@@ -141,11 +144,11 @@ function RootShell({ children }: { children: ReactNode }) {
         <Scripts />
       </body>
     </html>
-  );
+  )
 }
 
 function RootComponent() {
-  const { queryClient } = Route.useRouteContext();
+  const { queryClient } = Route.useRouteContext()
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -155,5 +158,5 @@ function RootComponent() {
         <Toaster />
       </AuthProvider>
     </QueryClientProvider>
-  );
+  )
 }

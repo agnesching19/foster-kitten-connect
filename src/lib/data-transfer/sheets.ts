@@ -19,7 +19,7 @@ export class SheetTemplateNotReadyError extends Error {}
 
 export const fosterTrackerTemplate: SheetTemplateAdapter = {
   id: 'foster-tracker-v1',
-  label: 'Foster Kitten Tracker template',
+  label: 'Kitty Tracker template',
   description:
     'Tabs: Litters, Kittens, Feedings, Poops, Litter changes, Weigh-ins, Weights, Notes.',
   matches: (url) => /docs\.google\.com\/spreadsheets\//.test(url),

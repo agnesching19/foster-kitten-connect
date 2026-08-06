@@ -9,13 +9,14 @@ export function AppLayout() {
       <SidebarNav />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <MobileHeader />
+        <div className="sticky top-0 z-40 md:hidden">
+          <MobileHeader />
+          <BottomNav />
+        </div>
 
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-28 pt-5 md:px-8 md:pb-8 md:pt-8 lg:px-10">
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-8 pt-5 md:px-8 md:pt-8 lg:px-10">
           <Outlet />
         </main>
-
-        <BottomNav />
       </div>
     </div>
   )
