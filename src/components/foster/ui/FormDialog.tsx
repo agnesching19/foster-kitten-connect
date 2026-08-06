@@ -4,7 +4,7 @@ import { Button } from '@/components/foster/ui/Button'
 import { useAuth } from '@/hooks/useAuth'
 
 export const inputClass =
-  'min-h-11 w-full rounded-xl border border-border bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100'
+  'block min-h-11 min-w-0 max-w-full w-full rounded-xl border border-border bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100 [&::-webkit-date-and-time-value]:text-left'
 
 interface FormDialogProps {
   open: boolean
@@ -35,7 +35,7 @@ export function FormDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby={id}
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-border bg-surface-raised p-5 shadow-lg sm:rounded-2xl"
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-border bg-surface-raised p-5 pb-[calc(5rem+env(safe-area-inset-bottom))] shadow-lg sm:rounded-2xl sm:pb-5"
       >
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
