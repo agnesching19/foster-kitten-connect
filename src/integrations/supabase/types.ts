@@ -51,6 +51,7 @@ export type Database = {
           created_at: string
           date: string
           food: string
+          flavours: string[]
           id: string
           litter_id: string
           meal_number: number | null
@@ -64,6 +65,7 @@ export type Database = {
           created_at?: string
           date: string
           food: string
+          flavours?: string[]
           id?: string
           litter_id: string
           meal_number?: number | null
@@ -77,6 +79,7 @@ export type Database = {
           created_at?: string
           date?: string
           food?: string
+          flavours?: string[]
           id?: string
           litter_id?: string
           meal_number?: number | null

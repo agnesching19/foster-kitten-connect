@@ -11,7 +11,7 @@ export type TableName =
 export interface ColumnSpec {
   name: string
   required?: boolean
-  type?: 'text' | 'date' | 'time' | 'int' | 'uuid' | 'status'
+  type?: 'text' | 'date' | 'time' | 'int' | 'uuid' | 'status' | 'string-array'
 }
 
 export interface TableSpec {
@@ -93,6 +93,7 @@ export const tableSpecs: TableSpec[] = [
       { name: 'date', required: true, type: 'date' },
       { name: 'time', required: true, type: 'time' },
       { name: 'food', required: true },
+      { name: 'flavours', type: 'string-array' },
       { name: 'meal_number', type: 'int' },
       { name: 'pouch_count', type: 'int' },
     ],
@@ -238,6 +239,22 @@ export function normaliseRow(
           valid = false
         }
         payload[column.name] = raw
+        break
+      case 'string-array':
+        try {
+          const parsed: unknown = JSON.parse(raw)
+          if (!Array.isArray(parsed) || !parsed.every((item) => typeof item === 'string')) {
+            throw new Error('Not a string array')
+          }
+          payload[column.name] = parsed
+        } catch {
+          issues.push({
+            file: spec.file,
+            row: rowNumber,
+            message: `"${column.name}" must be a list of text values`,
+          })
+          valid = false
+        }
         break
       default:
         payload[column.name] = raw

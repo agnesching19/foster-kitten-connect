@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
@@ -25,10 +26,11 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
   const queryClient = useQueryClient()
   const [date, setDate] = useState(todayIso())
   const [time, setTime] = useState(nowTime())
-  const [food, setFood] = useState('')
+  const [flavours, setFlavours] = useState<string[]>([''])
+  const [customFlavours, setCustomFlavours] = useState<boolean[]>([false])
   const [notes, setNotes] = useState('')
   const [pouchCount, setPouchCount] = useState(1)
-  const { data: storedPresets = [] } = useQuery({
+  const { data: storedPresets } = useQuery({
     queryKey: ['feeding-food-presets'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -40,26 +42,38 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
     },
     enabled: open && Boolean(user),
   })
-  const foodPresets = storedPresets.map((preset) => preset.name)
+  const foodPresets = useMemo(
+    () => (storedPresets ?? []).map((preset) => preset.name),
+    [storedPresets],
+  )
 
   useEffect(() => {
     if (!open) return
     setDate(feeding?.date ?? todayIso())
     setTime(feeding?.time.slice(0, 5) ?? nowTime())
-    setFood(feeding?.food ?? '')
+    const nextFlavours = feeding?.flavours?.length ? feeding.flavours : [feeding?.food ?? '']
+    setFlavours(nextFlavours)
+    setCustomFlavours(
+      nextFlavours.map((flavour) => Boolean(flavour) && !foodPresets.includes(flavour)),
+    )
     setNotes(feeding?.notes ?? '')
     setPouchCount(feeding?.pouch_count ?? 1)
-  }, [open, feeding])
+  }, [open, feeding, foodPresets])
 
   const mutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error('You need to be signed in.')
       if (!litterId) throw new Error('Add a batch first.')
-      const normalisedFood = food.trim().toLowerCase()
+      const normalisedFlavours = flavours.map((flavour) => flavour.trim().toLowerCase())
+      if (normalisedFlavours.some((flavour) => !flavour)) {
+        throw new Error('Choose a flavour for every pouch.')
+      }
+      const normalisedFood = normalisedFlavours.join(' + ')
       const payload = {
         date,
         time,
         food: normalisedFood,
+        flavours: normalisedFlavours,
         notes: notes.trim() || null,
         pouch_count: pouchCount,
       }
@@ -70,12 +84,14 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
             .insert({ ...payload, litter_id: litterId, user_id: user.id })
       if (error) throw error
 
-      if (!foodPresets.includes(normalisedFood)) {
-        const { error: presetError } = await supabase
-          .from('feeding_food_presets')
-          .insert({ name: normalisedFood, created_by: user.id })
-        if (presetError && presetError.code !== '23505') {
-          console.warn('Could not save the new food preset', presetError)
+      for (const flavour of new Set(normalisedFlavours)) {
+        if (!foodPresets.includes(flavour)) {
+          const { error: presetError } = await supabase
+            .from('feeding_food_presets')
+            .insert({ name: flavour, created_by: user.id })
+          if (presetError && presetError.code !== '23505') {
+            console.warn('Could not save the new food preset', presetError)
+          }
         }
       }
     },
@@ -124,52 +140,92 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
             className={inputClass}
           />
         </label>
-        <fieldset className="min-w-0 sm:col-span-2">
-          <legend className="mb-2 text-sm font-medium text-ink">Food *</legend>
-          <div className="mb-3 flex flex-wrap gap-2">
-            {foodPresets.map((preset) => {
-              const selected = food.trim().toLowerCase() === preset
-              return (
-                <button
-                  key={preset}
-                  type="button"
-                  aria-pressed={selected}
-                  onClick={() => setFood(preset)}
-                  className={`rounded-full border px-3 py-2 text-sm capitalize transition ${
-                    selected
-                      ? 'border-brand-500 bg-brand-100 font-medium text-brand-800'
-                      : 'border-border bg-white text-ink hover:border-brand-300 hover:bg-brand-50'
-                  }`}
-                >
-                  {preset}
-                </button>
-              )
-            })}
-          </div>
-          <label>
-            <span className="mb-1 block text-xs text-muted">Or enter another flavour</span>
-            <input
-              required
-              value={food}
-              onChange={(e) => setFood(e.target.value)}
-              className={inputClass}
-              placeholder="e.g. turkey"
-              maxLength={80}
-            />
-          </label>
-          <p className="mt-1 text-xs text-muted">
-            New flavours are saved to the preset list automatically.
-          </p>
-        </fieldset>
         <div className="sm:col-span-2">
           <label htmlFor="feeding-pouch-count" className="mb-1 block text-sm font-medium text-ink">
             Pouch count *
           </label>
-          <CountStepper id="feeding-pouch-count" value={pouchCount} onChange={setPouchCount} />
+          <CountStepper
+            id="feeding-pouch-count"
+            value={pouchCount}
+            onChange={(count) => {
+              setPouchCount(count)
+              setFlavours((current) =>
+                Array.from({ length: count }, (_, index) => current[index] ?? current.at(-1) ?? ''),
+              )
+              setCustomFlavours((current) =>
+                Array.from({ length: count }, (_, index) => current[index] ?? false),
+              )
+            }}
+          />
           <span className="mt-1 block text-xs text-muted">
             Number of pouches served during this feeding.
           </span>
         </div>
+        <fieldset className="min-w-0 sm:col-span-2">
+          <legend className="mb-2 text-sm font-medium text-ink">
+            {pouchCount === 1 ? 'Flavour *' : 'Flavours *'}
+          </legend>
+          <div className="grid gap-3">
+            {flavours.map((flavour, index) => (
+              <div key={index} className="grid min-w-0 gap-1">
+                <label htmlFor={`feeding-flavour-${index}`} className="text-xs text-muted">
+                  Pouch {index + 1}
+                </label>
+                <div className="relative min-w-0">
+                  <select
+                    id={`feeding-flavour-${index}`}
+                    value={customFlavours[index] ? '__other__' : flavour}
+                    onChange={(event) => {
+                      const custom = event.target.value === '__other__'
+                      setCustomFlavours((current) =>
+                        current.map((value, itemIndex) => (itemIndex === index ? custom : value)),
+                      )
+                      setFlavours((current) =>
+                        current.map((value, itemIndex) =>
+                          itemIndex === index ? (custom ? '' : event.target.value) : value,
+                        ),
+                      )
+                    }}
+                    className={`${inputClass} appearance-none pr-12`}
+                    required
+                  >
+                    <option value="">Choose flavour…</option>
+                    {foodPresets.map((preset) => (
+                      <option key={preset} value={preset}>
+                        {preset.replace(/\b\w/g, (letter) => letter.toUpperCase())}
+                      </option>
+                    ))}
+                    <option value="__other__">Other flavour…</option>
+                  </select>
+                  <ChevronDown
+                    aria-hidden
+                    className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
+                  />
+                </div>
+                {customFlavours[index] ? (
+                  <input
+                    required
+                    value={flavour}
+                    onChange={(event) =>
+                      setFlavours((current) =>
+                        current.map((value, itemIndex) =>
+                          itemIndex === index ? event.target.value : value,
+                        ),
+                      )
+                    }
+                    className={inputClass}
+                    placeholder="Enter another flavour"
+                    maxLength={80}
+                    aria-label={`Other flavour for pouch ${index + 1}`}
+                  />
+                ) : null}
+              </div>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-muted">
+            New flavours are saved to the preset list automatically.
+          </p>
+        </fieldset>
         <label className="sm:col-span-2">
           <span className="mb-1 block text-sm font-medium text-ink">Notes</span>
           <textarea

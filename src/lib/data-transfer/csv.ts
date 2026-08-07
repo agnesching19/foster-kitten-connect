@@ -60,7 +60,7 @@ export function parseCsv(text: string): { headers: string[]; rows: CsvRow[] } {
 
 function escapeCell(value: unknown): string {
   if (value === null || value === undefined) return ''
-  const text = String(value)
+  const text = Array.isArray(value) ? JSON.stringify(value) : String(value)
   return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
 }
 

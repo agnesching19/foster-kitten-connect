@@ -160,6 +160,7 @@ export interface FeedingRow {
   date: string
   time: string
   food: string
+  flavours: string[]
   meal_number: number | null
   notes: string | null
   pouch_count: number
@@ -172,7 +173,7 @@ export const feedingsQueryOptions = (litterId: string | undefined) =>
     queryFn: async (): Promise<FeedingRow[]> => {
       const { data, error } = await supabase
         .from('feedings')
-        .select('id, user_id, date, time, food, meal_number, notes, pouch_count')
+        .select('id, user_id, date, time, food, flavours, meal_number, notes, pouch_count')
         .eq('litter_id', litterId!)
         .order('date', { ascending: false })
         .order('time', { ascending: false })

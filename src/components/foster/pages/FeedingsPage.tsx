@@ -250,7 +250,9 @@ function FeedingDayCard({
                       <Badge label={`×${feeding.pouch_count} pouches`} color="neutral" />
                     ) : null}
                   </div>
-                  <p className="mt-0.5 text-sm capitalize text-muted">{feeding.food}</p>
+                  <p className="mt-0.5 text-sm capitalize text-muted">
+                    {formatFlavours(feeding.flavours)}
+                  </p>
                   {feeding.notes && <p className="mt-0.5 text-xs text-muted">{feeding.notes}</p>}
                   <p className="mt-1 text-xs text-muted">
                     Added by {logAuthorName(profiles, feeding.user_id)}
@@ -290,4 +292,12 @@ function formatMonth(month: string) {
     month: 'long',
     year: 'numeric',
   }).format(new Date(`${month}-01T12:00:00`))
+}
+
+function formatFlavours(flavours: string[]) {
+  const counts = new Map<string, number>()
+  for (const flavour of flavours) counts.set(flavour, (counts.get(flavour) ?? 0) + 1)
+  return [...counts]
+    .map(([flavour, count]) => `${flavour}${count > 1 ? ` ×${count}` : ''}`)
+    .join(' + ')
 }
