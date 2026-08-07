@@ -57,28 +57,29 @@ export function WeightsPage() {
     onError: (error: Error) => toast.error(error.message || 'Could not delete the weigh-in'),
   })
 
-  // Sessions are newest-first; compare each kitten against the previous session.
-  const sessions = useMemo(
-    () =>
-      weighIns.map((session, index) => {
-        const previous = weighIns[index + 1]
-        return {
-          ...session,
-          daysOld: dob ? daysBetween(dob, session.date) : null,
-          weights: session.weights.map((weight) => {
-            const before = previous?.weights.find((w) => w.kitten_id === weight.kitten_id)
-            return {
-              ...weight,
-              changePercent:
-                before && before.grams > 0
-                  ? ((weight.grams - before.grams) / before.grams) * 100
-                  : null,
-            }
-          }),
-        }
-      }),
-    [weighIns, dob],
-  )
+  // Sessions arrive newest-first. Walk them chronologically so every kitten is
+  // compared with its own last recorded weight, even when it skipped a session.
+  const sessions = useMemo(() => {
+    const previousWeightByKitten = new Map<string, number>()
+    return [...weighIns]
+      .reverse()
+      .map((session) => ({
+        ...session,
+        daysOld: dob ? daysBetween(dob, session.date) : null,
+        weights: session.weights.map((weight) => {
+          const previousGrams = previousWeightByKitten.get(weight.kitten_id)
+          previousWeightByKitten.set(weight.kitten_id, weight.grams)
+          return {
+            ...weight,
+            changePercent:
+              previousGrams && previousGrams > 0
+                ? ((weight.grams - previousGrams) / previousGrams) * 100
+                : null,
+          }
+        }),
+      }))
+      .reverse()
+  }, [weighIns, dob])
 
   const months = useMemo(
     () => [...new Set(sessions.map((session) => session.date.slice(0, 7)))],

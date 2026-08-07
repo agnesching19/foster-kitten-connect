@@ -167,6 +167,25 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* iOS Safari gives native date/time controls an intrinsic width that can
+ * exceed their grid column, even when width and max-width are set to 100%. */
+@supports (-webkit-touch-callout: none) {
+  input[type='date'],
+  input[type='time'] {
+    box-sizing: border-box;
+    inline-size: 100%;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  input[type='date']::-webkit-date-and-time-value,
+  input[type='time']::-webkit-date-and-time-value {
+    text-align: left;
+  }
+}
+
 body {
   background-color: var(--color-surface);
   color: var(--color-ink);

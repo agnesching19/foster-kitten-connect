@@ -111,13 +111,13 @@ export function WeighInDialog({
       subtitle="One session records every kitten's weight"
     >
       <form
-        className="grid gap-4 sm:grid-cols-2"
+        className="grid min-w-0 gap-4 sm:grid-cols-2"
         onSubmit={(event) => {
           event.preventDefault()
           mutation.mutate()
         }}
       >
-        <label>
+        <label className="min-w-0">
           <span className="mb-1 block text-sm font-medium text-ink">Date *</span>
           <input
             type="date"
@@ -127,7 +127,7 @@ export function WeighInDialog({
             className={inputClass}
           />
         </label>
-        <label>
+        <label className="min-w-0">
           <span className="mb-1 block text-sm font-medium text-ink">Time *</span>
           <input
             type="time"
@@ -137,7 +137,7 @@ export function WeighInDialog({
             className={inputClass}
           />
         </label>
-        <label className="sm:col-span-2">
+        <label className="min-w-0 sm:col-span-2">
           <span className="mb-1 block text-sm font-medium text-ink">Days old</span>
           <input
             readOnly
@@ -146,26 +146,28 @@ export function WeighInDialog({
           />
         </label>
 
-        <div className="sm:col-span-2">
+        <div className="min-w-0 sm:col-span-2">
           <p className="mb-2 text-sm font-medium text-ink">Weights (grams)</p>
           {kittens.length ? (
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid min-w-0 gap-2 sm:grid-cols-2">
               {kittens.map((kitten) => (
-                <label key={kitten.id} className="flex items-center gap-2">
+                <label key={kitten.id} className="flex min-w-0 items-center gap-2">
                   <KittenAvatar
                     name={kitten.name}
                     avatarPath={kitten.avatar_path}
                     colour={kitten.tag_colour}
                     size="sm"
                   />
-                  <span className="w-24 shrink-0 truncate text-sm text-ink">{kitten.name}</span>
+                  <span className="w-20 shrink-0 truncate text-sm text-ink sm:w-24">
+                    {kitten.name}
+                  </span>
                   <input
                     type="number"
                     min={0}
                     inputMode="numeric"
                     value={grams[kitten.id] ?? ''}
                     onChange={(e) => setGrams((prev) => ({ ...prev, [kitten.id]: e.target.value }))}
-                    className={inputClass}
+                    className={`${inputClass} flex-1 basis-0`}
                     placeholder="g"
                     aria-label={`Weight for ${kitten.name}`}
                   />
@@ -179,7 +181,7 @@ export function WeighInDialog({
           )}
         </div>
 
-        <label className="sm:col-span-2">
+        <label className="min-w-0 sm:col-span-2">
           <span className="mb-1 block text-sm font-medium text-ink">Notes</span>
           <textarea
             value={notes}
