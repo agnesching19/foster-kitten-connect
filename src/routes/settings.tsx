@@ -1,7 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { SettingsPage } from '@/components/foster/pages/SettingsPage'
+import { SettingsPage, type SettingsSection } from '@/components/foster/pages/SettingsPage'
+
+const settingsSections: SettingsSection[] = ['profile', 'feeding', 'access', 'data']
 
 export const Route = createFileRoute('/settings')({
+  validateSearch: (search: Record<string, unknown>): { section?: SettingsSection } => {
+    const section = search['section']
+    return typeof section === 'string' && settingsSections.includes(section as SettingsSection)
+      ? { section: section as SettingsSection }
+      : {}
+  },
   head: () => ({
     meta: [
       { title: 'Settings & Data Management | Kitty Tracker' },

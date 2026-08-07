@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
@@ -26,6 +26,19 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
   const [time, setTime] = useState(nowTime())
   const [food, setFood] = useState('')
   const [notes, setNotes] = useState('')
+  const { data: storedPresets = [] } = useQuery({
+    queryKey: ['feeding-food-presets'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('feeding_food_presets')
+        .select('id, name')
+        .order('name')
+      if (error) throw error
+      return data
+    },
+    enabled: open && Boolean(user),
+  })
+  const foodPresets = storedPresets.map((preset) => preset.name)
 
   useEffect(() => {
     if (!open) return
@@ -39,10 +52,11 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
     mutationFn: async () => {
       if (!user) throw new Error('You need to be signed in.')
       if (!litterId) throw new Error('Add a batch first.')
+      const normalisedFood = food.trim().toLowerCase()
       const payload = {
         date,
         time,
-        food: food.trim(),
+        food: normalisedFood,
         notes: notes.trim() || null,
       }
       const { error } = feeding
@@ -51,9 +65,21 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
             .from('feedings')
             .insert({ ...payload, litter_id: litterId, user_id: user.id })
       if (error) throw error
+
+      if (!foodPresets.includes(normalisedFood)) {
+        const { error: presetError } = await supabase
+          .from('feeding_food_presets')
+          .insert({ name: normalisedFood, created_by: user.id })
+        if (presetError && presetError.code !== '23505') {
+          console.warn('Could not save the new food preset', presetError)
+        }
+      }
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['feedings', litterId] })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['feedings', litterId] }),
+        queryClient.invalidateQueries({ queryKey: ['feeding-food-presets'] }),
+      ])
       toast.success(feeding ? 'Feeding updated' : 'Feeding logged')
       onClose()
     },
@@ -94,16 +120,43 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
             className={inputClass}
           />
         </label>
-        <label className="sm:col-span-2">
-          <span className="mb-1 block text-sm font-medium text-ink">Food *</span>
-          <input
-            required
-            value={food}
-            onChange={(e) => setFood(e.target.value)}
-            className={inputClass}
-            placeholder="e.g. chicken pouch"
-          />
-        </label>
+        <fieldset className="min-w-0 sm:col-span-2">
+          <legend className="mb-2 text-sm font-medium text-ink">Food *</legend>
+          <div className="mb-3 flex flex-wrap gap-2">
+            {foodPresets.map((preset) => {
+              const selected = food.trim().toLowerCase() === preset
+              return (
+                <button
+                  key={preset}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => setFood(preset)}
+                  className={`rounded-full border px-3 py-2 text-sm capitalize transition ${
+                    selected
+                      ? 'border-brand-500 bg-brand-100 font-medium text-brand-800'
+                      : 'border-border bg-white text-ink hover:border-brand-300 hover:bg-brand-50'
+                  }`}
+                >
+                  {preset}
+                </button>
+              )
+            })}
+          </div>
+          <label>
+            <span className="mb-1 block text-xs text-muted">Or enter another flavour</span>
+            <input
+              required
+              value={food}
+              onChange={(e) => setFood(e.target.value)}
+              className={inputClass}
+              placeholder="e.g. turkey"
+              maxLength={80}
+            />
+          </label>
+          <p className="mt-1 text-xs text-muted">
+            New flavours are saved to the preset list automatically.
+          </p>
+        </fieldset>
         <label className="sm:col-span-2">
           <span className="mb-1 block text-sm font-medium text-ink">Notes</span>
           <textarea
