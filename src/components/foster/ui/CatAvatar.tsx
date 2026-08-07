@@ -9,11 +9,13 @@ export function CatAvatar({
   avatarPath,
   size = 'md',
   className = '',
+  photoPreview = true,
 }: {
   name: string
   avatarPath?: string | null
   size?: CatAvatarSize
   className?: string
+  photoPreview?: boolean
 }) {
   const [failed, setFailed] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -28,6 +30,24 @@ export function CatAvatar({
   useEffect(() => setFailed(false), [publicUrl])
 
   if (publicUrl && !failed) {
+    const image = (
+      <img
+        src={publicUrl}
+        alt={`${name} avatar`}
+        className="h-full w-full rounded-full border border-border object-cover"
+        loading="lazy"
+        onError={() => setFailed(true)}
+      />
+    )
+
+    if (!photoPreview) {
+      return (
+        <span className={`inline-flex shrink-0 ${catAvatarSizeClasses[size]} ${className}`}>
+          {image}
+        </span>
+      )
+    }
+
     return (
       <>
         <button
@@ -37,13 +57,7 @@ export function CatAvatar({
           aria-label={`View ${name}'s photo`}
           onClick={() => setPreviewOpen(true)}
         >
-          <img
-            src={publicUrl}
-            alt={`${name} avatar`}
-            className="h-full w-full rounded-full border border-border object-cover"
-            loading="lazy"
-            onError={() => setFailed(true)}
-          />
+          {image}
         </button>
         <AvatarPreviewDialog
           open={previewOpen}

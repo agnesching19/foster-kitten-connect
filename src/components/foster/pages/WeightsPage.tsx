@@ -9,6 +9,10 @@ import { Card, CardHeader } from '@/components/foster/ui/Card'
 import { EmptyState } from '@/components/foster/ui/EmptyState'
 import { KittenAvatar } from '@/components/foster/ui/KittenAvatar'
 import { WeightChart } from '@/components/foster/weights/WeightChart'
+import {
+  KittenWeightHistoryDialog,
+  type WeightHistoryKitten,
+} from '@/components/foster/weights/KittenWeightHistoryDialog'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { WeighInDialog } from '@/components/foster/dialogs/WeighInDialog'
 import { ConfirmDialog } from '@/components/foster/settings/ConfirmDialog'
@@ -41,6 +45,7 @@ export function WeightsPage() {
   const [pendingDelete, setPendingDelete] = useState<WeighInRow | null>(null)
   const [selectedMonth, setSelectedMonth] = useState('')
   const [openSessions, setOpenSessions] = useState<Record<string, boolean>>({})
+  const [historyKitten, setHistoryKitten] = useState<WeightHistoryKitten | null>(null)
 
   const remove = useMutation({
     mutationFn: async (id: string) => {
@@ -91,6 +96,9 @@ export function WeightsPage() {
   const allSessionsOpen = visibleSessions.every((session, index) =>
     isSessionOpen(session.id, index),
   )
+  const kittensWithWeights = (litter?.kittens ?? []).filter((kitten) =>
+    weighIns.some((session) => session.weights.some((weight) => weight.kitten_id === kitten.id)),
+  )
 
   return (
     <div>
@@ -131,6 +139,12 @@ export function WeightsPage() {
         onConfirm={() => pendingDelete && remove.mutate(pendingDelete.id)}
       />
 
+      <KittenWeightHistoryDialog
+        kitten={historyKitten}
+        weighIns={weighIns}
+        onClose={() => setHistoryKitten(null)}
+      />
+
       {isLoading ? (
         <Card>
           <p className="text-sm text-muted">Loading weigh-ins…</p>
@@ -140,6 +154,36 @@ export function WeightsPage() {
           <Card padding="lg">
             <CardHeader title="Growth chart" subtitle="Kitten weight over time" />
             <WeightChart weighIns={weighIns} />
+            <div className="mt-4 border-t border-border pt-4">
+              <p className="mb-3 text-sm font-medium text-ink">View individual history</p>
+              <div className="flex flex-wrap gap-2">
+                {kittensWithWeights.map((kitten) => (
+                  <button
+                    key={kitten.id}
+                    type="button"
+                    onClick={() =>
+                      setHistoryKitten({
+                        id: kitten.id,
+                        name: kitten.name,
+                        avatarPath: kitten.avatar_path,
+                        colour: kitten.tag_colour,
+                      })
+                    }
+                    className="flex min-h-12 items-center gap-2 rounded-2xl border border-border bg-white px-3 py-2 text-left text-sm font-medium text-ink transition hover:border-brand-300 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2"
+                    aria-label={`View ${kitten.name}'s weight history`}
+                  >
+                    <KittenAvatar
+                      name={kitten.name}
+                      avatarPath={kitten.avatar_path}
+                      colour={kitten.tag_colour}
+                      size="sm"
+                      photoPreview={false}
+                    />
+                    <span>{kitten.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           </Card>
 
           <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface-raised p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-4">

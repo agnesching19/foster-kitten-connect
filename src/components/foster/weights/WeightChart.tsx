@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+import { useMemo } from 'react'
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
 import {
   ChartConfig,
   ChartContainer,
@@ -7,63 +7,69 @@ import {
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart";
-import type { TagColour } from "@/components/foster/ui/KittenDot";
-import type { WeighInRow } from "@/lib/foster-queries";
+} from '@/components/ui/chart'
+import type { TagColour } from '@/components/foster/ui/KittenDot'
+import type { WeighInRow } from '@/lib/foster-queries'
 
 const lineColours: Record<TagColour, string> = {
-  blue: "#0ea5e9",
-  pink: "#f472b6",
-  red: "#ef4444",
-  orange: "#f97316",
-  yellow: "#eab308",
-  green: "#10b981",
-  purple: "#a855f7",
-  white: "#94a3b8",
-  grey: "#6b7280",
-  brown: "#92400e",
-  black: "#111827",
-};
+  blue: '#0ea5e9',
+  pink: '#f472b6',
+  red: '#ef4444',
+  orange: '#f97316',
+  yellow: '#eab308',
+  green: '#10b981',
+  purple: '#a855f7',
+  white: '#94a3b8',
+  grey: '#6b7280',
+  brown: '#92400e',
+  black: '#111827',
+}
 
-const fallbackColours = ["#ea580c", "#0891b2", "#7c3aed", "#db2777", "#16a34a"];
+const fallbackColours = ['#ea580c', '#0891b2', '#7c3aed', '#db2777', '#16a34a']
 
 function parseSessionTime(date: string, time: string) {
-  return new Date(`${date}T${time}`).getTime();
+  return new Date(`${date}T${time}`).getTime()
 }
 
 function formatAxisDate(timestamp: number) {
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "numeric",
-    month: "short",
-  }).format(timestamp);
+  return new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+  }).format(timestamp)
 }
 
 function formatTooltipDate(timestamp: number) {
-  return new Intl.DateTimeFormat("en-GB", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(timestamp);
+  return new Intl.DateTimeFormat('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(timestamp)
 }
 
-export function WeightChart({ weighIns }: { weighIns: WeighInRow[] }) {
+export function WeightChart({
+  weighIns,
+  showLegend = true,
+}: {
+  weighIns: WeighInRow[]
+  showLegend?: boolean
+}) {
   const { chartData, kittens, config } = useMemo(() => {
-    const kittenDetails = new Map<string, { id: string; name: string; colour: TagColour | null }>();
+    const kittenDetails = new Map<string, { id: string; name: string; colour: TagColour | null }>()
 
     for (const session of weighIns) {
       for (const weight of session.weights) {
         if (!kittenDetails.has(weight.kitten_id)) {
           kittenDetails.set(weight.kitten_id, {
             id: weight.kitten_id,
-            name: weight.kittens?.name ?? "Kitten",
+            name: weight.kittens?.name ?? 'Kitten',
             colour: weight.kittens?.tag_colour ?? null,
-          });
+          })
         }
       }
     }
 
-    const series = [...kittenDetails.values()];
+    const series = [...kittenDetails.values()]
     const chartConfig = Object.fromEntries(
       series.map((kitten, index) => [
         kitten.id,
@@ -74,17 +80,17 @@ export function WeightChart({ weighIns }: { weighIns: WeighInRow[] }) {
             : fallbackColours[index % fallbackColours.length]!,
         },
       ]),
-    ) satisfies ChartConfig;
+    ) satisfies ChartConfig
 
     const data = [...weighIns].reverse().map((session) => ({
       timestamp: parseSessionTime(session.date, session.time),
       ...Object.fromEntries(session.weights.map((weight) => [weight.kitten_id, weight.grams])),
-    }));
+    }))
 
-    return { chartData: data, kittens: series, config: chartConfig };
-  }, [weighIns]);
+    return { chartData: data, kittens: series, config: chartConfig }
+  }, [weighIns])
 
-  if (!chartData.length || !kittens.length) return null;
+  if (!chartData.length || !kittens.length) return null
 
   return (
     <ChartContainer
@@ -102,7 +108,7 @@ export function WeightChart({ weighIns }: { weighIns: WeighInRow[] }) {
           dataKey="timestamp"
           type="number"
           scale="time"
-          domain={["dataMin", "dataMax"]}
+          domain={['dataMin', 'dataMax']}
           tickFormatter={formatAxisDate}
           tickLine={false}
           axisLine={false}
@@ -122,8 +128,8 @@ export function WeightChart({ weighIns }: { weighIns: WeighInRow[] }) {
           content={
             <ChartTooltipContent
               labelFormatter={(_, payload) => {
-                const timestamp = payload?.[0]?.payload?.timestamp;
-                return typeof timestamp === "number" ? formatTooltipDate(timestamp) : "";
+                const timestamp = payload?.[0]?.payload?.timestamp
+                return typeof timestamp === 'number' ? formatTooltipDate(timestamp) : ''
               }}
               formatter={(value, name, item) => (
                 <div className="flex w-full items-center gap-2">
@@ -140,7 +146,9 @@ export function WeightChart({ weighIns }: { weighIns: WeighInRow[] }) {
             />
           }
         />
-        <ChartLegend content={<ChartLegendContent className="flex-wrap gap-x-4 gap-y-2" />} />
+        {showLegend ? (
+          <ChartLegend content={<ChartLegendContent className="flex-wrap gap-x-4 gap-y-2" />} />
+        ) : null}
         {kittens.map((kitten) => (
           <Line
             key={kitten.id}
@@ -149,11 +157,11 @@ export function WeightChart({ weighIns }: { weighIns: WeighInRow[] }) {
             stroke={`var(--color-${kitten.id})`}
             strokeWidth={2.5}
             dot={{ r: 3, strokeWidth: 0 }}
-            activeDot={{ r: 5, strokeWidth: 2, stroke: "white" }}
+            activeDot={{ r: 5, strokeWidth: 2, stroke: 'white' }}
             connectNulls
           />
         ))}
       </LineChart>
     </ChartContainer>
-  );
+  )
 }
