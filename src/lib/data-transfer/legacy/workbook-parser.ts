@@ -4,7 +4,14 @@ import {
   type LegacySheet,
   type SpreadsheetParser,
 } from './types'
-import { isTicked, normaliseHeader, parseGrams, parseLooseDate, parseLooseTime } from './values'
+import {
+  isTicked,
+  normaliseHeader,
+  parseGrams,
+  parseLooseDate,
+  parseLooseTime,
+  parsePoopPortions,
+} from './values'
 
 export type SheetKind = 'momma' | 'kitten-weights' | 'chart' | 'unknown'
 
@@ -250,13 +257,16 @@ function parseMommaSheet(sheet: LegacySheet, result: LegacyParseResult) {
         if (/^n(o|one)?$/i.test(entry)) continue
         const entryTime = parseLooseTime(entry)
         const note = normalisePoopNote(stripLeadingTime(entry))
-        result.poops.push({
-          date,
-          time: entryTime ?? column.impliedTime ?? rowTime ?? '12:00:00',
-          note: note && !isTicked(note) ? note : null,
-          kittenName: null,
-          subjectType: 'mother',
-        })
+        const parsedPortions = parsePoopPortions(note && !isTicked(note) ? note : null)
+        for (let portion = 0; portion < parsedPortions.count; portion += 1) {
+          result.poops.push({
+            date,
+            time: entryTime ?? column.impliedTime ?? rowTime ?? '12:00:00',
+            note: parsedPortions.note,
+            kittenName: null,
+            subjectType: 'mother',
+          })
+        }
       }
     }
 
@@ -266,13 +276,16 @@ function parseMommaSheet(sheet: LegacySheet, result: LegacyParseResult) {
       for (const entry of splitEntries(value)) {
         if (/^n(o|one)?$/i.test(entry)) continue
         const parsed = parseKittenPoopEntry(entry)
-        result.poops.push({
-          date,
-          time: parsed.time ?? column.impliedTime ?? rowTime ?? '12:00:00',
-          note: parsed.note,
-          kittenName: parsed.kittenName,
-          subjectType: 'kitten',
-        })
+        const parsedPortions = parsePoopPortions(parsed.note)
+        for (let portion = 0; portion < parsedPortions.count; portion += 1) {
+          result.poops.push({
+            date,
+            time: parsed.time ?? column.impliedTime ?? rowTime ?? '12:00:00',
+            note: parsedPortions.note,
+            kittenName: parsed.kittenName,
+            subjectType: 'kitten',
+          })
+        }
       }
     }
 

@@ -16,7 +16,7 @@ interface PoopDialogProps {
   open: boolean
   onClose: () => void
   litterId: string | undefined
-  entry?: PoopRow | null
+  entries?: PoopRow[]
   motherName?: string | null
   /** Optional entry point hint: a Momma-specific launcher defaults to mother. */
   defaultSubject?: 'mother' | 'kitten'
@@ -29,11 +29,12 @@ export function PoopDialog({
   open,
   onClose,
   litterId,
-  entry,
+  entries = [],
   motherName,
   defaultSubject,
 }: PoopDialogProps) {
   const { user } = useAuth()
+  const entry = entries[0] ?? null
   const queryClient = useQueryClient()
   const { data: kittens = [] } = useQuery(kittensQueryOptions(litterId))
   const [date, setDate] = useState(todayIso())
@@ -41,6 +42,7 @@ export function PoopDialog({
   const [subject, setSubject] = useState<'mother' | 'kitten'>('kitten')
   const [kittenId, setKittenId] = useState('')
   const [note, setNote] = useState('')
+  const [portions, setPortions] = useState(1)
 
   useEffect(() => {
     if (!open) return
@@ -49,7 +51,8 @@ export function PoopDialog({
     setSubject(entry?.subject_type ?? defaultSubject ?? lastSubject)
     setKittenId(entry?.kitten_id ?? '')
     setNote(entry?.note ?? '')
-  }, [open, entry, defaultSubject])
+    setPortions(Math.max(1, entries.length))
+  }, [open, entry, entries.length, defaultSubject])
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -62,12 +65,41 @@ export function PoopDialog({
         kitten_id: subject === 'kitten' ? kittenId || null : null,
         note: note.trim() || null,
       }
-      const { error } = entry
-        ? await supabase.from('poop_entries').update(payload).eq('id', entry.id)
-        : await supabase
+      if (entry) {
+        const retainedIds = entries.slice(0, portions).map((item) => item.id)
+        const removedIds = entries.slice(portions).map((item) => item.id)
+        if (retainedIds.length) {
+          const { error } = await supabase
             .from('poop_entries')
-            .insert({ ...payload, litter_id: litterId, user_id: user.id })
-      if (error) throw error
+            .update(payload)
+            .in('id', retainedIds)
+          if (error) throw error
+        }
+        if (removedIds.length) {
+          const { error } = await supabase.from('poop_entries').delete().in('id', removedIds)
+          if (error) throw error
+        }
+        const additional = Math.max(0, portions - entries.length)
+        if (additional) {
+          const { error } = await supabase.from('poop_entries').insert(
+            Array.from({ length: additional }, () => ({
+              ...payload,
+              litter_id: litterId,
+              user_id: user.id,
+            })),
+          )
+          if (error) throw error
+        }
+      } else {
+        const { error } = await supabase.from('poop_entries').insert(
+          Array.from({ length: portions }, () => ({
+            ...payload,
+            litter_id: litterId,
+            user_id: user.id,
+          })),
+        )
+        if (error) throw error
+      }
     },
     onSuccess: async () => {
       lastSubject = subject
@@ -145,6 +177,21 @@ export function PoopDialog({
             </select>
           </label>
         ) : null}
+        <label className="sm:col-span-2">
+          <span className="mb-1 block text-sm font-medium text-ink">Count *</span>
+          <input
+            type="number"
+            min={1}
+            max={50}
+            required
+            value={portions}
+            onChange={(event) => setPortions(Math.max(1, Math.min(50, Number(event.target.value))))}
+            className={inputClass}
+          />
+          <span className="mt-1 block text-xs text-muted">
+            Number of poops recorded at this time. Each is counted separately in daily totals.
+          </span>
+        </label>
         <label className="sm:col-span-2">
           <span className="mb-1 block text-sm font-medium text-ink">Notes</span>
           <textarea

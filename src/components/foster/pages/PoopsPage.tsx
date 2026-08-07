@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/foster/ui/EmptyState'
 import { KittenAvatar } from '@/components/foster/ui/KittenAvatar'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { PoopDialog } from '@/components/foster/dialogs/PoopDialog'
+import { PoopDailyChart } from '@/components/foster/poops/PoopDailyChart'
 import { ConfirmDialog } from '@/components/foster/settings/ConfirmDialog'
 import {
   groupByDate,
@@ -39,8 +40,8 @@ export function PoopsPage() {
   const months = useMemo(() => [...new Set(days.map((day) => day.date.slice(0, 7)))], [days])
 
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [editing, setEditing] = useState<PoopRow | null>(null)
-  const [pendingDelete, setPendingDelete] = useState<PoopRow | null>(null)
+  const [editing, setEditing] = useState<PoopRow[]>([])
+  const [pendingDelete, setPendingDelete] = useState<PoopRow[]>([])
   const [selectedMonth, setSelectedMonth] = useState('')
   const [openDays, setOpenDays] = useState<Record<string, boolean>>({})
 
@@ -51,12 +52,12 @@ export function PoopsPage() {
   const allDaysOpen = visibleDays.every((day, index) => isDayOpen(day.date, index))
 
   const remove = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from('poop_entries').delete().eq('id', id)
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('poop_entries').delete().in('id', ids)
       if (error) throw error
     },
     onSuccess: async () => {
-      setPendingDelete(null)
+      setPendingDelete([])
       await queryClient.invalidateQueries({ queryKey: ['poops', litter?.id] })
       toast.success('Entry deleted')
     },
@@ -74,7 +75,7 @@ export function PoopsPage() {
               size="md"
               className="shrink-0"
               onClick={() => {
-                setEditing(null)
+                setEditing([])
                 setDialogOpen(true)
               }}
             >
@@ -88,18 +89,18 @@ export function PoopsPage() {
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
         litterId={litter?.id}
-        entry={editing}
+        entries={editing}
         motherName={litter?.mother_name ?? null}
       />
 
       <ConfirmDialog
-        open={Boolean(pendingDelete)}
-        title="Delete this entry?"
+        open={pendingDelete.length > 0}
+        title={`Delete ${pendingDelete.length > 1 ? `these ${pendingDelete.length} poops` : 'this entry'}?`}
         description="This cannot be undone."
         confirmLabel="Delete"
         busy={remove.isPending}
-        onCancel={() => setPendingDelete(null)}
-        onConfirm={() => pendingDelete && remove.mutate(pendingDelete.id)}
+        onCancel={() => setPendingDelete([])}
+        onConfirm={() => remove.mutate(pendingDelete.map((entry) => entry.id))}
       />
 
       {littersLoading || isLoading ? (
@@ -144,6 +145,14 @@ export function PoopsPage() {
             </button>
           </div>
 
+          <Card padding="lg">
+            <div className="mb-3">
+              <h2 className="font-semibold text-ink">Daily poop totals</h2>
+              <p className="text-sm text-muted">Each stacked bar represents individual poops.</p>
+            </div>
+            <PoopDailyChart entries={visibleDays.flatMap((day) => day.items)} />
+          </Card>
+
           <div className="grid items-start gap-3 lg:grid-cols-2 lg:gap-4">
             {visibleDays.map((day, index) => {
               const open = isDayOpen(day.date, index)
@@ -159,8 +168,8 @@ export function PoopsPage() {
                   onOpenChange={(nextOpen) =>
                     setOpenDays((current) => ({ ...current, [day.date]: nextOpen }))
                   }
-                  onEdit={(entry) => {
-                    setEditing(entry)
+                  onEdit={(entryGroup) => {
+                    setEditing(entryGroup)
                     setDialogOpen(true)
                   }}
                   onDelete={setPendingDelete}
@@ -200,19 +209,19 @@ function PoopDayCard({
   canEdit: boolean
   open: boolean
   onOpenChange: (open: boolean) => void
-  onEdit: (entry: PoopRow) => void
-  onDelete: (entry: PoopRow) => void
+  onEdit: (entries: PoopRow[]) => void
+  onDelete: (entries: PoopRow[]) => void
 }) {
   const groups = [
     {
       key: 'mother',
       label: `Momma${motherName ? ` (${motherName})` : ''}`,
-      entries: entries.filter((entry) => entry.subject_type === 'mother'),
+      entries: groupPoopEntries(entries.filter((entry) => entry.subject_type === 'mother')),
     },
     {
       key: 'kitten',
       label: 'Kittens',
-      entries: entries.filter((entry) => entry.subject_type === 'kitten'),
+      entries: groupPoopEntries(entries.filter((entry) => entry.subject_type === 'kitten')),
     },
   ].filter((group) => group.entries.length)
 
@@ -252,66 +261,75 @@ function PoopDayCard({
                 >
                   <h3 className="text-sm font-semibold text-ink">{group.label}</h3>
                   <span className="text-xs text-muted">
-                    {group.entries.length} entr{group.entries.length === 1 ? 'y' : 'ies'}
+                    {group.entries.flat().length} entr
+                    {group.entries.flat().length === 1 ? 'y' : 'ies'}
                   </span>
                 </div>
                 <ul className="divide-y divide-border/70 bg-white px-3">
-                  {group.entries.map((entry) => (
-                    <li
-                      key={entry.id}
-                      className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-3 gap-y-1 py-3 last:pb-4"
-                    >
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-lg">
-                        💩
-                      </span>
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                          <p className="text-base font-semibold tabular-nums text-ink">
-                            {entry.time.slice(0, 5)}
-                          </p>
-                          {entry.subject_type === 'mother' ? (
-                            <Badge label="Momma" color="neutral" />
-                          ) : entry.kitten_id ? (
-                            <span className="flex items-center gap-1.5">
-                              <KittenAvatar
-                                name={entry.kittens?.name ?? 'Kitten'}
-                                avatarPath={entry.kittens?.avatar_path ?? null}
-                                colour={entry.kittens?.tag_colour ?? null}
-                                size="sm"
-                              />
-                              <Badge label={entry.kittens?.name ?? 'Kitten'} color="neutral" />
-                            </span>
+                  {group.entries.map((entryGroup) => {
+                    const entry = entryGroup[0]!
+                    return (
+                      <li
+                        key={entry.id}
+                        className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-3 gap-y-1 py-3 last:pb-4"
+                      >
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-lg">
+                          💩
+                        </span>
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                            <p className="text-base font-semibold tabular-nums text-ink">
+                              {entry.time.slice(0, 5)}
+                            </p>
+                            {entryGroup.length > 1 ? (
+                              <Badge label={`×${entryGroup.length}`} color="brand" />
+                            ) : null}
+                            {entry.subject_type === 'mother' ? (
+                              <Badge label="Momma" color="neutral" />
+                            ) : entry.kitten_id ? (
+                              <span className="flex items-center gap-1.5">
+                                <KittenAvatar
+                                  name={entry.kittens?.name ?? 'Kitten'}
+                                  avatarPath={entry.kittens?.avatar_path ?? null}
+                                  colour={entry.kittens?.tag_colour ?? null}
+                                  size="sm"
+                                />
+                                <Badge label={entry.kittens?.name ?? 'Kitten'} color="neutral" />
+                              </span>
+                            ) : null}
+                          </div>
+                          {entry.note ? (
+                            <p className="mt-0.5 text-sm text-muted">
+                              {formatPoopNote(entry.note)}
+                            </p>
                           ) : null}
+                          <p className="mt-1 text-xs text-muted">
+                            Added by {logAuthorName(profiles, entry.user_id)}
+                          </p>
                         </div>
-                        {entry.note ? (
-                          <p className="mt-0.5 text-sm text-muted">{formatPoopNote(entry.note)}</p>
+                        {canEdit ? (
+                          <div className="flex shrink-0 items-center gap-1">
+                            <button
+                              type="button"
+                              className={iconButtonClass}
+                              aria-label="Edit entry"
+                              onClick={() => onEdit(entryGroup)}
+                            >
+                              ✎
+                            </button>
+                            <button
+                              type="button"
+                              className={iconButtonClass}
+                              aria-label="Delete entry"
+                              onClick={() => onDelete(entryGroup)}
+                            >
+                              ✕
+                            </button>
+                          </div>
                         ) : null}
-                        <p className="mt-1 text-xs text-muted">
-                          Added by {logAuthorName(profiles, entry.user_id)}
-                        </p>
-                      </div>
-                      {canEdit ? (
-                        <div className="flex shrink-0 items-center gap-1">
-                          <button
-                            type="button"
-                            className={iconButtonClass}
-                            aria-label="Edit entry"
-                            onClick={() => onEdit(entry)}
-                          >
-                            ✎
-                          </button>
-                          <button
-                            type="button"
-                            className={iconButtonClass}
-                            aria-label="Delete entry"
-                            onClick={() => onDelete(entry)}
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      ) : null}
-                    </li>
-                  ))}
+                      </li>
+                    )
+                  })}
                 </ul>
               </section>
             ))}
@@ -327,6 +345,23 @@ function formatMonth(month: string) {
     month: 'long',
     year: 'numeric',
   }).format(new Date(`${month}-01T12:00:00`))
+}
+
+function groupPoopEntries(entries: PoopRow[]): PoopRow[][] {
+  const groups = new Map<string, PoopRow[]>()
+  for (const entry of entries) {
+    const key = [
+      entry.time.slice(0, 5),
+      entry.subject_type,
+      entry.kitten_id ?? '',
+      entry.note?.trim().toLowerCase() ?? '',
+      entry.user_id,
+    ].join('|')
+    const group = groups.get(key)
+    if (group) group.push(entry)
+    else groups.set(key, [entry])
+  }
+  return [...groups.values()]
 }
 
 function formatPoopNote(note: string) {

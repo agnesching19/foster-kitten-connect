@@ -8,20 +8,7 @@ export function normaliseHeader(header: string): string {
     .trim()
 }
 
-const MONTHS = [
-  'jan',
-  'feb',
-  'mar',
-  'apr',
-  'may',
-  'jun',
-  'jul',
-  'aug',
-  'sep',
-  'oct',
-  'nov',
-  'dec',
-]
+const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
 
 const WEEKDAY = /^(mon|tues?|tue|wed(nes)?|thur?s?|fri|sat(ur)?|sun)[a-z]*\.?,?\s*/i
 
@@ -33,7 +20,10 @@ function pad(value: number): string {
  * Accepts YYYY-MM-DD, DD/MM/YYYY, MM/DD/YY, "12 Mar 2024", "Mar 12",
  * and Google Sheets style "Fri, 19 June 2026".
  */
-export function parseLooseDate(raw: string, fallbackYear = new Date().getFullYear()): string | null {
+export function parseLooseDate(
+  raw: string,
+  fallbackYear = new Date().getFullYear(),
+): string | null {
   const value = raw.trim().replace(WEEKDAY, '').trim()
   if (!value) return null
 
@@ -134,6 +124,19 @@ export function isTicked(raw: string): boolean {
   if (TRUTHY.has(value)) return true
   if (parseLooseTime(value)) return true
   return false
+}
+
+/** Extracts a legacy portion marker such as x2 or x 4 and removes it from the note. */
+export function parsePoopPortions(raw: string | null): { count: number; note: string | null } {
+  if (!raw) return { count: 1, note: null }
+  const match = raw.match(/\bx\s*([2-9][0-9]*)\b/i)
+  const count = Math.min(Number(match?.[1] ?? 1), 50)
+  const note = raw
+    .replace(/\bx\s*[2-9][0-9]*\b/gi, '')
+    .replace(/[()]/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/^[\s,;]+|[\s,;]+$/g, '')
+  return { count, note: note || null }
 }
 
 /** Weight cells: "112", "112g", "0.112 kg", "4 oz", "3.9". */
