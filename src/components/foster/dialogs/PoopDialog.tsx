@@ -11,6 +11,7 @@ import {
   todayIso,
 } from '@/components/foster/ui/FormDialog'
 import { kittensQueryOptions, type PoopRow } from '@/lib/foster-queries'
+import { CountStepper } from '@/components/foster/ui/CountStepper'
 
 interface PoopDialogProps {
   open: boolean
@@ -177,21 +178,15 @@ export function PoopDialog({
             </select>
           </label>
         ) : null}
-        <label className="sm:col-span-2">
-          <span className="mb-1 block text-sm font-medium text-ink">Count *</span>
-          <input
-            type="number"
-            min={1}
-            max={50}
-            required
-            value={portions}
-            onChange={(event) => setPortions(Math.max(1, Math.min(50, Number(event.target.value))))}
-            className={inputClass}
-          />
+        <div className="sm:col-span-2">
+          <label htmlFor="poop-count" className="mb-1 block text-sm font-medium text-ink">
+            Count *
+          </label>
+          <CountStepper id="poop-count" value={portions} onChange={setPortions} />
           <span className="mt-1 block text-xs text-muted">
             Number of poops recorded at this time. Each is counted separately in daily totals.
           </span>
-        </label>
+        </div>
         <label className="sm:col-span-2">
           <span className="mb-1 block text-sm font-medium text-ink">Notes</span>
           <textarea

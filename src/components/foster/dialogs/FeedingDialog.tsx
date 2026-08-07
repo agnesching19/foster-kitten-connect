@@ -11,6 +11,7 @@ import {
   todayIso,
 } from '@/components/foster/ui/FormDialog'
 import type { FeedingRow } from '@/lib/foster-queries'
+import { CountStepper } from '@/components/foster/ui/CountStepper'
 
 interface FeedingDialogProps {
   open: boolean
@@ -160,23 +161,15 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
             New flavours are saved to the preset list automatically.
           </p>
         </fieldset>
-        <label className="sm:col-span-2">
-          <span className="mb-1 block text-sm font-medium text-ink">Pouch count *</span>
-          <input
-            type="number"
-            min={1}
-            max={50}
-            required
-            value={pouchCount}
-            onChange={(event) =>
-              setPouchCount(Math.max(1, Math.min(50, Number(event.target.value))))
-            }
-            className={inputClass}
-          />
+        <div className="sm:col-span-2">
+          <label htmlFor="feeding-pouch-count" className="mb-1 block text-sm font-medium text-ink">
+            Pouch count *
+          </label>
+          <CountStepper id="feeding-pouch-count" value={pouchCount} onChange={setPouchCount} />
           <span className="mt-1 block text-xs text-muted">
             Number of pouches served during this feeding.
           </span>
-        </label>
+        </div>
         <label className="sm:col-span-2">
           <span className="mb-1 block text-sm font-medium text-ink">Notes</span>
           <textarea
