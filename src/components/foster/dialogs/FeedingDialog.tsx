@@ -26,6 +26,7 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
   const [time, setTime] = useState(nowTime())
   const [food, setFood] = useState('')
   const [notes, setNotes] = useState('')
+  const [pouchCount, setPouchCount] = useState(1)
   const { data: storedPresets = [] } = useQuery({
     queryKey: ['feeding-food-presets'],
     queryFn: async () => {
@@ -46,6 +47,7 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
     setTime(feeding?.time.slice(0, 5) ?? nowTime())
     setFood(feeding?.food ?? '')
     setNotes(feeding?.notes ?? '')
+    setPouchCount(feeding?.pouch_count ?? 1)
   }, [open, feeding])
 
   const mutation = useMutation({
@@ -58,6 +60,7 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
         time,
         food: normalisedFood,
         notes: notes.trim() || null,
+        pouch_count: pouchCount,
       }
       const { error } = feeding
         ? await supabase.from('feedings').update(payload).eq('id', feeding.id)
@@ -157,6 +160,23 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
             New flavours are saved to the preset list automatically.
           </p>
         </fieldset>
+        <label className="sm:col-span-2">
+          <span className="mb-1 block text-sm font-medium text-ink">Pouch count *</span>
+          <input
+            type="number"
+            min={1}
+            max={50}
+            required
+            value={pouchCount}
+            onChange={(event) =>
+              setPouchCount(Math.max(1, Math.min(50, Number(event.target.value))))
+            }
+            className={inputClass}
+          />
+          <span className="mt-1 block text-xs text-muted">
+            Number of pouches served during this feeding.
+          </span>
+        </label>
         <label className="sm:col-span-2">
           <span className="mb-1 block text-sm font-medium text-ink">Notes</span>
           <textarea

@@ -94,6 +94,7 @@ export const tableSpecs: TableSpec[] = [
       { name: 'time', required: true, type: 'time' },
       { name: 'food', required: true },
       { name: 'meal_number', type: 'int' },
+      { name: 'pouch_count', type: 'int' },
     ],
   },
   {

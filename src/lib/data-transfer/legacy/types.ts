@@ -11,6 +11,7 @@ export interface FeedingDraft {
   time: string
   food: string
   meal_number: number | null
+  pouch_count?: number
   notes: string | null
 }
 

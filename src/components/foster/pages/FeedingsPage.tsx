@@ -46,6 +46,10 @@ export function FeedingsPage() {
   const activeMonth = months.includes(selectedMonth) ? selectedMonth : (months[0] ?? '')
   const visibleDays = days.filter((day) => day.date.startsWith(activeMonth))
   const visibleFeedingCount = visibleDays.reduce((total, day) => total + day.items.length, 0)
+  const visiblePouchCount = visibleDays.reduce(
+    (total, day) => total + day.items.reduce((sum, feeding) => sum + feeding.pouch_count, 0),
+    0,
+  )
   const isDayOpen = (date: string, index: number) => openDays[date] ?? index < 2
   const allDaysOpen = visibleDays.every((day, index) => isDayOpen(day.date, index))
 
@@ -126,6 +130,8 @@ export function FeedingsPage() {
               <p className="hidden text-sm text-muted md:block">
                 {visibleDays.length} day{visibleDays.length === 1 ? '' : 's'} ·{' '}
                 {visibleFeedingCount} feeding{visibleFeedingCount === 1 ? '' : 's'}
+                {' · '}
+                {visiblePouchCount} pouch{visiblePouchCount === 1 ? '' : 'es'}
               </p>
             </div>
             <button
@@ -198,6 +204,8 @@ function FeedingDayCard({
   onEdit: (feeding: FeedingRow) => void
   onDelete: (feeding: FeedingRow) => void
 }) {
+  const pouchCount = feedings.reduce((total, feeding) => total + feeding.pouch_count, 0)
+
   return (
     <Collapsible open={open} onOpenChange={onOpenChange}>
       <Card>
@@ -210,6 +218,8 @@ function FeedingDayCard({
               <span className="block font-semibold text-ink">{formatRelativeDay(date)}</span>
               <span className="mt-0.5 block text-sm text-muted">
                 {feedings.length} feeding{feedings.length === 1 ? '' : 's'}
+                {' · '}
+                {pouchCount} pouch{pouchCount === 1 ? '' : 'es'}
               </span>
             </span>
             <ChevronDown
@@ -235,6 +245,9 @@ function FeedingDayCard({
                     </p>
                     {feeding.meal_number != null ? (
                       <Badge label={`Pouch ${feeding.meal_number}`} color="brand" />
+                    ) : null}
+                    {feeding.pouch_count > 1 ? (
+                      <Badge label={`×${feeding.pouch_count} pouches`} color="neutral" />
                     ) : null}
                   </div>
                   <p className="mt-0.5 text-sm capitalize text-muted">{feeding.food}</p>

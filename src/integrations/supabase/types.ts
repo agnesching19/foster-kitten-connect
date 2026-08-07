@@ -55,6 +55,7 @@ export type Database = {
           litter_id: string
           meal_number: number | null
           notes: string | null
+          pouch_count: number
           time: string
           updated_at: string
           user_id: string
@@ -67,6 +68,7 @@ export type Database = {
           litter_id: string
           meal_number?: number | null
           notes?: string | null
+          pouch_count?: number
           time: string
           updated_at?: string
           user_id: string
@@ -79,6 +81,7 @@ export type Database = {
           litter_id?: string
           meal_number?: number | null
           notes?: string | null
+          pouch_count?: number
           time?: string
           updated_at?: string
           user_id?: string

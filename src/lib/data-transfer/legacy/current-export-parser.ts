@@ -39,6 +39,7 @@ export const currentExportParser: SpreadsheetParser = {
             time,
             food: row['food'] || 'Fed',
             meal_number: Number(row['meal_number']) || null,
+            pouch_count: Number(row['pouch_count']) || 1,
             notes: row['notes'] || null,
           })
         } else if (spec.table === 'poop_entries') {
