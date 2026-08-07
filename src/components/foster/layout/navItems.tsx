@@ -119,8 +119,8 @@ export const navItems: NavItem[] = [
   },
   {
     to: '/litter',
-    label: 'Litter',
-    shortLabel: 'Litter',
+    label: 'Litter box',
+    shortLabel: 'Litter box',
     icon: (active) => (
       <svg
         aria-hidden

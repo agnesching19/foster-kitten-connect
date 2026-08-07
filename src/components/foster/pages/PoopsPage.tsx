@@ -69,7 +69,7 @@ export function PoopsPage() {
         title="Poops"
         subtitle="Bathroom log"
         action={
-          canEdit ? (
+          canEdit && (
             <Button
               size="md"
               className="shrink-0"
@@ -80,7 +80,7 @@ export function PoopsPage() {
             >
               + Log
             </Button>
-          ) : null
+          )
         }
       />
 
@@ -174,7 +174,7 @@ export function PoopsPage() {
           <EmptyState
             icon="💩"
             title="No entries yet"
-            description={litter ? 'Log a poop to start tracking.' : 'Add a litter first.'}
+            description={litter ? 'Log a poop to start tracking.' : 'Add a batch first.'}
           />
         </Card>
       )}
@@ -281,9 +281,7 @@ function PoopDayCard({
                               />
                               <Badge label={entry.kittens?.name ?? 'Kitten'} color="neutral" />
                             </span>
-                          ) : (
-                            <Badge label="Not identified" color="neutral" />
-                          )}
+                          ) : null}
                         </div>
                         {entry.note ? (
                           <p className="mt-0.5 text-sm text-muted">{formatPoopNote(entry.note)}</p>

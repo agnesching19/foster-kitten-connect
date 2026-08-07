@@ -8,7 +8,7 @@ export const Route = createFileRoute('/auth')({
       {
         name: 'description',
         content:
-          'Sign in or create an account to log feedings, weights and litter records for your foster cats.',
+          'Sign in or create an account to log feedings, weights and litter-box records for your foster cats.',
       },
       { property: 'og:title', content: 'Sign In | Kitty Tracker' },
       {

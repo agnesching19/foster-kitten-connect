@@ -67,8 +67,8 @@ export function DashboardPage() {
             className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl bg-brand-500 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600"
           >
             <span aria-hidden>＋</span>
-            <span className="hidden sm:inline">New litter</span>
-            <span className="sr-only sm:hidden">New litter</span>
+            <span className="hidden sm:inline">New batch</span>
+            <span className="sr-only sm:hidden">New batch</span>
           </button>
         }
       />
@@ -108,7 +108,7 @@ export function DashboardPage() {
           />
           <QuickViewCard
             to="/litter"
-            label="Last litter change"
+            label="Last litter box change"
             value={
               quickView?.latestLitterChange
                 ? quickView.latestLitterChange.date === today
@@ -174,12 +174,12 @@ export function DashboardPage() {
       ) : (
         <Card className="py-12 text-center">
           <p className="font-medium text-ink">
-            {litters.length ? 'No matching batches' : 'No litters yet'}
+            {litters.length ? 'No matching batches' : 'No batches yet'}
           </p>
           <p className="mt-1 text-sm text-muted">
             {litters.length
               ? 'Try another name or filter.'
-              : 'Add your first foster litter to get started.'}
+              : 'Add your first foster batch to get started.'}
           </p>
         </Card>
       )}
@@ -261,7 +261,7 @@ function BatchCard({ litter }: { litter: LitterRow }) {
       </div>
 
       <div className="mt-4 w-full rounded-xl bg-gray-50 px-3 py-3">
-        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">The litter</p>
+        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">The kittens</p>
         {litter.kittens.length ? (
           <ul className="flex flex-wrap items-center gap-2 text-sm leading-relaxed text-ink">
             {litter.kittens.map((k) => (

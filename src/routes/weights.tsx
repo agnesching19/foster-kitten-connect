@@ -7,7 +7,7 @@ export const Route = createFileRoute('/weights')({
       { title: 'Kitten Weights | Kitty Tracker' },
       {
         name: 'description',
-        content: 'Weigh-in history and growth percentages for every kitten in your foster litter.',
+        content: 'Weigh-in history and growth percentages for every kitten in your foster batch.',
       },
       { property: 'og:title', content: 'Kitten Weights | Kitty Tracker' },
       {

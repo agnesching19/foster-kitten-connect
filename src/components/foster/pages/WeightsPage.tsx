@@ -293,7 +293,7 @@ export function WeightsPage() {
           <EmptyState
             icon="⚖️"
             title="No weigh-ins yet"
-            description={litter ? 'Record a weigh-in to track growth.' : 'Add a litter first.'}
+            description={litter ? 'Record a weigh-in to track growth.' : 'Add a batch first.'}
           />
         </Card>
       )}

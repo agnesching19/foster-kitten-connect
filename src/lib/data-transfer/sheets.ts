@@ -21,7 +21,7 @@ export const fosterTrackerTemplate: SheetTemplateAdapter = {
   id: 'foster-tracker-v1',
   label: 'Kitty Tracker template',
   description:
-    'Tabs: Litters, Kittens, Feedings, Poops, Litter changes, Weigh-ins, Weights, Notes.',
+    'Tabs: Batches (Litters), Kittens, Feedings, Poops, Litter box changes, Weigh-ins, Weights, Notes.',
   matches: (url) => /docs\.google\.com\/spreadsheets\//.test(url),
   buildPreview: async () => {
     throw new SheetTemplateNotReadyError(

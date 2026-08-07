@@ -57,19 +57,21 @@ export function ImportPreviewPanel({
       {conflicting.length ? (
         <div className="mt-3">
           <p className="text-sm font-semibold text-ink">
-            {conflicting.length} litter{conflicting.length === 1 ? '' : 's'} already exist
+            {conflicting.length} batch{conflicting.length === 1 ? '' : 'es'} already exist
           </p>
           <p className="mt-0.5 text-xs text-muted">
             {conflicting.map((litter) => litter.label).join(', ')}
           </p>
           <label className="mt-2 block">
-            <span className="mb-1 block text-sm font-medium text-ink">How should we handle them?</span>
+            <span className="mb-1 block text-sm font-medium text-ink">
+              How should we handle them?
+            </span>
             <select
               value={strategy}
               onChange={(event) => onStrategyChange(event.target.value as ConflictStrategy)}
               className={inputClass}
             >
-              <option value="skip">Skip — leave existing litters untouched</option>
+              <option value="skip">Skip — leave existing batches untouched</option>
               <option value="merge">Merge — update matching records, keep the rest</option>
               <option value="replace">Replace — delete existing records, then import</option>
             </select>

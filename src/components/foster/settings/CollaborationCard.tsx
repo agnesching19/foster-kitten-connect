@@ -40,7 +40,7 @@ export function CollaborationCard() {
 
   const addCollaborator = useMutation({
     mutationFn: async (userId: string) => {
-      if (!litter) throw new Error('No litter selected')
+      if (!litter) throw new Error('No batch selected')
       const { error } = await supabase.from('litter_collaborators').insert({
         litter_id: litter.id,
         user_id: userId,
@@ -58,7 +58,7 @@ export function CollaborationCard() {
 
   const removeCollaborator = useMutation({
     mutationFn: async (userId: string) => {
-      if (!litter) throw new Error('No litter selected')
+      if (!litter) throw new Error('No batch selected')
       const { error } = await supabase
         .from('litter_collaborators')
         .delete()
@@ -79,17 +79,17 @@ export function CollaborationCard() {
   return (
     <Card>
       <CardHeader
-        title="Litter access"
+        title="Batch access"
         subtitle={
           litter
             ? `Choose who can add, edit and delete records for ${litter.litter_name || litter.mother_name}.`
-            : 'Add a litter before inviting another editor.'
+            : 'Add a batch before inviting another editor.'
         }
       />
 
       {!user || !litter ? (
         <p className="rounded-xl bg-gray-50 px-3 py-2 text-sm text-muted">
-          Sign in and select a litter to manage access.
+          Sign in and select a batch to manage access.
         </p>
       ) : (
         <div className="grid gap-3">
@@ -158,7 +158,7 @@ export function CollaborationCard() {
               </Button>
             </div>
           ) : (
-            <p className="text-xs text-muted">Only the litter owner can change editor access.</p>
+            <p className="text-xs text-muted">Only the batch owner can change editor access.</p>
           )}
         </div>
       )}

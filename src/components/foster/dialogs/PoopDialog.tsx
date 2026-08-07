@@ -54,7 +54,7 @@ export function PoopDialog({
   const mutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error('You need to be signed in.')
-      if (!litterId) throw new Error('Add a litter first.')
+      if (!litterId) throw new Error('Add a batch first.')
       const payload = {
         date,
         time,
@@ -98,11 +98,23 @@ export function PoopDialog({
       >
         <label>
           <span className="mb-1 block text-sm font-medium text-ink">Date *</span>
-          <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className={inputClass} />
+          <input
+            type="date"
+            required
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className={inputClass}
+          />
         </label>
         <label>
           <span className="mb-1 block text-sm font-medium text-ink">Time *</span>
-          <input type="time" required value={time} onChange={(e) => setTime(e.target.value)} className={inputClass} />
+          <input
+            type="time"
+            required
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+            className={inputClass}
+          />
         </label>
         <label className="sm:col-span-2">
           <span className="mb-1 block text-sm font-medium text-ink">Subject *</span>
@@ -118,22 +130,36 @@ export function PoopDialog({
         </label>
         {subject === 'kitten' ? (
           <label className="sm:col-span-2">
-          <span className="mb-1 block text-sm font-medium text-ink">Kitten</span>
-          <select value={kittenId} onChange={(e) => setKittenId(e.target.value)} className={inputClass}>
-            <option value="">Not identified</option>
-            {kittens.map((kitten) => (
-              <option key={kitten.id} value={kitten.id}>
-                {kitten.name}
-              </option>
-            ))}
-          </select>
+            <span className="mb-1 block text-sm font-medium text-ink">Kitten</span>
+            <select
+              value={kittenId}
+              onChange={(e) => setKittenId(e.target.value)}
+              className={inputClass}
+            >
+              <option value="">Not identified</option>
+              {kittens.map((kitten) => (
+                <option key={kitten.id} value={kitten.id}>
+                  {kitten.name}
+                </option>
+              ))}
+            </select>
           </label>
         ) : null}
         <label className="sm:col-span-2">
           <span className="mb-1 block text-sm font-medium text-ink">Notes</span>
-          <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} className={inputClass} placeholder="Optional" />
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={2}
+            className={inputClass}
+            placeholder="Optional"
+          />
         </label>
-        <DialogActions busy={mutation.isPending} onCancel={onClose} saveLabel={entry ? 'Save changes' : 'Save entry'} />
+        <DialogActions
+          busy={mutation.isPending}
+          onCancel={onClose}
+          saveLabel={entry ? 'Save changes' : 'Save entry'}
+        />
       </form>
     </FormDialog>
   )

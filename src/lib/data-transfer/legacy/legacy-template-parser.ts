@@ -89,7 +89,7 @@ export const legacyTemplateParser: SpreadsheetParser = {
   id: 'legacy-foster-tracker',
   label: 'Legacy Kitty Tracker spreadsheet',
   description:
-    'Row-per-entry sheets with columns such as Date, Time, Food, Poop, Litter change, Weight and Notes — column names and order are detected automatically.',
+    'Row-per-entry sheets with columns such as Date, Time, Food, Poop, Litter box change, Weight and Notes — column names and order are detected automatically.',
   detect: (sheets) => {
     let score = 0
     for (const sheet of sheets) {

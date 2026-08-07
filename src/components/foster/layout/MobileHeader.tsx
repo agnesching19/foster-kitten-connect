@@ -1,10 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useLocation } from '@tanstack/react-router'
 import { littersQueryOptions, pickCurrentLitter } from '@/lib/foster-queries'
+import { useLiveCamAccess } from '@/hooks/useLiveCamAccess'
 import { AuthStatus } from './AuthStatus'
 import { liveCamsNavItem } from './navItems'
 
 export function MobileHeader() {
+  const { canAccess: canAccessLiveCams } = useLiveCamAccess()
   const { data: litters = [] } = useQuery(littersQueryOptions)
   const isSettings = useLocation({ select: (location) => location.pathname === '/settings' })
   const current = pickCurrentLitter(litters)
@@ -25,16 +27,18 @@ export function MobileHeader() {
         </div>
         <div className="flex items-center gap-3">
           <AuthStatus variant="mobile" />
-          <a
-            href={liveCamsNavItem.href}
-            target="_blank"
-            rel="noreferrer"
-            aria-label="Open live kitten cameras"
-            title="Live cams"
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-muted transition hover:bg-brand-100 hover:text-ink"
-          >
-            {liveCamsNavItem.icon}
-          </a>
+          {canAccessLiveCams && (
+            <a
+              href={liveCamsNavItem.href}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Open live kitten cameras"
+              title="Live cams"
+              className="flex h-9 w-9 items-center justify-center rounded-xl text-muted transition hover:bg-brand-100 hover:text-ink"
+            >
+              {liveCamsNavItem.icon}
+            </a>
+          )}
           <Link
             to={isSettings ? '/' : '/settings'}
             aria-label={isSettings ? 'Close settings' : 'Settings'}

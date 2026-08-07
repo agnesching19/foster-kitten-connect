@@ -47,7 +47,7 @@ export function ProfileCard() {
     <Card>
       <CardHeader
         title="Your profile"
-        subtitle="This name appears beside feedings, bathroom entries, weigh-ins and litter changes you add."
+        subtitle="This name appears beside feedings, bathroom entries, weigh-ins and litter-box changes you add."
       />
       {user ? (
         <form onSubmit={save} className="flex flex-col gap-3 sm:flex-row sm:items-end">

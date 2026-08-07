@@ -38,7 +38,7 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
   const mutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error('You need to be signed in.')
-      if (!litterId) throw new Error('Add a litter first.')
+      if (!litterId) throw new Error('Add a batch first.')
       const payload = {
         date,
         time,

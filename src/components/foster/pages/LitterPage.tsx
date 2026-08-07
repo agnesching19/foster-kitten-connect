@@ -42,7 +42,7 @@ export function LitterPage() {
   const logNow = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error('You need to be signed in.')
-      if (!litter) throw new Error('Add a litter first.')
+      if (!litter) throw new Error('Add a batch first.')
       const { error } = await supabase.from('litter_changes').insert({
         litter_id: litter.id,
         user_id: user.id,
@@ -54,9 +54,9 @@ export function LitterPage() {
     onSuccess: async () => {
       setConfirmOpen(false)
       await queryClient.invalidateQueries({ queryKey: ['litter-changes', litter?.id] })
-      toast.success('Litter change logged')
+      toast.success('Litter box change logged')
     },
-    onError: (error: Error) => toast.error(error.message || 'Could not log the litter change'),
+    onError: (error: Error) => toast.error(error.message || 'Could not log the litter box change'),
   })
 
   const remove = useMutation({
@@ -67,18 +67,18 @@ export function LitterPage() {
     onSuccess: async () => {
       setPendingDelete(null)
       await queryClient.invalidateQueries({ queryKey: ['litter-changes', litter?.id] })
-      toast.success('Litter change deleted')
+      toast.success('Litter box change deleted')
     },
     onError: (error: Error) => toast.error(error.message || 'Could not delete the record'),
   })
 
   return (
     <div>
-      <PageHeader title="Litter" subtitle="Litter box maintenance" />
+      <PageHeader title="Litter box" subtitle="Cleaning and maintenance history" />
 
       <ConfirmDialog
         open={confirmOpen}
-        title="Log a litter change now?"
+        title="Log a litter box change now?"
         description={`This saves a change for ${todayIso()} at ${nowTime()}.`}
         confirmLabel="Log change"
         busy={logNow.isPending}
@@ -88,7 +88,7 @@ export function LitterPage() {
 
       <ConfirmDialog
         open={Boolean(pendingDelete)}
-        title="Delete this litter change?"
+        title="Delete this litter box change?"
         description="This cannot be undone."
         confirmLabel="Delete"
         busy={remove.isPending}
@@ -119,7 +119,7 @@ export function LitterPage() {
               disabled={!litter || logNow.isPending}
               onClick={() => setConfirmOpen(true)}
             >
-              Log litter change now
+              Log litter box change now
             </Button>
           ) : null}
         </Card>
@@ -155,7 +155,7 @@ export function LitterPage() {
                         <button
                           type="button"
                           className={iconButtonClass}
-                          aria-label="Edit litter change"
+                          aria-label="Edit litter box change"
                           onClick={() => {
                             setEditing(change)
                             setDialogOpen(true)
@@ -166,7 +166,7 @@ export function LitterPage() {
                         <button
                           type="button"
                           className={iconButtonClass}
-                          aria-label="Delete litter change"
+                          aria-label="Delete litter box change"
                           onClick={() => setPendingDelete(change)}
                         >
                           ✕
@@ -181,8 +181,8 @@ export function LitterPage() {
             <Card>
               <EmptyState
                 icon="🧹"
-                title="No litter changes yet"
-                description={litter ? 'Log a change to start the history.' : 'Add a litter first.'}
+                title="No litter box changes yet"
+                description={litter ? 'Log a change to start the history.' : 'Add a batch first.'}
               />
             </Card>
           )}

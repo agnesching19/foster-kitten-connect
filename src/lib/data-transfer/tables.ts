@@ -31,7 +31,7 @@ export interface TableSpec {
 export const tableSpecs: TableSpec[] = [
   {
     table: 'litters',
-    label: 'Litters',
+    label: 'Batches',
     file: 'litters.csv',
     litterColumn: 'id',
     columns: [
@@ -112,7 +112,7 @@ export const tableSpecs: TableSpec[] = [
   },
   {
     table: 'litter_changes',
-    label: 'Litter changes',
+    label: 'Litter box changes',
     file: 'litter_changes.csv',
     litterColumn: 'litter_id',
     columns: [
@@ -183,21 +183,33 @@ export function normaliseRow(
     switch (column.type) {
       case 'uuid':
         if (!uuidPattern.test(raw)) {
-          issues.push({ file: spec.file, row: rowNumber, message: `"${column.name}" is not a valid ID` })
+          issues.push({
+            file: spec.file,
+            row: rowNumber,
+            message: `"${column.name}" is not a valid ID`,
+          })
           valid = false
         }
         payload[column.name] = raw
         break
       case 'date':
         if (!datePattern.test(raw)) {
-          issues.push({ file: spec.file, row: rowNumber, message: `"${column.name}" must be YYYY-MM-DD` })
+          issues.push({
+            file: spec.file,
+            row: rowNumber,
+            message: `"${column.name}" must be YYYY-MM-DD`,
+          })
           valid = false
         }
         payload[column.name] = raw
         break
       case 'time':
         if (!timePattern.test(raw)) {
-          issues.push({ file: spec.file, row: rowNumber, message: `"${column.name}" must be HH:MM` })
+          issues.push({
+            file: spec.file,
+            row: rowNumber,
+            message: `"${column.name}" must be HH:MM`,
+          })
           valid = false
         }
         payload[column.name] = raw
@@ -205,7 +217,11 @@ export function normaliseRow(
       case 'int': {
         const parsed = Number(raw)
         if (!Number.isInteger(parsed)) {
-          issues.push({ file: spec.file, row: rowNumber, message: `"${column.name}" must be a whole number` })
+          issues.push({
+            file: spec.file,
+            row: rowNumber,
+            message: `"${column.name}" must be a whole number`,
+          })
           valid = false
         }
         payload[column.name] = parsed

@@ -8,7 +8,7 @@ export const Route = createFileRoute('/settings')({
       {
         name: 'description',
         content:
-          'Import litters, kittens and logs from CSV or Google Sheets, export CSV bundles and download complete backups of your foster records.',
+          'Import batches, kittens and logs from CSV or Google Sheets, export CSV bundles and download complete backups of your foster records.',
       },
       { property: 'og:title', content: 'Settings & Data Management | Kitty Tracker' },
       {

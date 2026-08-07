@@ -8,7 +8,7 @@ export const Route = createFileRoute('/')({
       {
         name: 'description',
         content:
-          'Track foster momma cats and their kittens: batches, feedings, weights, bathroom logs and litter changes.',
+          'Track foster momma cats and their kittens: batches, feedings, weights, bathroom logs and litter-box changes.',
       },
       {
         property: 'og:title',
@@ -17,7 +17,7 @@ export const Route = createFileRoute('/')({
       {
         property: 'og:description',
         content:
-          'Track foster momma cats and their kittens: batches, feedings, weights, bathroom logs and litter changes.',
+          'Track foster momma cats and their kittens: batches, feedings, weights, bathroom logs and litter-box changes.',
       },
       { property: 'og:type', content: 'website' },
       { name: 'twitter:card', content: 'summary_large_image' },

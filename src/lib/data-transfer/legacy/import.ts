@@ -42,9 +42,9 @@ export async function runLegacyImport(
 
   if (!litterId) {
     if (!target.newLitter?.mother_name || !target.newLitter.arrived) {
-      throw new Error('Enter a mother name and arrival date for the new litter.')
+      throw new Error('Enter a mother name and arrival date for the new batch.')
     }
-    onProgress?.({ step: 'Creating litter…', percent: 5 })
+    onProgress?.({ step: 'Creating batch…', percent: 5 })
     const { data, error } = await supabase
       .from('litters')
       .insert({ ...target.newLitter, user_id: userId, status: 'active' })
@@ -112,7 +112,7 @@ export async function runLegacyImport(
     })),
   )
 
-  onProgress?.({ step: 'Importing litter changes…', percent: 60 })
+  onProgress?.({ step: 'Importing litter box changes…', percent: 60 })
   await chunkInsert(
     'litter_changes',
     result.litterChanges.map((row) => ({ ...base, ...row })),

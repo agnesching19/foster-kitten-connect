@@ -164,7 +164,7 @@ export function KittensSection({ litterId, canEdit }: { litterId: string; canEdi
   return (
     <section aria-label="Kittens">
       <Card>
-        <CardHeader title="Kittens" subtitle={`${kittens.length} recorded in this litter`} />
+        <CardHeader title="Kittens" subtitle={`${kittens.length} recorded in this batch`} />
 
         {canEdit ? (
           <form
@@ -192,7 +192,7 @@ export function KittensSection({ litterId, canEdit }: { litterId: string; canEdi
           </form>
         ) : (
           <p className="mb-4 rounded-xl bg-gray-50 px-3 py-3 text-sm text-muted">
-            You have read-only access to this litter.
+            You have read-only access to this batch.
           </p>
         )}
 
@@ -326,7 +326,7 @@ export function KittensSection({ litterId, canEdit }: { litterId: string; canEdi
           <EmptyState
             icon="🐾"
             title="No kittens yet"
-            description="Add the kittens in this litter to start tracking them."
+            description="Add the kittens in this batch to start tracking them."
           />
         )}
       </Card>

@@ -406,7 +406,7 @@ export const workbookParser: SpreadsheetParser = {
   id: 'legacy-foster-workbook',
   label: 'Kitty Tracker workbook (Momma + Kitten weights)',
   description:
-    'Multi-sheet historical workbooks. The Momma tab supplies feedings, 💩 entries, litter changes and notes; the Kitten weights tab supplies weigh-in sessions. Chart and unknown tabs are ignored.',
+    'Multi-sheet historical workbooks. The Momma tab supplies feedings, 💩 entries, litter box changes and notes; the Kitten weights tab supplies weigh-in sessions. Chart and unknown tabs are ignored.',
   detect: (sheets) => {
     const kinds = sheets.map(classifySheet)
     const momma = kinds.filter((kind) => kind === 'momma').length

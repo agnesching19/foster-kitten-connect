@@ -30,7 +30,9 @@ export function ExportDataCard() {
   async function exportNow() {
     const ids = litterIdsForScope()
     if (ids && ids.length === 0) {
-      toast.error(scope === 'current' ? 'No current litter to export.' : 'Select at least one litter.')
+      toast.error(
+        scope === 'current' ? 'No current batch to export.' : 'Select at least one batch.',
+      )
       return
     }
     setProgress({ step: 'Starting…', percent: 0 })
@@ -63,16 +65,16 @@ export function ExportDataCard() {
             className={inputClass}
           >
             <option value="current">
-              Current litter{current ? ` — ${current.litter_name || current.mother_name}` : ''}
+              Current batch{current ? ` — ${current.litter_name || current.mother_name}` : ''}
             </option>
-            <option value="selected">Selected litters</option>
+            <option value="selected">Selected batches</option>
             <option value="all">All data</option>
           </select>
         </label>
 
         {scope === 'selected' ? (
           <fieldset className="rounded-xl border border-border bg-white p-3">
-            <legend className="px-1 text-sm font-medium text-ink">Litters</legend>
+            <legend className="px-1 text-sm font-medium text-ink">Batches</legend>
             {litters.length ? (
               <ul className="grid gap-1">
                 {litters.map((litter) => (
@@ -96,7 +98,7 @@ export function ExportDataCard() {
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-muted">No litters yet.</p>
+              <p className="text-sm text-muted">No batches yet.</p>
             )}
           </fieldset>
         ) : null}

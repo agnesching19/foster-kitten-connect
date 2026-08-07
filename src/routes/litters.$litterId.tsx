@@ -17,15 +17,15 @@ import { useLitterAccess } from '@/hooks/useLitterAccess'
 export const Route = createFileRoute('/litters/$litterId')({
   head: () => ({
     meta: [
-      { title: 'Litter details | Kitty Tracker' },
+      { title: 'Batch details | Kitty Tracker' },
       {
         name: 'description',
-        content: 'Manage a foster litter: view arrival details and add, rename or remove kittens.',
+        content: 'Manage a foster batch: view arrival details and add, rename or remove kittens.',
       },
-      { property: 'og:title', content: 'Litter details | Kitty Tracker' },
+      { property: 'og:title', content: 'Batch details | Kitty Tracker' },
       {
         property: 'og:description',
-        content: 'Manage the kittens in a foster litter and keep their details up to date.',
+        content: 'Manage the kittens in a foster batch and keep their details up to date.',
       },
       { property: 'og:type', content: 'website' },
       { name: 'twitter:card', content: 'summary_large_image' },
@@ -41,7 +41,7 @@ export const Route = createFileRoute('/litters/$litterId')({
   ),
   notFoundComponent: () => (
     <Card className="py-12 text-center">
-      <p className="text-sm text-muted">Litter not found.</p>
+      <p className="text-sm text-muted">Batch not found.</p>
     </Card>
   ),
 })
@@ -55,7 +55,7 @@ function LitterDetailPage() {
   if (isLoading) {
     return (
       <Card className="py-12 text-center">
-        <p className="text-sm text-muted">Loading litter…</p>
+        <p className="text-sm text-muted">Loading batch…</p>
       </Card>
     )
   }
@@ -63,7 +63,7 @@ function LitterDetailPage() {
   if (!litter) {
     return (
       <Card className="py-12 text-center">
-        <p className="font-medium text-ink">Litter not found</p>
+        <p className="font-medium text-ink">Batch not found</p>
         <Link to="/" className="mt-2 inline-block text-sm font-semibold text-brand-700">
           Back to dashboard
         </Link>
@@ -122,17 +122,17 @@ function LitterActions({ litter }: { litter: LitterRow }) {
     onSuccess: async () => {
       setConfirmOpen(false)
       await queryClient.invalidateQueries({ queryKey: ['litters'] })
-      toast.success('Litter deleted')
+      toast.success('Batch deleted')
       navigate({ to: '/' })
     },
-    onError: (error: Error) => toast.error(error.message || 'Could not delete the litter'),
+    onError: (error: Error) => toast.error(error.message || 'Could not delete the batch'),
   })
 
   return (
     <div className="relative" ref={containerRef}>
       <button
         type="button"
-        aria-label="Litter actions"
+        aria-label="Batch actions"
         aria-haspopup="menu"
         aria-expanded={menuOpen}
         onClick={() => setMenuOpen((open) => !open)}
@@ -155,7 +155,7 @@ function LitterActions({ litter }: { litter: LitterRow }) {
               setEditOpen(true)
             }}
           >
-            Edit litter
+            Edit batch
           </button>
           <button
             type="button"
@@ -166,7 +166,7 @@ function LitterActions({ litter }: { litter: LitterRow }) {
               setConfirmOpen(true)
             }}
           >
-            Delete litter
+            Delete batch
           </button>
         </div>
       ) : null}
@@ -175,22 +175,22 @@ function LitterActions({ litter }: { litter: LitterRow }) {
 
       <ConfirmDialog
         open={confirmOpen}
-        title="Delete this litter?"
+        title="Delete this batch?"
         description={
           <>
-            <p>This cannot be undone. Deleting this litter also deletes its:</p>
+            <p>This cannot be undone. Deleting this batch also deletes its:</p>
             <ul className="mt-2 list-disc pl-5">
               <li>kittens</li>
               <li>feedings</li>
               <li>poop entries</li>
-              <li>litter changes</li>
+              <li>litter box changes</li>
               <li>weigh-ins</li>
               <li>weights</li>
               <li>notes</li>
             </ul>
           </>
         }
-        confirmLabel="Delete litter"
+        confirmLabel="Delete batch"
         busy={remove.isPending}
         onCancel={() => setConfirmOpen(false)}
         onConfirm={() => remove.mutate()}

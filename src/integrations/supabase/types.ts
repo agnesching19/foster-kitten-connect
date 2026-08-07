@@ -207,6 +207,21 @@ export type Database = {
           },
         ]
       }
+      live_cam_access: {
+        Row: {
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       litters: {
         Row: {
           album_url: string | null

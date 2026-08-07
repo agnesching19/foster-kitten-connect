@@ -36,7 +36,7 @@ export function LitterChangeDialog({ open, onClose, litterId, change }: LitterCh
   const mutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error('You need to be signed in.')
-      if (!litterId) throw new Error('Add a litter first.')
+      if (!litterId) throw new Error('Add a batch first.')
       const payload = { date, time, notes: notes.trim() || null }
       const { error } = change
         ? await supabase.from('litter_changes').update(payload).eq('id', change.id)
@@ -47,17 +47,17 @@ export function LitterChangeDialog({ open, onClose, litterId, change }: LitterCh
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['litter-changes', litterId] })
-      toast.success(change ? 'Litter change updated' : 'Litter change logged')
+      toast.success(change ? 'Litter box change updated' : 'Litter box change logged')
       onClose()
     },
-    onError: (error: Error) => toast.error(error.message || 'Could not save the litter change'),
+    onError: (error: Error) => toast.error(error.message || 'Could not save the litter box change'),
   })
 
   return (
     <FormDialog
       open={open}
       onClose={onClose}
-      title={change ? 'Edit litter change' : 'Log litter change'}
+      title={change ? 'Edit litter box change' : 'Log litter box change'}
       subtitle="When the tray was last cleaned"
     >
       <form
@@ -69,17 +69,39 @@ export function LitterChangeDialog({ open, onClose, litterId, change }: LitterCh
       >
         <label>
           <span className="mb-1 block text-sm font-medium text-ink">Date *</span>
-          <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className={inputClass} />
+          <input
+            type="date"
+            required
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className={inputClass}
+          />
         </label>
         <label>
           <span className="mb-1 block text-sm font-medium text-ink">Time *</span>
-          <input type="time" required value={time} onChange={(e) => setTime(e.target.value)} className={inputClass} />
+          <input
+            type="time"
+            required
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+            className={inputClass}
+          />
         </label>
         <label className="sm:col-span-2">
           <span className="mb-1 block text-sm font-medium text-ink">Notes</span>
-          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className={inputClass} placeholder="Optional" />
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={2}
+            className={inputClass}
+            placeholder="Optional"
+          />
         </label>
-        <DialogActions busy={mutation.isPending} onCancel={onClose} saveLabel={change ? 'Save changes' : 'Save change'} />
+        <DialogActions
+          busy={mutation.isPending}
+          onCancel={onClose}
+          saveLabel={change ? 'Save changes' : 'Save change'}
+        />
       </form>
     </FormDialog>
   )

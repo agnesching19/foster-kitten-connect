@@ -171,9 +171,7 @@ export function FeedingsPage() {
           <EmptyState
             icon="🍼"
             title="No feedings logged"
-            description={
-              litter ? 'Log a feeding to start the daily record.' : 'Add a litter first.'
-            }
+            description={litter ? 'Log a feeding to start the daily record.' : 'Add a batch first.'}
           />
         </Card>
       )}

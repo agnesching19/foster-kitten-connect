@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/foster/ui/Button'
 import { CatAvatar } from '@/components/foster/ui/CatAvatar'
+import { inputClass } from '@/components/foster/ui/FormDialog'
 import { removeCatAvatars, uploadCatAvatar } from '@/lib/avatar-storage'
 import type { LitterRow } from '@/lib/foster-queries'
 
@@ -14,9 +15,6 @@ interface NewLitterDialogProps {
   onClose: () => void
   litter?: LitterRow | null
 }
-
-const inputClass =
-  'min-h-11 w-full rounded-xl border border-border bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100'
 
 export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps) {
   const { user } = useAuth()
@@ -68,7 +66,7 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
 
   const mutation = useMutation({
     mutationFn: async () => {
-      if (!user) throw new Error('You need to be signed in to add a litter.')
+      if (!user) throw new Error('You need to be signed in to add a batch.')
       const litterId = litter?.id ?? crypto.randomUUID()
       let avatarPath = removeMotherAvatar ? null : (litter?.mother_avatar_path ?? null)
       let uploadedPath: string | null = null
@@ -113,12 +111,12 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['litters'] })
-      toast.success(isEdit ? 'Litter updated' : 'Litter added')
+      toast.success(isEdit ? 'Batch updated' : 'Batch added')
       if (!isEdit) reset()
       onClose()
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Could not save the litter')
+      toast.error(error.message || 'Could not save the batch')
     },
   })
 
@@ -130,15 +128,15 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
         role="dialog"
         aria-modal="true"
         aria-labelledby="new-litter-title"
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-border bg-surface-raised p-5 shadow-lg sm:rounded-2xl"
+        className="max-h-[90vh] w-full min-w-0 max-w-lg overflow-x-hidden overflow-y-auto rounded-t-2xl border border-border bg-surface-raised p-5 pb-[calc(5rem+env(safe-area-inset-bottom))] shadow-lg sm:rounded-2xl sm:pb-5"
       >
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
             <h2 id="new-litter-title" className="text-lg font-semibold text-ink">
-              {isEdit ? 'Edit litter' : 'New litter'}
+              {isEdit ? 'Edit batch' : 'New batch'}
             </h2>
             <p className="mt-0.5 text-sm text-muted">
-              {isEdit ? 'Update this litter’s details' : 'Add a foster batch to your dashboard'}
+              {isEdit ? 'Update this batch’s details' : 'Add a foster batch to your dashboard'}
             </p>
           </div>
           <button
@@ -154,7 +152,7 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
         {!user ? (
           <div className="rounded-xl bg-gray-50 px-3 py-4 text-sm text-muted">
             <p className="font-medium text-ink">Sign in required</p>
-            <p className="mt-1">Litters are saved to your account, so please sign in first.</p>
+            <p className="mt-1">Batches are saved to your account, so please sign in first.</p>
             <Button
               size="md"
               className="mt-3"
@@ -168,13 +166,13 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
           </div>
         ) : (
           <form
-            className="grid gap-4 sm:grid-cols-2"
+            className="grid min-w-0 gap-4 sm:grid-cols-2"
             onSubmit={(event) => {
               event.preventDefault()
               mutation.mutate()
             }}
           >
-            <label className="sm:col-span-2">
+            <label className="min-w-0 sm:col-span-2">
               <span className="mb-1 block text-sm font-medium text-ink">Mother's name *</span>
               <input
                 required
@@ -184,7 +182,7 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
                 placeholder="e.g. Willow"
               />
             </label>
-            <div className="flex items-center gap-3 rounded-xl bg-gray-50 px-3 py-3 sm:col-span-2">
+            <div className="flex min-w-0 items-center gap-3 overflow-hidden rounded-xl bg-gray-50 px-3 py-3 sm:col-span-2">
               <CatAvatar
                 name={motherName || 'Mother cat'}
                 avatarPath={removeMotherAvatar ? null : (litter?.mother_avatar_path ?? null)}
@@ -196,7 +194,7 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
                   <input
                     type="file"
                     accept="image/jpeg,image/png,image/webp,image/gif"
-                    className="mt-1 block max-w-full text-sm text-muted file:mr-2 file:rounded-lg file:border-0 file:bg-brand-100 file:px-3 file:py-2 file:font-medium file:text-brand-800"
+                    className="mt-1 block w-full min-w-0 max-w-full text-sm text-muted file:mr-2 file:rounded-lg file:border-0 file:bg-brand-100 file:px-3 file:py-2 file:font-medium file:text-brand-800"
                     onChange={(event) => {
                       setMotherAvatar(event.target.files?.[0] ?? null)
                       setRemoveMotherAvatar(false)
@@ -214,8 +212,8 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
                 ) : null}
               </div>
             </div>
-            <label className="sm:col-span-2">
-              <span className="mb-1 block text-sm font-medium text-ink">Litter name</span>
+            <label className="min-w-0 sm:col-span-2">
+              <span className="mb-1 block text-sm font-medium text-ink">Batch name</span>
               <input
                 value={litterName}
                 onChange={(e) => setLitterName(e.target.value)}
@@ -223,7 +221,7 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
                 placeholder="Optional"
               />
             </label>
-            <label>
+            <label className="min-w-0">
               <span className="mb-1 block text-sm font-medium text-ink">Date of birth</span>
               <input
                 type="date"
@@ -232,7 +230,7 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
                 className={inputClass}
               />
             </label>
-            <label>
+            <label className="min-w-0">
               <span className="mb-1 block text-sm font-medium text-ink">Arrival date *</span>
               <input
                 type="date"
@@ -242,7 +240,7 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
                 className={inputClass}
               />
             </label>
-            <label>
+            <label className="min-w-0">
               <span className="mb-1 block text-sm font-medium text-ink">Departure date</span>
               <input
                 type="date"
@@ -251,7 +249,7 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
                 className={inputClass}
               />
             </label>
-            <label>
+            <label className="min-w-0">
               <span className="mb-1 block text-sm font-medium text-ink">Status</span>
               <select
                 value={status}
@@ -262,7 +260,7 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
                 <option value="completed">Completed</option>
               </select>
             </label>
-            <label className="sm:col-span-2">
+            <label className="min-w-0 sm:col-span-2">
               <span className="mb-1 block text-sm font-medium text-ink">External record</span>
               <input
                 value={externalRecord}
@@ -271,7 +269,7 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
                 placeholder="Optional reference"
               />
             </label>
-            <label className="sm:col-span-2">
+            <label className="min-w-0 sm:col-span-2">
               <span className="mb-1 block text-sm font-medium text-ink">Photo album URL</span>
               <input
                 type="url"
@@ -284,7 +282,7 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
 
             <div className="mt-1 flex gap-2 sm:col-span-2">
               <Button type="submit" size="md" fullWidth disabled={mutation.isPending}>
-                {mutation.isPending ? 'Saving…' : isEdit ? 'Save changes' : 'Save litter'}
+                {mutation.isPending ? 'Saving…' : isEdit ? 'Save changes' : 'Save batch'}
               </Button>
               <Button
                 type="button"

@@ -86,13 +86,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: 'description',
         content:
-          'Track foster momma cats and their kittens: batches, feedings, weights, bathroom logs and litter changes.',
+          'Track foster momma cats and their kittens: batches, feedings, weights, bathroom logs and litter-box changes.',
       },
       { property: 'og:title', content: 'Kitty Tracker | Every Batch in One Place' },
       {
         property: 'og:description',
         content:
-          'Track foster momma cats and their kittens: batches, feedings, weights, bathroom logs and litter changes.',
+          'Track foster momma cats and their kittens: batches, feedings, weights, bathroom logs and litter-box changes.',
       },
       { property: 'og:type', content: 'website' },
       { name: 'twitter:card', content: 'summary_large_image' },
@@ -101,7 +101,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: 'twitter:description',
         content:
-          'Track foster momma cats and their kittens: batches, feedings, weights, bathroom logs and litter changes.',
+          'Track foster momma cats and their kittens: batches, feedings, weights, bathroom logs and litter-box changes.',
       },
       {
         property: 'og:image',

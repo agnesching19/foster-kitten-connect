@@ -109,7 +109,10 @@ export async function buildImportPreview(files: File[]): Promise<ImportPreview> 
     const { data, error } = await supabase
       .from('litters')
       .select('id')
-      .in('id', litters.map((litter) => litter.id))
+      .in(
+        'id',
+        litters.map((litter) => litter.id),
+      )
     if (error) throw error
     existingLitterIds = (data ?? []).map((row) => row.id)
   }
@@ -169,7 +172,7 @@ export async function runImport(
   const skipped = strategy === 'skip' ? conflicting : new Set<string>()
 
   if (strategy === 'replace' && conflicting.size) {
-    onProgress?.({ step: 'Clearing existing litter records…', percent: 5 })
+    onProgress?.({ step: 'Clearing existing batch records…', percent: 5 })
     await deleteLitterData([...conflicting])
   }
 
@@ -192,7 +195,7 @@ export async function runImport(
     const payload = rows
       .filter((row) => {
         const litterId = spec.viaWeighIn
-          ? weighInsById.get(String(row['weigh_in_id'])) ?? null
+          ? (weighInsById.get(String(row['weigh_in_id'])) ?? null)
           : rowLitterId(spec, row)
         return !(litterId && skipped.has(litterId))
       })
@@ -204,9 +207,7 @@ export async function runImport(
     const chunkSize = 400
     for (let start = 0; start < payload.length; start += chunkSize) {
       const chunk = payload.slice(start, start + chunkSize)
-      const { error } = await supabase
-        .from(spec.table)
-        .upsert(chunk as never, { onConflict: 'id' })
+      const { error } = await supabase.from(spec.table).upsert(chunk as never, { onConflict: 'id' })
       if (error) throw error
     }
   }

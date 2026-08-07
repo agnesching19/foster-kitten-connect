@@ -51,7 +51,7 @@ export function WeighInDialog({
   const mutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error('You need to be signed in.')
-      if (!litterId) throw new Error('Add a litter first.')
+      if (!litterId) throw new Error('Add a batch first.')
       const entries = kittens
         .map((kitten) => ({ kitten_id: kitten.id, grams: Number(grams[kitten.id]) }))
         .filter((entry) => Number.isFinite(entry.grams) && entry.grams > 0)
@@ -141,7 +141,7 @@ export function WeighInDialog({
           <span className="mb-1 block text-sm font-medium text-ink">Days old</span>
           <input
             readOnly
-            value={daysOld != null ? `Day ${daysOld}` : 'Add a date of birth to the litter'}
+            value={daysOld != null ? `Day ${daysOld}` : 'Add a date of birth to the batch'}
             className={`${inputClass} bg-gray-50 text-muted`}
           />
         </label>
@@ -174,7 +174,7 @@ export function WeighInDialog({
             </div>
           ) : (
             <p className="rounded-xl bg-gray-50 px-3 py-3 text-sm text-muted">
-              Add kittens to this litter first.
+              Add kittens to this batch first.
             </p>
           )}
         </div>

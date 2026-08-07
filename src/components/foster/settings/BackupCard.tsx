@@ -31,7 +31,7 @@ export function BackupCard({ onRestore }: BackupCardProps) {
     <Card>
       <CardHeader
         title="Backup & restore"
-        subtitle="Download a complete backup of every litter and log, or restore from a backup you saved earlier. Backups use the same ZIP format as exports."
+        subtitle="Download a complete backup of every batch and log, or restore from a backup you saved earlier. Backups use the same ZIP format as exports."
       />
 
       <div className="flex flex-wrap gap-2">
@@ -48,7 +48,7 @@ export function BackupCard({ onRestore }: BackupCardProps) {
       <ConfirmDialog
         open={confirmOpen}
         title="Restore from a backup?"
-        description="Restoring uses the CSV import above: pick your backup ZIP, review the preview, and choose how to handle litters that already exist."
+        description="Restoring uses the CSV import above: pick your backup ZIP, review the preview, and choose how to handle batches that already exist."
         confirmLabel="Take me there"
         onConfirm={() => {
           setConfirmOpen(false)

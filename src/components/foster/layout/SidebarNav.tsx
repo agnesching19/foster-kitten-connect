@@ -2,10 +2,12 @@ import { Link, useLocation } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { littersQueryOptions, pickCurrentLitter } from '@/lib/foster-queries'
 import { KittenAvatar } from '@/components/foster/ui/KittenAvatar'
+import { useLiveCamAccess } from '@/hooks/useLiveCamAccess'
 import { getNavLinkClass, liveCamsNavItem, navItems, settingsNavItem } from './navItems'
 import { AuthStatus } from './AuthStatus'
 
 export function SidebarNav() {
+  const { canAccess: canAccessLiveCams } = useLiveCamAccess()
   const pathname = useLocation({ select: (location) => location.pathname })
   const { data: litters = [] } = useQuery(littersQueryOptions)
   const totalCats = litters.reduce((sum, litter) => sum + litter.kittens.length + 1, 0)
@@ -49,20 +51,22 @@ export function SidebarNav() {
               <span>{settingsNavItem.label}</span>
             </Link>
           </li>
-          <li>
-            <a
-              href={liveCamsNavItem.href}
-              target="_blank"
-              rel="noreferrer"
-              className={getNavLinkClass(false, 'sidebar')}
-            >
-              {liveCamsNavItem.icon}
-              <span>{liveCamsNavItem.label}</span>
-              <span className="ml-auto text-xs" aria-hidden>
-                ↗
-              </span>
-            </a>
-          </li>
+          {canAccessLiveCams && (
+            <li>
+              <a
+                href={liveCamsNavItem.href}
+                target="_blank"
+                rel="noreferrer"
+                className={getNavLinkClass(false, 'sidebar')}
+              >
+                {liveCamsNavItem.icon}
+                <span>{liveCamsNavItem.label}</span>
+                <span className="ml-auto text-xs" aria-hidden>
+                  ↗
+                </span>
+              </a>
+            </li>
+          )}
         </ul>
       </nav>
 

@@ -1,13 +1,13 @@
 # Kitty Tracker
 
-A mobile-first, responsive web app for tracking foster cats across batches—including feedings, poops, weights, and litter changes.
+A mobile-first, responsive web app for tracking foster cats across batches—including feedings, poops, weights, and litter-box changes.
 
 **Production:** [kitty-tracker.lovable.app](https://kitty-tracker.lovable.app)
 
 ## Features
 
-- Organise foster cats and kittens into active or completed litters
-- Record feeding, weight, poop, and litter-change history
+- Organise foster cats and kittens into active or completed batches
+- Record feeding, weight, poop, and litter-box change history
 - Track kitten details and progress over time
 - Import records from CSV, Google Sheets, and legacy backups
 - Export data and create complete backups

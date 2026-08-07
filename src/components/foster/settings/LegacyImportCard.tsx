@@ -98,7 +98,7 @@ export function LegacyImportCard() {
     ? ([
         ['feedings', result.feedings.length],
         ['poop entries', result.poops.length],
-        ['litter changes', result.litterChanges.length],
+        ['litter box changes', result.litterChanges.length],
         ['weigh-in sessions', result.weighIns.length],
         [
           'kitten weights',
@@ -238,7 +238,7 @@ export function LegacyImportCard() {
               onChange={(event) => setLitterId(event.target.value)}
               className={inputClass}
             >
-              <option value={NEW_LITTER}>Create a new litter…</option>
+              <option value={NEW_LITTER}>Create a new batch…</option>
               {litters.map((litter) => (
                 <option key={litter.id} value={litter.id}>
                   {litter.litter_name || litter.mother_name} ({litter.arrived})
@@ -259,7 +259,7 @@ export function LegacyImportCard() {
                 />
               </label>
               <label>
-                <span className="mb-1 block text-sm font-medium text-ink">Litter name</span>
+                <span className="mb-1 block text-sm font-medium text-ink">Batch name</span>
                 <input
                   value={litterName}
                   onChange={(event) => setLitterName(event.target.value)}
@@ -313,7 +313,7 @@ export function LegacyImportCard() {
               <span className="font-medium text-ink">{summary.imported.poops}</span>
             </li>
             <li className="flex justify-between gap-2">
-              <span>litter changes</span>
+              <span>litter box changes</span>
               <span className="font-medium text-ink">{summary.imported.litterChanges}</span>
             </li>
             <li className="flex justify-between gap-2">
