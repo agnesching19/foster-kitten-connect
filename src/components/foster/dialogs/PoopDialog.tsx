@@ -44,29 +44,37 @@ export function PoopDialog({
   const [kittenId, setKittenId] = useState('')
   const [note, setNote] = useState('')
   const [portions, setPortions] = useState(1)
+  const [motherCount, setMotherCount] = useState(0)
+  const [kittenCount, setKittenCount] = useState(0)
 
   useEffect(() => {
     if (!open) return
     setDate(entry?.date ?? todayIso())
     setTime(entry?.time.slice(0, 5) ?? nowTime())
-    setSubject(entry?.subject_type ?? defaultSubject ?? lastSubject)
+    const nextSubject = entry?.subject_type ?? defaultSubject ?? lastSubject
+    setSubject(nextSubject)
     setKittenId(entry?.kitten_id ?? '')
     setNote(entry?.note ?? '')
     setPortions(Math.max(1, entries.length))
+    setMotherCount(0)
+    setKittenCount(0)
   }, [open, entry, entries.length, defaultSubject])
 
   const mutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error('You need to be signed in.')
       if (!litterId) throw new Error('Add a batch first.')
-      const payload = {
+      const sharedPayload = {
         date,
         time,
-        subject_type: subject,
-        kitten_id: subject === 'kitten' ? kittenId || null : null,
         note: note.trim() || null,
       }
       if (entry) {
+        const payload = {
+          ...sharedPayload,
+          subject_type: subject,
+          kitten_id: subject === 'kitten' ? kittenId || null : null,
+        }
         const retainedIds = entries.slice(0, portions).map((item) => item.id)
         const removedIds = entries.slice(portions).map((item) => item.id)
         if (retainedIds.length) {
@@ -92,18 +100,29 @@ export function PoopDialog({
           if (error) throw error
         }
       } else {
-        const { error } = await supabase.from('poop_entries').insert(
-          Array.from({ length: portions }, () => ({
-            ...payload,
+        if (motherCount + kittenCount < 1) throw new Error('Add at least one poop.')
+        const rows = [
+          ...Array.from({ length: motherCount }, () => ({
+            ...sharedPayload,
+            subject_type: 'mother' as const,
+            kitten_id: null,
             litter_id: litterId,
             user_id: user.id,
           })),
-        )
+          ...Array.from({ length: kittenCount }, () => ({
+            ...sharedPayload,
+            subject_type: 'kitten' as const,
+            kitten_id: kittenId || null,
+            litter_id: litterId,
+            user_id: user.id,
+          })),
+        ]
+        const { error } = await supabase.from('poop_entries').insert(rows)
         if (error) throw error
       }
     },
     onSuccess: async () => {
-      lastSubject = subject
+      lastSubject = entry ? subject : motherCount > 0 && kittenCount === 0 ? 'mother' : 'kitten'
       await queryClient.invalidateQueries({ queryKey: ['poops', litterId] })
       toast.success(entry ? 'Entry updated' : 'Poop logged')
       onClose()
@@ -117,9 +136,11 @@ export function PoopDialog({
       onClose={onClose}
       title={entry ? 'Edit entry' : 'Log poop'}
       subtitle={
-        subject === 'mother'
-          ? 'Recording a poop for the mother cat'
-          : 'Kitten is optional — leave it blank if unknown'
+        !entry
+          ? 'Record Momma and kitten poops together'
+          : subject === 'mother'
+            ? 'Recording a poop for the mother cat'
+            : 'Kitten is optional — leave it blank if unknown'
       }
     >
       <form
@@ -149,19 +170,55 @@ export function PoopDialog({
             className={inputClass}
           />
         </label>
-        <label className="sm:col-span-2">
-          <span className="mb-1 block text-sm font-medium text-ink">Subject *</span>
-          <select
-            required
-            value={subject}
-            onChange={(e) => setSubject(e.target.value as 'mother' | 'kitten')}
-            className={inputClass}
-          >
-            <option value="mother">{motherName ? `Mother (${motherName})` : 'Mother'}</option>
-            <option value="kitten">Kitten</option>
-          </select>
-        </label>
-        {subject === 'kitten' ? (
+        {entry ? (
+          <label className="sm:col-span-2">
+            <span className="mb-1 block text-sm font-medium text-ink">Subject *</span>
+            <select
+              required
+              value={subject}
+              onChange={(e) => setSubject(e.target.value as 'mother' | 'kitten')}
+              className={inputClass}
+            >
+              <option value="mother">{motherName ? `Mother (${motherName})` : 'Mother'}</option>
+              <option value="kitten">Kitten</option>
+            </select>
+          </label>
+        ) : (
+          <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
+            <div>
+              <label
+                htmlFor="mother-poop-count"
+                className="mb-1 block text-sm font-medium text-ink"
+              >
+                {motherName ? `Momma (${motherName})` : 'Momma'}
+              </label>
+              <CountStepper
+                id="mother-poop-count"
+                value={motherCount}
+                min={0}
+                onChange={setMotherCount}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="kitten-poop-count"
+                className="mb-1 block text-sm font-medium text-ink"
+              >
+                Kittens
+              </label>
+              <CountStepper
+                id="kitten-poop-count"
+                value={kittenCount}
+                min={0}
+                onChange={setKittenCount}
+              />
+            </div>
+            <p className="text-xs text-muted sm:col-span-2">
+              Each poop is saved separately and counted in the daily totals.
+            </p>
+          </div>
+        )}
+        {(entry ? subject === 'kitten' : kittenCount > 0) ? (
           <label className="sm:col-span-2">
             <span className="mb-1 block text-sm font-medium text-ink">Kitten</span>
             <select
@@ -178,15 +235,17 @@ export function PoopDialog({
             </select>
           </label>
         ) : null}
-        <div className="sm:col-span-2">
-          <label htmlFor="poop-count" className="mb-1 block text-sm font-medium text-ink">
-            Count *
-          </label>
-          <CountStepper id="poop-count" value={portions} onChange={setPortions} />
-          <span className="mt-1 block text-xs text-muted">
-            Number of poops recorded at this time. Each is counted separately in daily totals.
-          </span>
-        </div>
+        {entry ? (
+          <div className="sm:col-span-2">
+            <label htmlFor="poop-count" className="mb-1 block text-sm font-medium text-ink">
+              Count *
+            </label>
+            <CountStepper id="poop-count" value={portions} onChange={setPortions} />
+            <span className="mt-1 block text-xs text-muted">
+              Number of poops recorded at this time. Each is counted separately in daily totals.
+            </span>
+          </div>
+        ) : null}
         <label className="sm:col-span-2">
           <span className="mb-1 block text-sm font-medium text-ink">Notes</span>
           <textarea
