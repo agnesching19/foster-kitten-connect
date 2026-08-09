@@ -1,6 +1,14 @@
 import { useRef, useState } from 'react'
 import { Link, useSearch } from '@tanstack/react-router'
-import { ArrowLeft, ChevronRight, Database, PawPrint, UserRound, UsersRound } from 'lucide-react'
+import {
+  ArrowLeft,
+  Bell,
+  ChevronRight,
+  Database,
+  PawPrint,
+  UserRound,
+  UsersRound,
+} from 'lucide-react'
 import { PageHeader } from '@/components/foster/layout/PageHeader'
 import { BackupCard } from '@/components/foster/settings/BackupCard'
 import { CollaborationCard } from '@/components/foster/settings/CollaborationCard'
@@ -10,8 +18,9 @@ import { ImportDataCard, type ImportMethod } from '@/components/foster/settings/
 import { LegacyImportCard } from '@/components/foster/settings/LegacyImportCard'
 import { LiveCamAccessCard } from '@/components/foster/settings/LiveCamAccessCard'
 import { ProfileCard } from '@/components/foster/settings/ProfileCard'
+import { NotificationsCard } from '@/components/foster/settings/NotificationsCard'
 
-export type SettingsSection = 'profile' | 'feeding' | 'access' | 'data'
+export type SettingsSection = 'profile' | 'notifications' | 'feeding' | 'access' | 'data'
 
 const settingsSections: Array<{
   id: SettingsSection
@@ -19,6 +28,12 @@ const settingsSections: Array<{
   description: string
   icon: typeof UserRound
 }> = [
+  {
+    id: 'notifications',
+    title: 'Notifications',
+    description: 'Choose whether this device alerts you when collaborators add records.',
+    icon: Bell,
+  },
   {
     id: 'profile',
     title: 'Your profile',
@@ -104,6 +119,7 @@ export function SettingsPage() {
 
       <div className="grid gap-4">
         {section === 'profile' ? <ProfileCard /> : null}
+        {section === 'notifications' ? <NotificationsCard /> : null}
         {section === 'feeding' ? <FeedingFlavoursCard /> : null}
         {section === 'access' ? (
           <>

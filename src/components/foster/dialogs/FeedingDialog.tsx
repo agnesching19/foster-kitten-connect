@@ -13,6 +13,7 @@ import {
 } from '@/components/foster/ui/FormDialog'
 import type { FeedingRow } from '@/lib/foster-queries'
 import { CountStepper } from '@/components/foster/ui/CountStepper'
+import { sendLogNotification } from '@/lib/push-notifications'
 
 interface FeedingDialogProps {
   open: boolean
@@ -96,6 +97,7 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
       }
     },
     onSuccess: async () => {
+      if (!feeding && litterId) void sendLogNotification(litterId, 'feeding', pouchCount)
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['feedings', litterId] }),
         queryClient.invalidateQueries({ queryKey: ['feeding-food-presets'] }),

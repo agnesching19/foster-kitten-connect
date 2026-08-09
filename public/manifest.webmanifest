@@ -1,0 +1,22 @@
+{
+  "name": "Kitty Tracker",
+  "short_name": "Kitty Tracker",
+  "description": "Track foster cats, feedings, weights and litter-box care.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fffaf3",
+  "theme_color": "#f97316",
+  "icons": [
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "256x256",
+      "type": "image/x-icon"
+    }
+  ]
+}

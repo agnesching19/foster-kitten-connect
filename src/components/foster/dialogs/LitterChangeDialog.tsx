@@ -11,6 +11,7 @@ import {
   todayIso,
 } from '@/components/foster/ui/FormDialog'
 import type { LitterChangeRow } from '@/lib/foster-queries'
+import { sendLogNotification } from '@/lib/push-notifications'
 
 interface LitterChangeDialogProps {
   open: boolean
@@ -46,6 +47,7 @@ export function LitterChangeDialog({ open, onClose, litterId, change }: LitterCh
       if (error) throw error
     },
     onSuccess: async () => {
+      if (!change && litterId) void sendLogNotification(litterId, 'litter_change', 1)
       await queryClient.invalidateQueries({ queryKey: ['litter-changes', litterId] })
       toast.success(change ? 'Litter box change updated' : 'Litter box change logged')
       onClose()

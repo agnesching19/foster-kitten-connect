@@ -12,6 +12,7 @@ import {
 } from '@/components/foster/ui/FormDialog'
 import { kittensQueryOptions, type PoopRow } from '@/lib/foster-queries'
 import { CountStepper } from '@/components/foster/ui/CountStepper'
+import { sendLogNotification } from '@/lib/push-notifications'
 
 interface PoopDialogProps {
   open: boolean
@@ -122,6 +123,9 @@ export function PoopDialog({
       }
     },
     onSuccess: async () => {
+      if (!entry && litterId) {
+        void sendLogNotification(litterId, 'poop', motherCount + kittenCount)
+      }
       lastSubject = entry ? subject : motherCount > 0 && kittenCount === 0 ? 'mother' : 'kitten'
       await queryClient.invalidateQueries({ queryKey: ['poops', litterId] })
       toast.success(entry ? 'Entry updated' : 'Poop logged')

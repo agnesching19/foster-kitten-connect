@@ -82,6 +82,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         name: 'viewport',
         content: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no',
       },
+      { name: 'theme-color', content: '#f97316' },
+      { name: 'mobile-web-app-capable', content: 'yes' },
+      { name: 'apple-mobile-web-app-capable', content: 'yes' },
+      { name: 'apple-mobile-web-app-title', content: 'Kitty Tracker' },
       { title: 'Kitty Tracker | Every Batch in One Place' },
       {
         name: 'description',
@@ -130,6 +134,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: '/apple-touch-icon.png?v=1',
         sizes: '180x180',
       },
+      {
+        rel: 'manifest',
+        href: '/manifest.webmanifest',
+      },
     ],
   }),
   shellComponent: RootShell,
@@ -154,6 +162,10 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext()
+
+  useEffect(() => {
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js')
+  }, [])
 
   return (
     <QueryClientProvider client={queryClient}>

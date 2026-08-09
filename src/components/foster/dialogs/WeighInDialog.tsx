@@ -12,6 +12,7 @@ import {
 } from '@/components/foster/ui/FormDialog'
 import { KittenAvatar } from '@/components/foster/ui/KittenAvatar'
 import { daysBetween, kittensQueryOptions, type WeighInRow } from '@/lib/foster-queries'
+import { sendLogNotification } from '@/lib/push-notifications'
 
 interface WeighInDialogProps {
   open: boolean
@@ -94,8 +95,10 @@ export function WeighInDialog({
         })),
       )
       if (weightsError) throw weightsError
+      return entries.length
     },
-    onSuccess: async () => {
+    onSuccess: async (kittenCount) => {
+      if (!session && litterId) void sendLogNotification(litterId, 'weigh_in', kittenCount)
       await queryClient.invalidateQueries({ queryKey: ['weigh-ins', litterId] })
       toast.success(session ? 'Weigh-in updated' : 'Weigh-in saved')
       onClose()
