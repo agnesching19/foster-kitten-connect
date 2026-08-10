@@ -4,6 +4,7 @@ import { WeightChart } from '@/components/foster/weights/WeightChart'
 import type { TagColour } from '@/components/foster/ui/KittenDot'
 import type { WeighInRow } from '@/lib/foster-queries'
 import { formatRelativeDay } from '@/utils/formatDate'
+import { groupWeighInsByDay } from '@/lib/weight-history'
 
 export interface WeightHistoryKitten {
   id: string
@@ -29,7 +30,8 @@ export function KittenWeightHistoryDialog({
         }))
         .filter((session) => session.weights.length > 0)
     : []
-  const latestWeight = kittenWeighIns[0]?.weights[0]?.grams
+  const kittenDays = groupWeighInsByDay(kittenWeighIns)
+  const latestWeight = kittenDays[0]?.weights[0]?.grams
 
   return (
     <FormDialog
@@ -38,7 +40,7 @@ export function KittenWeightHistoryDialog({
       title={kitten ? `${kitten.name}'s weight history` : 'Weight history'}
       subtitle={
         kitten
-          ? `${kittenWeighIns.length} weigh-in${kittenWeighIns.length === 1 ? '' : 's'}${latestWeight ? ` · Latest ${latestWeight}g` : ''}`
+          ? `${kittenDays.length} day${kittenDays.length === 1 ? '' : 's'}${latestWeight ? ` · Latest ${latestWeight}g` : ''}`
           : ''
       }
       requireAuth={false}
@@ -65,14 +67,14 @@ export function KittenWeightHistoryDialog({
           </div>
 
           <ol className="min-w-0 max-w-full divide-y divide-border overflow-hidden rounded-xl border border-border px-3">
-            {kittenWeighIns.map((session) => (
-              <li key={session.id} className="flex min-w-0 items-center gap-3 py-3">
+            {kittenDays.map((day) => (
+              <li key={day.date} className="flex min-w-0 items-center gap-3 py-3">
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-ink">{formatRelativeDay(session.date)}</p>
-                  <p className="text-xs text-muted">{session.time.slice(0, 5)}</p>
+                  <p className="text-sm font-medium text-ink">{formatRelativeDay(day.date)}</p>
+                  <p className="text-xs text-muted">{day.weights[0]?.sessionTime.slice(0, 5)}</p>
                 </div>
                 <p className="ml-auto shrink-0 text-right font-semibold tabular-nums text-ink">
-                  {session.weights[0]?.grams}
+                  {day.weights[0]?.grams}
                   <span className="ml-0.5 text-sm font-normal text-muted">g</span>
                 </p>
               </li>

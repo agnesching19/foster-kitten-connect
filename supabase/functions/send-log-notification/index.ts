@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-type NotificationType = 'feeding' | 'poop' | 'weigh_in' | 'litter_change'
+type NotificationType = 'feeding' | 'dry_top_up' | 'poop' | 'weigh_in' | 'litter_change'
 
 interface RequestBody {
   litterId: string
@@ -50,7 +50,10 @@ Deno.serve(async (request) => {
       .select('user_id')
       .eq('litter_id', body.litterId)
     if (collaboratorsError) throw collaboratorsError
-    const memberIds = new Set([litter.user_id, ...(collaborators ?? []).map((item) => item.user_id)])
+    const memberIds = new Set([
+      litter.user_id,
+      ...(collaborators ?? []).map((item) => item.user_id),
+    ])
     if (!memberIds.has(actor.id)) return json({ error: 'Not allowed for this batch' }, 403)
     memberIds.delete(actor.id)
     if (!memberIds.size) return json({ sent: 0 })
@@ -120,6 +123,14 @@ function notificationContent(
       body: `${actor} logged ${count} pouch${count === 1 ? '' : 'es'}.`,
       url: '/feedings',
       tag: `${litterId}-feeding`,
+    }
+  }
+  if (type === 'dry_top_up') {
+    return {
+      title: `${batch}: dry food topped up`,
+      body: `${actor} topped up ${count} shared bowl${count === 1 ? '' : 's'}.`,
+      url: '/feedings',
+      tag: `${litterId}-dry-top-up`,
     }
   }
   if (type === 'poop') {

@@ -14,6 +14,7 @@ export interface LitterRow {
   status: 'active' | 'completed'
   external_record: string | null
   album_url: string | null
+  litter_change_interval_hours: number
   kittens: {
     id: string
     name: string
@@ -29,7 +30,7 @@ export const littersQueryOptions = queryOptions({
     const { data, error } = await supabase
       .from('litters')
       .select(
-        'id, user_id, mother_name, mother_avatar_path, litter_name, date_of_birth, arrived, left_date, status, external_record, album_url, kittens(id, name, sort_order, tag_colour, avatar_path)',
+        'id, user_id, mother_name, mother_avatar_path, litter_name, date_of_birth, arrived, left_date, status, external_record, album_url, litter_change_interval_hours, kittens(id, name, sort_order, tag_colour, avatar_path)',
       )
       .order('arrived', { ascending: false })
     if (error) throw error
@@ -164,6 +165,10 @@ export interface FeedingRow {
   meal_number: number | null
   notes: string | null
   pouch_count: number
+  feeding_type: 'wet' | 'dry'
+  dry_food_type: 'kitten' | 'adult' | 'mixed' | null
+  bowl_count: number | null
+  top_up_percent: number | null
 }
 
 export const feedingsQueryOptions = (litterId: string | undefined) =>
@@ -173,7 +178,9 @@ export const feedingsQueryOptions = (litterId: string | undefined) =>
     queryFn: async (): Promise<FeedingRow[]> => {
       const { data, error } = await supabase
         .from('feedings')
-        .select('id, user_id, date, time, food, flavours, meal_number, notes, pouch_count')
+        .select(
+          'id, user_id, date, time, food, flavours, meal_number, notes, pouch_count, feeding_type, dry_food_type, bowl_count, top_up_percent',
+        )
         .eq('litter_id', litterId!)
         .order('date', { ascending: false })
         .order('time', { ascending: false })

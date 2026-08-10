@@ -5,6 +5,7 @@ const settingsSections: SettingsSection[] = [
   'profile',
   'notifications',
   'feeding',
+  'litter-routine',
   'access',
   'data',
 ]

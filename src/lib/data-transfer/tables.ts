@@ -41,6 +41,7 @@ export const tableSpecs: TableSpec[] = [
       { name: 'date_of_birth', type: 'date' },
       { name: 'arrived', required: true, type: 'date' },
       { name: 'left_date', type: 'date' },
+      { name: 'litter_change_interval_hours', type: 'int' },
       { name: 'status', required: true, type: 'status' },
       { name: 'external_record' },
       { name: 'album_url' },
@@ -96,6 +97,10 @@ export const tableSpecs: TableSpec[] = [
       { name: 'flavours', type: 'string-array' },
       { name: 'meal_number', type: 'int' },
       { name: 'pouch_count', type: 'int' },
+      { name: 'feeding_type' },
+      { name: 'dry_food_type' },
+      { name: 'bowl_count', type: 'int' },
+      { name: 'top_up_percent', type: 'int' },
     ],
   },
   {

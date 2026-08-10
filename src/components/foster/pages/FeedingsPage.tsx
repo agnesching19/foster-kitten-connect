@@ -10,6 +10,7 @@ import { Card } from '@/components/foster/ui/Card'
 import { EmptyState } from '@/components/foster/ui/EmptyState'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { FeedingDialog } from '@/components/foster/dialogs/FeedingDialog'
+import { FeedingDailyChart } from '@/components/foster/feedings/FeedingDailyChart'
 import { ConfirmDialog } from '@/components/foster/settings/ConfirmDialog'
 import {
   feedingsQueryOptions,
@@ -42,12 +43,27 @@ export function FeedingsPage() {
   const [pendingDelete, setPendingDelete] = useState<FeedingRow | null>(null)
   const [selectedMonth, setSelectedMonth] = useState('')
   const [openDays, setOpenDays] = useState<Record<string, boolean>>({})
+  const [chartOpen, setChartOpen] = useState(true)
 
   const activeMonth = months.includes(selectedMonth) ? selectedMonth : (months[0] ?? '')
   const visibleDays = days.filter((day) => day.date.startsWith(activeMonth))
+  const visibleFeedings = visibleDays.flatMap((day) => day.items)
   const visibleFeedingCount = visibleDays.reduce((total, day) => total + day.items.length, 0)
   const visiblePouchCount = visibleDays.reduce(
-    (total, day) => total + day.items.reduce((sum, feeding) => sum + feeding.pouch_count, 0),
+    (total, day) =>
+      total +
+      day.items.reduce(
+        (sum, feeding) => sum + (feeding.feeding_type === 'wet' ? feeding.pouch_count : 0),
+        0,
+      ),
+    0,
+  )
+  const visibleDryTopUpCount = visibleDays.reduce(
+    (total, day) => total + day.items.filter((feeding) => feeding.feeding_type === 'dry').length,
+    0,
+  )
+  const visibleDryBowlEquivalent = visibleDays.reduce(
+    (total, day) => total + dryBowlEquivalent(day.items),
     0,
   )
   const isDayOpen = (date: string, index: number) => openDays[date] ?? index < 2
@@ -70,7 +86,7 @@ export function FeedingsPage() {
     <div>
       <PageHeader
         title="Feedings"
-        subtitle={litter ? `${litter.mother_name}'s daily pouches` : 'Daily pouches'}
+        subtitle={litter ? 'Wet food and dry-food top-ups for the whole batch' : 'Daily food log'}
         action={
           canEdit ? (
             <Button
@@ -132,6 +148,14 @@ export function FeedingsPage() {
                 {visibleFeedingCount} feeding{visibleFeedingCount === 1 ? '' : 's'}
                 {' · '}
                 {visiblePouchCount} pouch{visiblePouchCount === 1 ? '' : 'es'}
+                {visibleDryTopUpCount > 0 ? (
+                  <>
+                    {' · '}
+                    {visibleDryTopUpCount} dry top-up{visibleDryTopUpCount === 1 ? '' : 's'}
+                    {' · '}
+                    {formatBowlEquivalent(visibleDryBowlEquivalent)}
+                  </>
+                ) : null}
               </p>
             </div>
             <button
@@ -147,6 +171,33 @@ export function FeedingsPage() {
               {allDaysOpen ? 'Collapse all' : 'Expand all'}
             </button>
           </div>
+
+          <Collapsible open={chartOpen} onOpenChange={setChartOpen}>
+            <Card>
+              <CollapsibleTrigger asChild>
+                <button
+                  type="button"
+                  className="flex min-h-11 w-full items-center justify-between gap-3 text-left"
+                >
+                  <span>
+                    <span className="block font-semibold text-ink">Food over time</span>
+                    <span className="mt-0.5 block text-sm text-muted">
+                      Daily totals for the latest 14 days in this month
+                    </span>
+                  </span>
+                  <ChevronDown
+                    aria-hidden
+                    className={`h-5 w-5 shrink-0 text-muted transition-transform ${chartOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="mt-4 border-t border-border/70 pt-4">
+                  <FeedingDailyChart feedings={visibleFeedings} />
+                </div>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
 
           <div className="grid items-start gap-3 lg:grid-cols-2 lg:gap-4">
             {visibleDays.map((day, index) => {
@@ -204,7 +255,12 @@ function FeedingDayCard({
   onEdit: (feeding: FeedingRow) => void
   onDelete: (feeding: FeedingRow) => void
 }) {
-  const pouchCount = feedings.reduce((total, feeding) => total + feeding.pouch_count, 0)
+  const pouchCount = feedings.reduce(
+    (total, feeding) => total + (feeding.feeding_type === 'wet' ? feeding.pouch_count : 0),
+    0,
+  )
+  const dryTopUpCount = feedings.filter((feeding) => feeding.feeding_type === 'dry').length
+  const dryBowlTotal = dryBowlEquivalent(feedings)
 
   return (
     <Collapsible open={open} onOpenChange={onOpenChange}>
@@ -218,8 +274,20 @@ function FeedingDayCard({
               <span className="block font-semibold text-ink">{formatRelativeDay(date)}</span>
               <span className="mt-0.5 block text-sm text-muted">
                 {feedings.length} feeding{feedings.length === 1 ? '' : 's'}
-                {' · '}
-                {pouchCount} pouch{pouchCount === 1 ? '' : 'es'}
+                {pouchCount > 0 ? (
+                  <>
+                    {' · '}
+                    {pouchCount} pouch{pouchCount === 1 ? '' : 'es'}
+                  </>
+                ) : null}
+                {dryTopUpCount > 0 ? (
+                  <>
+                    {' · '}
+                    {dryTopUpCount} dry top-up{dryTopUpCount === 1 ? '' : 's'}
+                    {' · '}
+                    {formatBowlEquivalent(dryBowlTotal)}
+                  </>
+                ) : null}
               </span>
             </span>
             <ChevronDown
@@ -236,7 +304,7 @@ function FeedingDayCard({
                 className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-3 gap-y-1 py-3 last:pb-0"
               >
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-lg">
-                  🍼
+                  {feeding.feeding_type === 'dry' ? '🥣' : '🍼'}
                 </span>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -244,15 +312,25 @@ function FeedingDayCard({
                       {feeding.time.slice(0, 5)}
                     </p>
                     {feeding.meal_number != null ? (
-                      <Badge label={`Pouch ${feeding.meal_number}`} color="brand" />
+                      <Badge label={`Feed ${feeding.meal_number}`} color="brand" />
                     ) : null}
-                    {feeding.pouch_count > 1 ? (
+                    {feeding.feeding_type === 'wet' && feeding.pouch_count > 1 ? (
                       <Badge label={`×${feeding.pouch_count} pouches`} color="neutral" />
                     ) : null}
+                    {feeding.feeding_type === 'dry' ? (
+                      <Badge label="Dry top-up" color="neutral" />
+                    ) : null}
                   </div>
-                  <p className="mt-0.5 text-sm capitalize text-muted">
-                    {formatFlavours(feeding.flavours)}
-                  </p>
+                  {feeding.feeding_type === 'dry' ? (
+                    <p className="mt-0.5 text-sm capitalize text-muted">
+                      {feeding.bowl_count} shared bowl{feeding.bowl_count === 1 ? '' : 's'} ·{' '}
+                      {feeding.top_up_percent}% · {feeding.dry_food_type} food
+                    </p>
+                  ) : (
+                    <p className="mt-0.5 text-sm capitalize text-muted">
+                      {formatFlavours(feeding.flavours)}
+                    </p>
+                  )}
                   {feeding.notes && <p className="mt-0.5 text-xs text-muted">{feeding.notes}</p>}
                   <p className="mt-1 text-xs text-muted">
                     Added by {logAuthorName(profiles, feeding.user_id)}
@@ -300,4 +378,20 @@ function formatFlavours(flavours: string[]) {
   return [...counts]
     .map(([flavour, count]) => `${flavour}${count > 1 ? ` ×${count}` : ''}`)
     .join(' + ')
+}
+
+function dryBowlEquivalent(feedings: FeedingRow[]) {
+  return feedings.reduce(
+    (total, feeding) =>
+      total +
+      (feeding.feeding_type === 'dry'
+        ? ((feeding.bowl_count ?? 0) * (feeding.top_up_percent ?? 0)) / 100
+        : 0),
+    0,
+  )
+}
+
+function formatBowlEquivalent(value: number) {
+  const formatted = value.toLocaleString(undefined, { maximumFractionDigits: 2 })
+  return `${formatted} bowl equivalent${value === 1 ? '' : 's'}`
 }

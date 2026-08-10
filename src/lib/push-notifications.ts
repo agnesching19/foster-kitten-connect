@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client'
 export const VAPID_PUBLIC_KEY =
   'BOrv7AvwBvotcnsq_uy0y3DEA2asqhZ-a1G3Z13rzaqLK4SGQvoVRd06-pel07FswiD3AtsVWz44rjS0bsFSZts'
 
-export type LogNotificationType = 'feeding' | 'poop' | 'weigh_in' | 'litter_change'
+export type LogNotificationType = 'feeding' | 'dry_top_up' | 'poop' | 'weigh_in' | 'litter_change'
 
 export function supportsPushNotifications() {
   return (
@@ -47,14 +47,14 @@ export async function enablePushNotifications(userId: string) {
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
     }))
   const json = subscription.toJSON()
-  if (!json.keys?.p256dh || !json.keys.auth)
+  if (!json.keys?.['p256dh'] || !json.keys['auth'])
     throw new Error('The browser returned an invalid subscription.')
   const { error } = await supabase.from('push_subscriptions').upsert(
     {
       user_id: userId,
       endpoint: subscription.endpoint,
-      p256dh: json.keys.p256dh,
-      auth: json.keys.auth,
+      p256dh: json.keys['p256dh'],
+      auth: json.keys['auth'],
       user_agent: navigator.userAgent,
       updated_at: new Date().toISOString(),
     },

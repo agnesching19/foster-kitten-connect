@@ -87,8 +87,8 @@ export function FeedingFlavoursCard() {
     <>
       <Card>
         <CardHeader
-          title="Feeding flavours"
-          subtitle="Manage the shared pouch flavours shown as quick options when logging a feeding."
+          title="Wet-food flavours"
+          subtitle="Manage the shared pouch flavours shown as quick options when logging wet food."
         />
 
         {user ? (

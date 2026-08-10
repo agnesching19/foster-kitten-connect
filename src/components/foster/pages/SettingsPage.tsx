@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   Bell,
   ChevronRight,
+  Clock3,
   Database,
   PawPrint,
   UserRound,
@@ -17,10 +18,12 @@ import { FeedingFlavoursCard } from '@/components/foster/settings/FeedingFlavour
 import { ImportDataCard, type ImportMethod } from '@/components/foster/settings/ImportDataCard'
 import { LegacyImportCard } from '@/components/foster/settings/LegacyImportCard'
 import { LiveCamAccessCard } from '@/components/foster/settings/LiveCamAccessCard'
+import { LitterRoutineCard } from '@/components/foster/settings/LitterRoutineCard'
 import { ProfileCard } from '@/components/foster/settings/ProfileCard'
 import { NotificationsCard } from '@/components/foster/settings/NotificationsCard'
 
-export type SettingsSection = 'profile' | 'notifications' | 'feeding' | 'access' | 'data'
+export type SettingsSection =
+  'profile' | 'notifications' | 'feeding' | 'litter-routine' | 'access' | 'data'
 
 const settingsSections: Array<{
   id: SettingsSection
@@ -42,9 +45,15 @@ const settingsSections: Array<{
   },
   {
     id: 'feeding',
-    title: 'Feeding flavours',
+    title: 'Wet-food flavours',
     description: 'Add, rename or remove the quick pouch options.',
     icon: PawPrint,
+  },
+  {
+    id: 'litter-routine',
+    title: 'Litter-box routine',
+    description: 'Set how often the boxes should be changed for the current batch.',
+    icon: Clock3,
   },
   {
     id: 'access',
@@ -121,6 +130,7 @@ export function SettingsPage() {
         {section === 'profile' ? <ProfileCard /> : null}
         {section === 'notifications' ? <NotificationsCard /> : null}
         {section === 'feeding' ? <FeedingFlavoursCard /> : null}
+        {section === 'litter-routine' ? <LitterRoutineCard /> : null}
         {section === 'access' ? (
           <>
             <CollaborationCard />

@@ -27,6 +27,7 @@ import {
 } from '@/lib/foster-queries'
 import { formatRelativeDay } from '@/utils/formatDate'
 import { useLitterAccess } from '@/hooks/useLitterAccess'
+import { groupWeighInsByDay } from '@/lib/weight-history'
 
 const iconButtonClass =
   'flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-white text-sm text-muted transition hover:bg-brand-50 hover:text-ink'
@@ -44,7 +45,7 @@ export function WeightsPage() {
   const [editing, setEditing] = useState<WeighInRow | null>(null)
   const [pendingDelete, setPendingDelete] = useState<WeighInRow | null>(null)
   const [selectedMonth, setSelectedMonth] = useState('')
-  const [openSessions, setOpenSessions] = useState<Record<string, boolean>>({})
+  const [openDays, setOpenDays] = useState<Record<string, boolean>>({})
   const [historyKitten, setHistoryKitten] = useState<WeightHistoryKitten | null>(null)
 
   const remove = useMutation({
@@ -62,16 +63,16 @@ export function WeightsPage() {
     onError: (error: Error) => toast.error(error.message || 'Could not delete the weigh-in'),
   })
 
-  // Sessions arrive newest-first. Walk them chronologically so every kitten is
-  // compared with its own last recorded weight, even when it skipped a session.
-  const sessions = useMemo(() => {
+  // Use the latest reading for each kitten on a day, then compare it with that
+  // kitten's reading from the previous day it was weighed.
+  const days = useMemo(() => {
     const previousWeightByKitten = new Map<string, number>()
-    return [...weighIns]
+    return groupWeighInsByDay(weighIns)
       .reverse()
-      .map((session) => ({
-        ...session,
-        daysOld: dob ? daysBetween(dob, session.date) : null,
-        weights: session.weights.map((weight) => {
+      .map((day) => ({
+        ...day,
+        daysOld: dob ? daysBetween(dob, day.date) : null,
+        weights: day.weights.map((weight) => {
           const previousGrams = previousWeightByKitten.get(weight.kitten_id)
           previousWeightByKitten.set(weight.kitten_id, weight.grams)
           return {
@@ -86,16 +87,12 @@ export function WeightsPage() {
       .reverse()
   }, [weighIns, dob])
 
-  const months = useMemo(
-    () => [...new Set(sessions.map((session) => session.date.slice(0, 7)))],
-    [sessions],
-  )
+  const months = useMemo(() => [...new Set(days.map((day) => day.date.slice(0, 7)))], [days])
   const activeMonth = months.includes(selectedMonth) ? selectedMonth : (months[0] ?? '')
-  const visibleSessions = sessions.filter((session) => session.date.startsWith(activeMonth))
-  const isSessionOpen = (id: string, index: number) => openSessions[id] ?? index < 2
-  const allSessionsOpen = visibleSessions.every((session, index) =>
-    isSessionOpen(session.id, index),
-  )
+  const visibleDays = days.filter((day) => day.date.startsWith(activeMonth))
+  const visibleSessionCount = visibleDays.reduce((total, day) => total + day.sessions.length, 0)
+  const isDayOpen = (date: string, index: number) => openDays[date] ?? index < 2
+  const allDaysOpen = visibleDays.every((day, index) => isDayOpen(day.date, index))
   const kittensWithWeights = (litter?.kittens ?? []).filter((kitten) =>
     weighIns.some((session) => session.weights.some((weight) => weight.kitten_id === kitten.id)),
   )
@@ -149,7 +146,7 @@ export function WeightsPage() {
         <Card>
           <p className="text-sm text-muted">Loading weigh-ins…</p>
         </Card>
-      ) : sessions.length ? (
+      ) : days.length ? (
         <div className="space-y-4 xl:space-y-6">
           <Card padding="lg">
             <CardHeader title="Growth chart" subtitle="Kitten weight over time" />
@@ -204,34 +201,37 @@ export function WeightsPage() {
                 ))}
               </select>
               <p className="hidden text-sm text-muted md:block">
-                {visibleSessions.length} weigh-in{visibleSessions.length === 1 ? '' : 's'}
+                {visibleDays.length} day{visibleDays.length === 1 ? '' : 's'} ·{' '}
+                {visibleSessionCount} weigh-in{visibleSessionCount === 1 ? '' : 's'}
               </p>
             </div>
             <button
               type="button"
               className="min-h-11 shrink-0 rounded-xl px-3 text-sm font-semibold text-brand-700 transition hover:bg-brand-50"
               onClick={() =>
-                setOpenSessions((current) => ({
+                setOpenDays((current) => ({
                   ...current,
-                  ...Object.fromEntries(
-                    visibleSessions.map((session) => [session.id, !allSessionsOpen]),
-                  ),
+                  ...Object.fromEntries(visibleDays.map((day) => [day.date, !allDaysOpen])),
                 }))
               }
             >
-              {allSessionsOpen ? 'Collapse all' : 'Expand all'}
+              {allDaysOpen ? 'Collapse all' : 'Expand all'}
             </button>
           </div>
 
           <div className="grid items-start gap-3 xl:grid-cols-2 xl:gap-4">
-            {visibleSessions.map((session, index) => {
-              const open = isSessionOpen(session.id, index)
+            {visibleDays.map((day, index) => {
+              const open = isDayOpen(day.date, index)
+              const singleSession = day.sessions.length === 1 ? day.sessions[0]! : null
+              const authors = [
+                ...new Set(day.sessions.map((session) => logAuthorName(profiles, session.user_id))),
+              ]
               return (
                 <Collapsible
-                  key={session.id}
+                  key={day.date}
                   open={open}
                   onOpenChange={(nextOpen) =>
-                    setOpenSessions((current) => ({ ...current, [session.id]: nextOpen }))
+                    setOpenDays((current) => ({ ...current, [day.date]: nextOpen }))
                   }
                 >
                   <Card>
@@ -243,16 +243,16 @@ export function WeightsPage() {
                         >
                           <span>
                             <span className="block font-semibold text-ink">
-                              {formatRelativeDay(session.date)}
+                              {formatRelativeDay(day.date)}
                             </span>
                             <span className="mt-0.5 block text-sm text-muted">
-                              {session.time.slice(0, 5)}
-                              {session.daysOld != null ? ` · Day ${session.daysOld}` : ''} ·{' '}
-                              {session.weights.length} kitten
-                              {session.weights.length === 1 ? '' : 's'}
+                              {formatSessionTimes(day.sessions)} ·{' '}
+                              {day.daysOld != null ? `Day ${day.daysOld} · ` : ''}
+                              {day.weights.length} kitten{day.weights.length === 1 ? '' : 's'} ·{' '}
+                              {day.sessions.length} session{day.sessions.length === 1 ? '' : 's'}
                             </span>
                             <span className="mt-1 block text-xs text-muted">
-                              Added by {logAuthorName(profiles, session.user_id)}
+                              Added by {authors.join(' & ')}
                             </span>
                           </span>
                           <ChevronDown
@@ -261,16 +261,14 @@ export function WeightsPage() {
                           />
                         </button>
                       </CollapsibleTrigger>
-                      {canEdit ? (
+                      {canEdit && singleSession ? (
                         <div className="flex shrink-0 items-center gap-1">
                           <button
                             type="button"
                             className={iconButtonClass}
                             aria-label="Edit weigh-in"
                             onClick={() => {
-                              const original =
-                                weighIns.find((item) => item.id === session.id) ?? null
-                              setEditing(original)
+                              setEditing(singleSession)
                               setDialogOpen(true)
                             }}
                           >
@@ -280,11 +278,7 @@ export function WeightsPage() {
                             type="button"
                             className={iconButtonClass}
                             aria-label="Delete weigh-in"
-                            onClick={() =>
-                              setPendingDelete(
-                                weighIns.find((item) => item.id === session.id) ?? null,
-                              )
-                            }
+                            onClick={() => setPendingDelete(singleSession)}
                           >
                             ✕
                           </button>
@@ -293,7 +287,7 @@ export function WeightsPage() {
                     </div>
                     <CollapsibleContent>
                       <ul className="mt-3 grid gap-2 border-t border-border/70 pt-3 sm:grid-cols-2">
-                        {session.weights.map((weight) => (
+                        {day.weights.map((weight) => (
                           <li
                             key={weight.kitten_id}
                             className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl bg-gray-50 px-3 py-3"
@@ -323,8 +317,56 @@ export function WeightsPage() {
                           </li>
                         ))}
                       </ul>
-                      {session.notes ? (
-                        <p className="mt-3 text-sm text-muted">{session.notes}</p>
+                      {day.sessions.length > 1 ? (
+                        <div className="mt-3 border-t border-border/70 pt-3">
+                          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
+                            Weigh-in sessions
+                          </p>
+                          <ul className="grid gap-2">
+                            {day.sessions.map((session) => (
+                              <li
+                                key={session.id}
+                                className="flex min-w-0 items-center gap-3 rounded-xl border border-border bg-white px-3 py-2"
+                              >
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-medium text-ink">
+                                    {session.time.slice(0, 5)} · {session.weights.length} kitten
+                                    {session.weights.length === 1 ? '' : 's'}
+                                  </p>
+                                  <p className="truncate text-xs text-muted">
+                                    Added by {logAuthorName(profiles, session.user_id)}
+                                    {session.notes ? ` · ${session.notes}` : ''}
+                                  </p>
+                                </div>
+                                {canEdit ? (
+                                  <div className="flex shrink-0 items-center gap-1">
+                                    <button
+                                      type="button"
+                                      className={iconButtonClass}
+                                      aria-label={`Edit ${session.time.slice(0, 5)} weigh-in`}
+                                      onClick={() => {
+                                        setEditing(session)
+                                        setDialogOpen(true)
+                                      }}
+                                    >
+                                      ✎
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className={iconButtonClass}
+                                      aria-label={`Delete ${session.time.slice(0, 5)} weigh-in`}
+                                      onClick={() => setPendingDelete(session)}
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                ) : null}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : singleSession?.notes ? (
+                        <p className="mt-3 text-sm text-muted">{singleSession.notes}</p>
                       ) : null}
                     </CollapsibleContent>
                   </Card>
@@ -351,4 +393,10 @@ function formatMonth(month: string) {
     month: 'long',
     year: 'numeric',
   }).format(new Date(`${month}-01T12:00:00`))
+}
+
+function formatSessionTimes(sessions: WeighInRow[]) {
+  const latest = sessions[0]?.time.slice(0, 5) ?? ''
+  const earliest = sessions.at(-1)?.time.slice(0, 5) ?? latest
+  return earliest === latest ? latest : `${earliest}–${latest}`
 }

@@ -48,8 +48,11 @@ export type Database = {
       }
       feedings: {
         Row: {
+          bowl_count: number | null
           created_at: string
           date: string
+          dry_food_type: string | null
+          feeding_type: string
           food: string
           flavours: string[]
           id: string
@@ -58,12 +61,16 @@ export type Database = {
           notes: string | null
           pouch_count: number
           time: string
+          top_up_percent: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          bowl_count?: number | null
           created_at?: string
           date: string
+          dry_food_type?: string | null
+          feeding_type?: string
           food: string
           flavours?: string[]
           id?: string
@@ -72,12 +79,16 @@ export type Database = {
           notes?: string | null
           pouch_count?: number
           time: string
+          top_up_percent?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          bowl_count?: number | null
           created_at?: string
           date?: string
+          dry_food_type?: string | null
+          feeding_type?: string
           food?: string
           flavours?: string[]
           id?: string
@@ -86,6 +97,7 @@ export type Database = {
           notes?: string | null
           pouch_count?: number
           time?: string
+          top_up_percent?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -258,6 +270,7 @@ export type Database = {
           external_record: string | null
           id: string
           left_date: string | null
+          litter_change_interval_hours: number
           litter_name: string | null
           mother_avatar_path: string | null
           mother_name: string
@@ -273,6 +286,7 @@ export type Database = {
           external_record?: string | null
           id?: string
           left_date?: string | null
+          litter_change_interval_hours?: number
           litter_name?: string | null
           mother_avatar_path?: string | null
           mother_name: string
@@ -288,6 +302,7 @@ export type Database = {
           external_record?: string | null
           id?: string
           left_date?: string | null
+          litter_change_interval_hours?: number
           litter_name?: string | null
           mother_avatar_path?: string | null
           mother_name?: string
