@@ -7,9 +7,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { AuthStatus } from './AuthStatus'
@@ -47,31 +46,32 @@ export function MobileHeader() {
                 <MoreHorizontal aria-hidden className="h-5 w-5" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 p-2">
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger className="min-h-11 cursor-pointer rounded-lg px-3">
-                  <Layers aria-hidden />
-                  View batch
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent className="w-60 p-2">
-                  {litters.map((litter) => (
-                    <DropdownMenuItem
-                      key={litter.id}
-                      asChild
-                      className="min-h-11 cursor-pointer rounded-lg px-3"
-                    >
-                      <Link to={batchRouteForPathname(pathname)} params={{ litterId: litter.id }}>
-                        <span className="min-w-0 flex-1 truncate">
-                          {litter.litter_name || litter.mother_name}
-                        </span>
-                        <span className="text-xs text-muted">
-                          {litter.status === 'completed' ? 'Completed' : 'Active'}
-                        </span>
-                      </Link>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
+            <DropdownMenuContent
+              align="end"
+              collisionPadding={12}
+              className="w-[min(20rem,calc(100vw-1.5rem))] p-2"
+            >
+              <DropdownMenuLabel className="flex items-center gap-2 px-3 py-2 text-xs uppercase tracking-wide text-muted">
+                <Layers aria-hidden />
+                View batch
+              </DropdownMenuLabel>
+              {litters.map((litter) => (
+                <DropdownMenuItem
+                  key={litter.id}
+                  asChild
+                  className="min-h-11 min-w-0 cursor-pointer rounded-lg px-3"
+                >
+                  <Link to={batchRouteForPathname(pathname)} params={{ litterId: litter.id }}>
+                    <span className="min-w-0 flex-1 truncate">
+                      {litter.litter_name || litter.mother_name}
+                    </span>
+                    <span className="shrink-0 text-xs text-muted">
+                      {litter.status === 'completed' ? 'Completed' : 'Active'}
+                    </span>
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
               <DropdownMenuItem asChild className="min-h-11 cursor-pointer rounded-lg px-3">
                 <Link to="/notes">
                   <NotebookPen aria-hidden />

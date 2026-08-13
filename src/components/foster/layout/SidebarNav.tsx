@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { littersQueryOptions, pickCurrentLitter } from '@/lib/foster-queries'
 import { KittenAvatar } from '@/components/foster/ui/KittenAvatar'
+import { CatAvatar } from '@/components/foster/ui/CatAvatar'
 import { useLiveCamAccess } from '@/hooks/useLiveCamAccess'
 import {
   batchRouteForPathname,
@@ -124,8 +125,19 @@ export function SidebarNav() {
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
           {selectedBatch?.status === 'completed' ? 'Selected batch' : 'Active batch'}
         </p>
-        {kittens.length ? (
+        {selectedBatch ? (
           <ul className="space-y-2">
+            <li className="flex items-center gap-2">
+              <CatAvatar
+                name={selectedBatch.mother_name}
+                avatarPath={selectedBatch.mother_avatar_path}
+                size="sm"
+              />
+              <span className="min-w-0 flex-1 truncate text-sm text-ink">
+                {selectedBatch.mother_name}
+              </span>
+              <span className="shrink-0 text-xs text-muted">Momma</span>
+            </li>
             {kittens.map((kitten) => (
               <li key={kitten.id} className="flex items-center gap-2">
                 <KittenAvatar
@@ -139,7 +151,7 @@ export function SidebarNav() {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-muted">No active batch</p>
+          <p className="text-sm text-muted">No batch selected</p>
         )}
       </div>
 
