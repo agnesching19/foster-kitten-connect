@@ -10,29 +10,44 @@ export type Database = {
     Tables: {
       daily_notes: {
         Row: {
+          category: string
           created_at: string
           date: string
           id: string
+          importance: string
+          kitten_ids: string[]
           litter_id: string
           note: string
+          subject_type: string
+          time: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          category?: string
           created_at?: string
           date: string
           id?: string
+          importance?: string
+          kitten_ids?: string[]
           litter_id: string
           note: string
+          subject_type?: string
+          time?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          category?: string
           created_at?: string
           date?: string
           id?: string
+          importance?: string
+          kitten_ids?: string[]
           litter_id?: string
           note?: string
+          subject_type?: string
+          time?: string | null
           updated_at?: string
           user_id?: string
         }

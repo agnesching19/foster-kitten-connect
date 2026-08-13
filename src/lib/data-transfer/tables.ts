@@ -138,7 +138,12 @@ export const tableSpecs: TableSpec[] = [
       { name: 'id', required: true, type: 'uuid' },
       { name: 'litter_id', required: true, type: 'uuid' },
       { name: 'date', required: true, type: 'date' },
+      { name: 'time', type: 'time' },
       { name: 'note', required: true },
+      { name: 'category' },
+      { name: 'importance' },
+      { name: 'subject_type' },
+      { name: 'kitten_ids', type: 'string-array' },
     ],
   },
 ]

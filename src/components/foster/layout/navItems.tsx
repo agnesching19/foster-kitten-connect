@@ -146,6 +146,31 @@ export const navItems: NavItem[] = [
       </svg>
     ),
   },
+  {
+    to: '/notes',
+    label: 'Notes',
+    shortLabel: 'Notes',
+    icon: (active) => (
+      <svg
+        aria-hidden
+        className="h-6 w-6 shrink-0"
+        fill={active ? 'currentColor' : 'none'}
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth={active ? 0 : 1.75}
+      >
+        {active ? (
+          <path d="M5.625 3.75A2.625 2.625 0 003 6.375v11.25a2.625 2.625 0 002.625 2.625h12.75A2.625 2.625 0 0021 17.625V6.375a2.625 2.625 0 00-2.625-2.625H5.625zM7.5 8.25a.75.75 0 000 1.5h9a.75.75 0 000-1.5h-9zm0 3.75a.75.75 0 000 1.5h9a.75.75 0 000-1.5h-9zm0 3.75a.75.75 0 000 1.5h5.25a.75.75 0 000-1.5H7.5z" />
+        ) : (
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M19.5 14.25v-8.625A2.625 2.625 0 0016.875 3h-10.5A2.625 2.625 0 003.75 5.625v12.75A2.625 2.625 0 006.375 21h8.625m4.5-6.75L15 18.75m4.5-4.5v3.375A1.125 1.125 0 0118.375 18.75H15"
+          />
+        )}
+      </svg>
+    ),
+  },
 ]
 
 export function getNavLinkClass(isActive: boolean, variant: 'bottom' | 'sidebar') {

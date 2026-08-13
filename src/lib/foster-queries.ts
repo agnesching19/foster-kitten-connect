@@ -130,6 +130,42 @@ export function logAuthorName(profiles: ProfileRow[], userId: string): string {
   return profiles.find((profile) => profile.id === userId)?.display_name ?? 'Foster carer'
 }
 
+export type NoteCategory =
+  'milestone' | 'behaviour' | 'health' | 'medication' | 'appointment' | 'general'
+export type NoteImportance = 'normal' | 'important'
+export type NoteSubject = 'batch' | 'mother' | 'kittens'
+
+export interface DailyNoteRow {
+  id: string
+  user_id: string
+  litter_id: string
+  date: string
+  time: string | null
+  note: string
+  category: NoteCategory
+  importance: NoteImportance
+  subject_type: NoteSubject
+  kitten_ids: string[]
+}
+
+export const dailyNotesQueryOptions = (litterId: string | undefined) =>
+  queryOptions({
+    queryKey: ['daily-notes', litterId],
+    enabled: Boolean(litterId),
+    queryFn: async (): Promise<DailyNoteRow[]> => {
+      const { data, error } = await supabase
+        .from('daily_notes')
+        .select(
+          'id, user_id, litter_id, date, time, note, category, importance, subject_type, kitten_ids',
+        )
+        .eq('litter_id', litterId!)
+        .order('date', { ascending: false })
+        .order('time', { ascending: false, nullsFirst: false })
+      if (error) throw error
+      return (data ?? []) as DailyNoteRow[]
+    },
+  })
+
 export interface KittenRow {
   id: string
   name: string

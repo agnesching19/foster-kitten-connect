@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as FeedingsRouteImport } from './routes/feedings'
 import { Route as LitterRouteImport } from './routes/litter'
+import { Route as NotesRouteImport } from './routes/notes'
 import { Route as PoopsRouteImport } from './routes/poops'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as WeightsRouteImport } from './routes/weights'
@@ -36,6 +37,11 @@ const FeedingsRoute = FeedingsRouteImport.update({
 const LitterRoute = LitterRouteImport.update({
   id: '/litter',
   path: '/litter',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotesRoute = NotesRouteImport.update({
+  id: '/notes',
+  path: '/notes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PoopsRoute = PoopsRouteImport.update({
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/feedings': typeof FeedingsRoute
   '/litter': typeof LitterRoute
+  '/notes': typeof NotesRoute
   '/poops': typeof PoopsRoute
   '/settings': typeof SettingsRoute
   '/weights': typeof WeightsRoute
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/feedings': typeof FeedingsRoute
   '/litter': typeof LitterRoute
+  '/notes': typeof NotesRoute
   '/poops': typeof PoopsRoute
   '/settings': typeof SettingsRoute
   '/weights': typeof WeightsRoute
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/feedings': typeof FeedingsRoute
   '/litter': typeof LitterRoute
+  '/notes': typeof NotesRoute
   '/poops': typeof PoopsRoute
   '/settings': typeof SettingsRoute
   '/weights': typeof WeightsRoute
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/feedings'
     | '/litter'
+    | '/notes'
     | '/poops'
     | '/settings'
     | '/weights'
@@ -107,6 +117,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/feedings'
     | '/litter'
+    | '/notes'
     | '/poops'
     | '/settings'
     | '/weights'
@@ -117,6 +128,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/feedings'
     | '/litter'
+    | '/notes'
     | '/poops'
     | '/settings'
     | '/weights'
@@ -128,6 +140,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   FeedingsRoute: typeof FeedingsRoute
   LitterRoute: typeof LitterRoute
+  NotesRoute: typeof NotesRoute
   PoopsRoute: typeof PoopsRoute
   SettingsRoute: typeof SettingsRoute
   WeightsRoute: typeof WeightsRoute
@@ -162,6 +175,13 @@ declare module '@tanstack/react-router' {
       path: '/litter'
       fullPath: '/litter'
       preLoaderRoute: typeof LitterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notes': {
+      id: '/notes'
+      path: '/notes'
+      fullPath: '/notes'
+      preLoaderRoute: typeof NotesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/poops': {
@@ -200,6 +220,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   FeedingsRoute: FeedingsRoute,
   LitterRoute: LitterRoute,
+  NotesRoute: NotesRoute,
   PoopsRoute: PoopsRoute,
   SettingsRoute: SettingsRoute,
   WeightsRoute: WeightsRoute,
