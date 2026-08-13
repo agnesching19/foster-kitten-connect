@@ -216,7 +216,7 @@ export function KittensSection({ litterId, canEdit }: { litterId: string; canEdi
 
                 {editingId === kitten.id ? (
                   <form
-                    className="flex min-w-0 basis-full flex-col gap-2 sm:basis-auto"
+                    className="flex min-w-0 basis-full flex-1 flex-col gap-2 sm:basis-auto"
                     onSubmit={(event) => {
                       event.preventDefault()
                       const name = editingName.trim()
@@ -230,7 +230,7 @@ export function KittensSection({ litterId, canEdit }: { litterId: string; canEdi
                       })
                     }}
                   >
-                    <div className="flex flex-col gap-2 sm:flex-row">
+                    <div className="grid min-w-0 gap-2 sm:grid-cols-[minmax(12rem,1fr)_12rem_auto] sm:items-center">
                       <input
                         autoFocus
                         value={editingName}
@@ -243,7 +243,7 @@ export function KittensSection({ litterId, canEdit }: { litterId: string; canEdi
                         onChange={setEditingColour}
                         label={`Tag colour for ${kitten.name}`}
                       />
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
                         <Button type="submit" size="md" disabled={updateKitten.isPending}>
                           {updateKitten.isPending ? 'Saving…' : 'Save'}
                         </Button>
