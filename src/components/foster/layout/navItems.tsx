@@ -2,9 +2,31 @@ import type { ReactNode } from 'react'
 
 export interface NavItem {
   to: string
+  batchSection?: 'feedings' | 'poops' | 'weights' | 'litter' | 'notes'
   label: string
   shortLabel: string
   icon: (active: boolean) => ReactNode
+}
+
+export function batchRouteForPathname(pathname: string) {
+  const section = pathname.match(
+    /^\/litters\/[^/]+\/(feedings|poops|weights|litter|notes)\/?$/,
+  )?.[1]
+
+  switch (section) {
+    case 'feedings':
+      return '/litters/$litterId/feedings' as const
+    case 'poops':
+      return '/litters/$litterId/poops' as const
+    case 'weights':
+      return '/litters/$litterId/weights' as const
+    case 'litter':
+      return '/litters/$litterId/litter' as const
+    case 'notes':
+      return '/litters/$litterId/notes' as const
+    default:
+      return '/litters/$litterId' as const
+  }
 }
 
 export const navItems: NavItem[] = [
@@ -35,6 +57,7 @@ export const navItems: NavItem[] = [
   },
   {
     to: '/feedings',
+    batchSection: 'feedings',
     label: 'Feedings',
     shortLabel: 'Feed',
     icon: (active) => (
@@ -60,6 +83,7 @@ export const navItems: NavItem[] = [
   },
   {
     to: '/poops',
+    batchSection: 'poops',
     label: 'Poops',
     shortLabel: 'Poops',
     icon: (active) => (
@@ -89,6 +113,7 @@ export const navItems: NavItem[] = [
   },
   {
     to: '/weights',
+    batchSection: 'weights',
     label: 'Weights',
     shortLabel: 'Weight',
     icon: (active) => (
@@ -119,6 +144,7 @@ export const navItems: NavItem[] = [
   },
   {
     to: '/litter',
+    batchSection: 'litter',
     label: 'Litter box',
     shortLabel: 'Litter box',
     icon: (active) => (
@@ -148,6 +174,7 @@ export const navItems: NavItem[] = [
   },
   {
     to: '/notes',
+    batchSection: 'notes',
     label: 'Notes',
     shortLabel: 'Notes',
     icon: (active) => (

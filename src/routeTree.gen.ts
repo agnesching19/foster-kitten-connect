@@ -18,6 +18,12 @@ import { Route as PoopsRouteImport } from './routes/poops'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as WeightsRouteImport } from './routes/weights'
 import { Route as LittersLitterIdRouteImport } from './routes/litters.$litterId'
+import { Route as LittersLitterIdIndexRouteImport } from './routes/litters.$litterId.index'
+import { Route as LittersLitterIdFeedingsRouteImport } from './routes/litters.$litterId.feedings'
+import { Route as LittersLitterIdLitterRouteImport } from './routes/litters.$litterId.litter'
+import { Route as LittersLitterIdNotesRouteImport } from './routes/litters.$litterId.notes'
+import { Route as LittersLitterIdPoopsRouteImport } from './routes/litters.$litterId.poops'
+import { Route as LittersLitterIdWeightsRouteImport } from './routes/litters.$litterId.weights'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -64,6 +70,36 @@ const LittersLitterIdRoute = LittersLitterIdRouteImport.update({
   path: '/litters/$litterId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LittersLitterIdIndexRoute = LittersLitterIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LittersLitterIdRoute,
+} as any)
+const LittersLitterIdFeedingsRoute = LittersLitterIdFeedingsRouteImport.update({
+  id: '/feedings',
+  path: '/feedings',
+  getParentRoute: () => LittersLitterIdRoute,
+} as any)
+const LittersLitterIdLitterRoute = LittersLitterIdLitterRouteImport.update({
+  id: '/litter',
+  path: '/litter',
+  getParentRoute: () => LittersLitterIdRoute,
+} as any)
+const LittersLitterIdNotesRoute = LittersLitterIdNotesRouteImport.update({
+  id: '/notes',
+  path: '/notes',
+  getParentRoute: () => LittersLitterIdRoute,
+} as any)
+const LittersLitterIdPoopsRoute = LittersLitterIdPoopsRouteImport.update({
+  id: '/poops',
+  path: '/poops',
+  getParentRoute: () => LittersLitterIdRoute,
+} as any)
+const LittersLitterIdWeightsRoute = LittersLitterIdWeightsRouteImport.update({
+  id: '/weights',
+  path: '/weights',
+  getParentRoute: () => LittersLitterIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -74,7 +110,13 @@ export interface FileRoutesByFullPath {
   '/poops': typeof PoopsRoute
   '/settings': typeof SettingsRoute
   '/weights': typeof WeightsRoute
-  '/litters/$litterId': typeof LittersLitterIdRoute
+  '/litters/$litterId': typeof LittersLitterIdRouteWithChildren
+  '/litters/$litterId/feedings': typeof LittersLitterIdFeedingsRoute
+  '/litters/$litterId/litter': typeof LittersLitterIdLitterRoute
+  '/litters/$litterId/notes': typeof LittersLitterIdNotesRoute
+  '/litters/$litterId/poops': typeof LittersLitterIdPoopsRoute
+  '/litters/$litterId/weights': typeof LittersLitterIdWeightsRoute
+  '/litters/$litterId/': typeof LittersLitterIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -85,7 +127,12 @@ export interface FileRoutesByTo {
   '/poops': typeof PoopsRoute
   '/settings': typeof SettingsRoute
   '/weights': typeof WeightsRoute
-  '/litters/$litterId': typeof LittersLitterIdRoute
+  '/litters/$litterId/feedings': typeof LittersLitterIdFeedingsRoute
+  '/litters/$litterId/litter': typeof LittersLitterIdLitterRoute
+  '/litters/$litterId/notes': typeof LittersLitterIdNotesRoute
+  '/litters/$litterId/poops': typeof LittersLitterIdPoopsRoute
+  '/litters/$litterId/weights': typeof LittersLitterIdWeightsRoute
+  '/litters/$litterId': typeof LittersLitterIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -97,7 +144,13 @@ export interface FileRoutesById {
   '/poops': typeof PoopsRoute
   '/settings': typeof SettingsRoute
   '/weights': typeof WeightsRoute
-  '/litters/$litterId': typeof LittersLitterIdRoute
+  '/litters/$litterId': typeof LittersLitterIdRouteWithChildren
+  '/litters/$litterId/feedings': typeof LittersLitterIdFeedingsRoute
+  '/litters/$litterId/litter': typeof LittersLitterIdLitterRoute
+  '/litters/$litterId/notes': typeof LittersLitterIdNotesRoute
+  '/litters/$litterId/poops': typeof LittersLitterIdPoopsRoute
+  '/litters/$litterId/weights': typeof LittersLitterIdWeightsRoute
+  '/litters/$litterId/': typeof LittersLitterIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -111,6 +164,12 @@ export interface FileRouteTypes {
     | '/settings'
     | '/weights'
     | '/litters/$litterId'
+    | '/litters/$litterId/feedings'
+    | '/litters/$litterId/litter'
+    | '/litters/$litterId/notes'
+    | '/litters/$litterId/poops'
+    | '/litters/$litterId/weights'
+    | '/litters/$litterId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -121,6 +180,11 @@ export interface FileRouteTypes {
     | '/poops'
     | '/settings'
     | '/weights'
+    | '/litters/$litterId/feedings'
+    | '/litters/$litterId/litter'
+    | '/litters/$litterId/notes'
+    | '/litters/$litterId/poops'
+    | '/litters/$litterId/weights'
     | '/litters/$litterId'
   id:
     | '__root__'
@@ -133,6 +197,12 @@ export interface FileRouteTypes {
     | '/settings'
     | '/weights'
     | '/litters/$litterId'
+    | '/litters/$litterId/feedings'
+    | '/litters/$litterId/litter'
+    | '/litters/$litterId/notes'
+    | '/litters/$litterId/poops'
+    | '/litters/$litterId/weights'
+    | '/litters/$litterId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -144,7 +214,7 @@ export interface RootRouteChildren {
   PoopsRoute: typeof PoopsRoute
   SettingsRoute: typeof SettingsRoute
   WeightsRoute: typeof WeightsRoute
-  LittersLitterIdRoute: typeof LittersLitterIdRoute
+  LittersLitterIdRoute: typeof LittersLitterIdRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -212,8 +282,72 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LittersLitterIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/litters/$litterId/': {
+      id: '/litters/$litterId/'
+      path: '/'
+      fullPath: '/litters/$litterId/'
+      preLoaderRoute: typeof LittersLitterIdIndexRouteImport
+      parentRoute: typeof LittersLitterIdRoute
+    }
+    '/litters/$litterId/feedings': {
+      id: '/litters/$litterId/feedings'
+      path: '/feedings'
+      fullPath: '/litters/$litterId/feedings'
+      preLoaderRoute: typeof LittersLitterIdFeedingsRouteImport
+      parentRoute: typeof LittersLitterIdRoute
+    }
+    '/litters/$litterId/litter': {
+      id: '/litters/$litterId/litter'
+      path: '/litter'
+      fullPath: '/litters/$litterId/litter'
+      preLoaderRoute: typeof LittersLitterIdLitterRouteImport
+      parentRoute: typeof LittersLitterIdRoute
+    }
+    '/litters/$litterId/notes': {
+      id: '/litters/$litterId/notes'
+      path: '/notes'
+      fullPath: '/litters/$litterId/notes'
+      preLoaderRoute: typeof LittersLitterIdNotesRouteImport
+      parentRoute: typeof LittersLitterIdRoute
+    }
+    '/litters/$litterId/poops': {
+      id: '/litters/$litterId/poops'
+      path: '/poops'
+      fullPath: '/litters/$litterId/poops'
+      preLoaderRoute: typeof LittersLitterIdPoopsRouteImport
+      parentRoute: typeof LittersLitterIdRoute
+    }
+    '/litters/$litterId/weights': {
+      id: '/litters/$litterId/weights'
+      path: '/weights'
+      fullPath: '/litters/$litterId/weights'
+      preLoaderRoute: typeof LittersLitterIdWeightsRouteImport
+      parentRoute: typeof LittersLitterIdRoute
+    }
   }
 }
+
+interface LittersLitterIdRouteChildren {
+  LittersLitterIdFeedingsRoute: typeof LittersLitterIdFeedingsRoute
+  LittersLitterIdLitterRoute: typeof LittersLitterIdLitterRoute
+  LittersLitterIdNotesRoute: typeof LittersLitterIdNotesRoute
+  LittersLitterIdPoopsRoute: typeof LittersLitterIdPoopsRoute
+  LittersLitterIdWeightsRoute: typeof LittersLitterIdWeightsRoute
+  LittersLitterIdIndexRoute: typeof LittersLitterIdIndexRoute
+}
+
+const LittersLitterIdRouteChildren: LittersLitterIdRouteChildren = {
+  LittersLitterIdFeedingsRoute: LittersLitterIdFeedingsRoute,
+  LittersLitterIdLitterRoute: LittersLitterIdLitterRoute,
+  LittersLitterIdNotesRoute: LittersLitterIdNotesRoute,
+  LittersLitterIdPoopsRoute: LittersLitterIdPoopsRoute,
+  LittersLitterIdWeightsRoute: LittersLitterIdWeightsRoute,
+  LittersLitterIdIndexRoute: LittersLitterIdIndexRoute,
+}
+
+const LittersLitterIdRouteWithChildren = LittersLitterIdRoute._addFileChildren(
+  LittersLitterIdRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -224,7 +358,7 @@ const rootRouteChildren: RootRouteChildren = {
   PoopsRoute: PoopsRoute,
   SettingsRoute: SettingsRoute,
   WeightsRoute: WeightsRoute,
-  LittersLitterIdRoute: LittersLitterIdRoute,
+  LittersLitterIdRoute: LittersLitterIdRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

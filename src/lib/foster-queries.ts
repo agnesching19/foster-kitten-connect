@@ -309,6 +309,37 @@ export const weighInsQueryOptions = (litterId: string | undefined) =>
     },
   })
 
+export interface HistoricalWeightPoint {
+  date: string
+  grams: number
+  litter_id: string
+  kitten_id: string
+  litters: { date_of_birth: string | null } | null
+}
+
+export const historicalWeighInsQueryOptions = (litterIds: string[]) =>
+  queryOptions({
+    queryKey: ['historical-weight-points', litterIds],
+    enabled: litterIds.length > 0,
+    queryFn: async (): Promise<HistoricalWeightPoint[]> => {
+      const { data, error } = await supabase
+        .from('weigh_ins')
+        .select('date, litter_id, litters(date_of_birth), weights(kitten_id, grams)')
+        .in('litter_id', litterIds)
+        .order('date', { ascending: true })
+      if (error) throw error
+      return (data ?? []).flatMap((session) =>
+        (session.weights ?? []).map((weight) => ({
+          date: session.date,
+          litter_id: session.litter_id,
+          litters: session.litters,
+          kitten_id: weight.kitten_id,
+          grams: weight.grams,
+        })),
+      ) as HistoricalWeightPoint[]
+    },
+  })
+
 export function daysBetween(from: string, to: string): number {
   const a = new Date(`${from}T12:00:00`).getTime()
   const b = new Date(`${to}T12:00:00`).getTime()

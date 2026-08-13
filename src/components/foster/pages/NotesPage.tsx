@@ -21,15 +21,19 @@ import {
   type NoteCategory,
 } from '@/lib/foster-queries'
 import { formatRelativeDay } from '@/utils/formatDate'
+import { BatchContextBar } from '@/components/foster/layout/BatchContextBar'
 
 const iconButtonClass =
   'flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-white text-sm text-muted transition hover:bg-brand-50 hover:text-ink'
 
-export function NotesPage() {
+export function NotesPage({ litterId }: { litterId?: string }) {
   const queryClient = useQueryClient()
   const { data: litters = [] } = useQuery(littersQueryOptions)
-  const litter = pickCurrentLitter(litters)
-  const { canEdit } = useLitterAccess(litter)
+  const litter = litterId
+    ? litters.find((item) => item.id === litterId)
+    : pickCurrentLitter(litters)
+  const { canEdit: hasEditAccess } = useLitterAccess(litter)
+  const canEdit = hasEditAccess && litter?.status === 'active'
   const { data: notes = [], isLoading } = useQuery(dailyNotesQueryOptions(litter?.id))
   const { data: kittens = [] } = useQuery(kittensQueryOptions(litter?.id))
   const { data: profiles = [] } = useQuery(profilesQueryOptions)
@@ -86,6 +90,7 @@ export function NotesPage() {
           ) : null
         }
       />
+      <BatchContextBar litter={litter} litters={litters} section="notes" />
       <NoteDialog
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}

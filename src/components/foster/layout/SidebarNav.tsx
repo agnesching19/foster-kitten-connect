@@ -1,18 +1,31 @@
-import { Link, useLocation } from '@tanstack/react-router'
+import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { littersQueryOptions, pickCurrentLitter } from '@/lib/foster-queries'
 import { KittenAvatar } from '@/components/foster/ui/KittenAvatar'
 import { useLiveCamAccess } from '@/hooks/useLiveCamAccess'
-import { getNavLinkClass, liveCamsNavItem, navItems, settingsNavItem } from './navItems'
+import {
+  batchRouteForPathname,
+  getNavLinkClass,
+  liveCamsNavItem,
+  navItems,
+  settingsNavItem,
+} from './navItems'
 import { AuthStatus } from './AuthStatus'
 
 export function SidebarNav() {
+  const navigate = useNavigate()
   const { canAccess: canAccessLiveCams } = useLiveCamAccess()
   const pathname = useLocation({ select: (location) => location.pathname })
   const { data: litters = [] } = useQuery(littersQueryOptions)
   const totalCats = litters.reduce((sum, litter) => sum + litter.kittens.length + 1, 0)
   const current = pickCurrentLitter(litters)
-  const kittens = current?.kittens ?? []
+  const isActivePath = (to: string) =>
+    to === '/'
+      ? pathname === '/' || /^\/litters\/[^/]+$/.test(pathname)
+      : pathname === to || pathname.startsWith(`${to}/`) || pathname.endsWith(to)
+  const selectedBatchId = pathname.match(/^\/litters\/([^/]+)/)?.[1] ?? ''
+  const selectedBatch = litters.find((litter) => litter.id === selectedBatchId) ?? current
+  const kittens = selectedBatch?.kittens ?? []
 
   return (
     <aside className="hidden md:flex md:w-64 md:shrink-0 md:flex-col md:border-r md:border-border md:bg-surface-raised lg:w-72">
@@ -27,12 +40,49 @@ export function SidebarNav() {
       </div>
 
       <nav aria-label="Main navigation" className="flex-1 px-3 py-4">
+        <div className="mb-4">
+          <label
+            htmlFor="sidebar-batch-selector"
+            className="mb-1.5 block px-2 text-xs font-semibold uppercase tracking-wide text-muted"
+          >
+            View batch
+          </label>
+          <select
+            id="sidebar-batch-selector"
+            value={selectedBatchId}
+            onChange={(event) => {
+              if (!event.target.value) return
+              navigate({
+                to: batchRouteForPathname(pathname),
+                params: { litterId: event.target.value },
+              })
+            }}
+            className="min-h-11 w-full rounded-xl border border-border bg-white px-3 py-2 text-sm font-medium text-ink"
+          >
+            <option value="" disabled>
+              Select a batch…
+            </option>
+            {litters.map((litter) => (
+              <option key={litter.id} value={litter.id}>
+                {litter.litter_name || litter.mother_name} ·{' '}
+                {litter.status === 'completed' ? 'Completed' : 'Active'}
+              </option>
+            ))}
+          </select>
+        </div>
         <ul className="space-y-1">
           {navItems.map((item) => {
-            const isActive = item.to === '/' ? pathname === '/' : pathname.startsWith(item.to)
+            const isActive = isActivePath(item.to)
+            const batchDestination = item.batchSection
+              ? (`/litters/$litterId/${item.batchSection}` as const)
+              : '/litters/$litterId'
             return (
               <li key={item.to}>
-                <Link to={item.to} className={getNavLinkClass(isActive, 'sidebar')}>
+                <Link
+                  to={selectedBatchId ? batchDestination : item.to}
+                  params={{ litterId: selectedBatchId }}
+                  className={getNavLinkClass(isActive, 'sidebar')}
+                >
                   {item.icon(isActive)}
                   <span>{item.label}</span>
                 </Link>
@@ -72,7 +122,7 @@ export function SidebarNav() {
 
       <div className="border-t border-border px-5 py-4">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
-          Active batch
+          {selectedBatch?.status === 'completed' ? 'Selected batch' : 'Active batch'}
         </p>
         {kittens.length ? (
           <ul className="space-y-2">

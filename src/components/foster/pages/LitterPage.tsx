@@ -20,16 +20,20 @@ import {
 } from '@/lib/foster-queries'
 import { formatRelativeDay } from '@/utils/formatDate'
 import { useLitterAccess } from '@/hooks/useLitterAccess'
+import { BatchContextBar } from '@/components/foster/layout/BatchContextBar'
 
 const iconButtonClass =
   'flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-white text-sm text-muted transition hover:bg-brand-50 hover:text-ink'
 
-export function LitterPage() {
+export function LitterPage({ litterId }: { litterId?: string }) {
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const { data: litters = [] } = useQuery(littersQueryOptions)
-  const litter = pickCurrentLitter(litters)
-  const { canEdit } = useLitterAccess(litter)
+  const litter = litterId
+    ? litters.find((item) => item.id === litterId)
+    : pickCurrentLitter(litters)
+  const { canEdit: hasEditAccess } = useLitterAccess(litter)
+  const canEdit = hasEditAccess && litter?.status === 'active'
   const { data: changes = [], isLoading } = useQuery(litterChangesQueryOptions(litter?.id))
   const { data: profiles = [] } = useQuery(profilesQueryOptions)
   const lastChange = changes[0]
@@ -91,6 +95,7 @@ export function LitterPage() {
   return (
     <div>
       <PageHeader title="Litter box" subtitle="Cleaning and maintenance history" />
+      <BatchContextBar litter={litter} litters={litters} section="litter" />
 
       <ConfirmDialog
         open={confirmOpen}
@@ -119,59 +124,69 @@ export function LitterPage() {
         change={editing}
       />
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,20rem)_1fr] lg:gap-8 xl:grid-cols-[minmax(0,22rem)_1fr]">
-        <Card className={`h-fit border ${freshness?.cardClass ?? 'border-brand-200 bg-brand-50'}`}>
-          <CardHeader
-            title="Litter-box freshness"
-            subtitle={lastChange ? `Changed ${freshness?.elapsed} ago` : 'No changes yet'}
-          />
-          {freshness ? (
-            <>
-              <div className="flex items-center gap-4">
-                <span
-                  role="img"
-                  aria-label={freshness.label}
-                  className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/75 text-4xl shadow-sm transition-opacity"
-                  style={{ opacity: freshness.emojiOpacity }}
-                >
-                  {freshness.emoji}
-                </span>
-                <div className="min-w-0">
-                  <p className={`text-xl font-bold ${freshness.textClass}`}>{freshness.label}</p>
-                  <p className="mt-1 text-sm text-muted">{freshness.dueText}</p>
-                  <p className="mt-1 text-xs text-muted">
-                    Last changed {formatRelativeDay(lastChange!.date)} at{' '}
-                    {lastChange!.time.slice(0, 5)}
-                  </p>
+      <div
+        className={
+          litter?.status === 'completed'
+            ? 'grid gap-5'
+            : 'grid gap-5 lg:grid-cols-[minmax(0,20rem)_1fr] lg:gap-8 xl:grid-cols-[minmax(0,22rem)_1fr]'
+        }
+      >
+        {litter?.status !== 'completed' ? (
+          <Card
+            className={`h-fit border ${freshness?.cardClass ?? 'border-brand-200 bg-brand-50'}`}
+          >
+            <CardHeader
+              title="Litter-box freshness"
+              subtitle={lastChange ? `Changed ${freshness?.elapsed} ago` : 'No changes yet'}
+            />
+            {freshness ? (
+              <>
+                <div className="flex items-center gap-4">
+                  <span
+                    role="img"
+                    aria-label={freshness.label}
+                    className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/75 text-4xl shadow-sm transition-opacity"
+                    style={{ opacity: freshness.emojiOpacity }}
+                  >
+                    {freshness.emoji}
+                  </span>
+                  <div className="min-w-0">
+                    <p className={`text-xl font-bold ${freshness.textClass}`}>{freshness.label}</p>
+                    <p className="mt-1 text-sm text-muted">{freshness.dueText}</p>
+                    <p className="mt-1 text-xs text-muted">
+                      Last changed {formatRelativeDay(lastChange!.date)} at{' '}
+                      {lastChange!.time.slice(0, 5)}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div className="mt-4">
-                <div className="h-2 overflow-hidden rounded-full bg-white/80">
-                  <div
-                    className={`h-full rounded-full transition-[width] ${freshness.barClass}`}
-                    style={{ width: `${freshness.progressPercent}%` }}
-                  />
+                <div className="mt-4">
+                  <div className="h-2 overflow-hidden rounded-full bg-white/80">
+                    <div
+                      className={`h-full rounded-full transition-[width] ${freshness.barClass}`}
+                      style={{ width: `${freshness.progressPercent}%` }}
+                    />
+                  </div>
+                  <div className="mt-1 flex justify-between text-xs text-muted">
+                    <span>Just changed</span>
+                    <span>{formatRoutine(routineHours)} routine</span>
+                  </div>
                 </div>
-                <div className="mt-1 flex justify-between text-xs text-muted">
-                  <span>Just changed</span>
-                  <span>{formatRoutine(routineHours)} routine</span>
-                </div>
-              </div>
-            </>
-          ) : (
-            <p className="text-3xl font-bold text-brand-700 md:text-4xl">—</p>
-          )}
-          {canEdit ? (
-            <Button
-              fullWidth
-              className="mt-4 md:max-w-none"
-              disabled={!litter || logNow.isPending}
-              onClick={() => setConfirmOpen(true)}
-            >
-              Log litter box change now
-            </Button>
-          ) : null}
-        </Card>
+              </>
+            ) : (
+              <p className="text-3xl font-bold text-brand-700 md:text-4xl">—</p>
+            )}
+            {canEdit ? (
+              <Button
+                fullWidth
+                className="mt-4 md:max-w-none"
+                disabled={!litter || logNow.isPending}
+                onClick={() => setConfirmOpen(true)}
+              >
+                Log litter box change now
+              </Button>
+            ) : null}
+          </Card>
+        ) : null}
 
         <section aria-label="Change history">
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">History</h2>

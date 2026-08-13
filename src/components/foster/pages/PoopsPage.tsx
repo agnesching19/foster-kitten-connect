@@ -25,15 +25,19 @@ import {
 } from '@/lib/foster-queries'
 import { formatRelativeDay } from '@/utils/formatDate'
 import { useLitterAccess } from '@/hooks/useLitterAccess'
+import { BatchContextBar } from '@/components/foster/layout/BatchContextBar'
 
 const iconButtonClass =
   'flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-white text-sm text-muted transition hover:bg-brand-50 hover:text-ink'
 
-export function PoopsPage() {
+export function PoopsPage({ litterId }: { litterId?: string }) {
   const queryClient = useQueryClient()
   const { data: litters = [], isLoading: littersLoading } = useQuery(littersQueryOptions)
-  const litter = pickCurrentLitter(litters)
-  const { canEdit } = useLitterAccess(litter)
+  const litter = litterId
+    ? litters.find((item) => item.id === litterId)
+    : pickCurrentLitter(litters)
+  const { canEdit: hasEditAccess } = useLitterAccess(litter)
+  const canEdit = hasEditAccess && litter?.status === 'active'
   const { data: entries = [], isLoading } = useQuery(poopsQueryOptions(litter?.id))
   const { data: profiles = [] } = useQuery(profilesQueryOptions)
   const days = useMemo(() => groupByDate(entries), [entries])
@@ -84,6 +88,7 @@ export function PoopsPage() {
           )
         }
       />
+      <BatchContextBar litter={litter} litters={litters} section="poops" />
 
       <PoopDialog
         open={dialogOpen}

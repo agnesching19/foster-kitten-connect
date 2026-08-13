@@ -233,7 +233,10 @@ function QuickViewCard({
 function BatchCard({ litter }: { litter: LitterRow }) {
   const isActive = litter.status === 'active'
   return (
-    <Card className="group transition hover:-translate-y-0.5 hover:shadow-md" padding="lg">
+    <Card
+      className="group flex h-full flex-col transition hover:-translate-y-0.5 hover:shadow-md"
+      padding="lg"
+    >
       <div className="flex items-start gap-4">
         <CatAvatar name={litter.mother_name} avatarPath={litter.mother_avatar_path} size="lg" />
         <div className="min-w-0 flex-1">
@@ -281,7 +284,7 @@ function BatchCard({ litter }: { litter: LitterRow }) {
         )}
       </div>
 
-      <div className="mt-4 flex w-full flex-wrap items-center gap-2">
+      <div className="mt-auto flex w-full flex-wrap items-center gap-2 pt-4">
         {isActive ? (
           <Link
             to="/litters/$litterId"

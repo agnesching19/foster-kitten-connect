@@ -18,6 +18,7 @@ import { WeighInDialog } from '@/components/foster/dialogs/WeighInDialog'
 import { ConfirmDialog } from '@/components/foster/settings/ConfirmDialog'
 import {
   daysBetween,
+  historicalWeighInsQueryOptions,
   littersQueryOptions,
   logAuthorName,
   pickCurrentLitter,
@@ -28,16 +29,26 @@ import {
 import { formatRelativeDay } from '@/utils/formatDate'
 import { useLitterAccess } from '@/hooks/useLitterAccess'
 import { groupWeighInsByDay } from '@/lib/weight-history'
+import { BatchContextBar } from '@/components/foster/layout/BatchContextBar'
 
 const iconButtonClass =
   'flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-white text-sm text-muted transition hover:bg-brand-50 hover:text-ink'
 
-export function WeightsPage() {
+export function WeightsPage({ litterId }: { litterId?: string }) {
   const queryClient = useQueryClient()
   const { data: litters = [] } = useQuery(littersQueryOptions)
-  const litter = pickCurrentLitter(litters)
-  const { canEdit } = useLitterAccess(litter)
+  const litter = litterId
+    ? litters.find((item) => item.id === litterId)
+    : pickCurrentLitter(litters)
+  const { canEdit: hasEditAccess } = useLitterAccess(litter)
+  const canEdit = hasEditAccess && litter?.status === 'active'
   const { data: weighIns = [], isLoading } = useQuery(weighInsQueryOptions(litter?.id))
+  const historicalLitterIds = litters
+    .filter((item) => item.id !== litter?.id && item.status === 'completed')
+    .map((item) => item.id)
+  const { data: historicalWeighIns = [] } = useQuery(
+    historicalWeighInsQueryOptions(historicalLitterIds),
+  )
   const { data: profiles = [] } = useQuery(profilesQueryOptions)
   const dob = litter?.date_of_birth ?? null
 
@@ -117,6 +128,7 @@ export function WeightsPage() {
           ) : null
         }
       />
+      <BatchContextBar litter={litter} litters={litters} section="weights" />
 
       <WeighInDialog
         open={dialogOpen}
@@ -150,7 +162,11 @@ export function WeightsPage() {
         <div className="space-y-4 xl:space-y-6">
           <Card padding="lg">
             <CardHeader title="Growth chart" subtitle="Kitten weight over time" />
-            <WeightChart weighIns={weighIns} />
+            <WeightChart
+              weighIns={weighIns}
+              dateOfBirth={dob}
+              historicalSeries={historicalWeighIns}
+            />
             <div className="mt-4 border-t border-border pt-4">
               <p className="mb-3 text-sm font-medium text-ink">View individual history</p>
               <div className="flex flex-wrap gap-2">
