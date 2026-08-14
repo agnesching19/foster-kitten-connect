@@ -1,5 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router'
-import type { LitterRow } from '@/lib/foster-queries'
+import { batchDisplayName, type LitterRow } from '@/lib/foster-queries'
 
 export type BatchSection = 'feedings' | 'poops' | 'weights' | 'litter' | 'notes'
 
@@ -34,8 +34,7 @@ export function BatchContextBar({
         >
           {litters.map((item) => (
             <option key={item.id} value={item.id}>
-              {item.litter_name || item.mother_name}{' '}
-              {item.status === 'completed' ? '· Completed' : '· Active'}
+              {batchDisplayName(item)} {item.status === 'completed' ? '· Completed' : '· Active'}
             </option>
           ))}
         </select>

@@ -74,6 +74,7 @@ export function KittensSection({
   async function refresh() {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['kittens', litterId] }),
+      queryClient.invalidateQueries({ queryKey: ['cats', litterId] }),
       queryClient.invalidateQueries({ queryKey: ['litters'] }),
     ])
   }

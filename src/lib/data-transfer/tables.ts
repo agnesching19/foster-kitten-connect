@@ -37,6 +37,7 @@ export const tableSpecs: TableSpec[] = [
     columns: [
       { name: 'id', required: true, type: 'uuid' },
       { name: 'mother_name', required: true },
+      { name: 'batch_type' },
       { name: 'litter_name' },
       { name: 'date_of_birth', type: 'date' },
       { name: 'arrived', required: true, type: 'date' },
@@ -57,6 +58,8 @@ export const tableSpecs: TableSpec[] = [
       { name: 'litter_id', required: true, type: 'uuid' },
       { name: 'name', required: true },
       { name: 'sort_order', type: 'int' },
+      { name: 'role' },
+      { name: 'date_of_birth', type: 'date' },
     ],
   },
   {

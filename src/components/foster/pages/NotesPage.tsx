@@ -96,7 +96,9 @@ export function NotesPage({ litterId }: { litterId?: string }) {
         onClose={() => setDialogOpen(false)}
         litterId={litter?.id}
         kittens={kittens}
-        motherName={litter?.mother_name}
+        motherName={litter?.primary_cat?.name}
+        primaryLabel={litter?.batch_type === 'single' ? 'Foster cat' : 'Momma'}
+        showKittens={litter?.batch_type !== 'single'}
         entry={editing}
       />
       <ConfirmDialog
@@ -149,7 +151,10 @@ export function NotesPage({ litterId }: { litterId?: string }) {
             >
               <option value="all">Everyone</option>
               <option value="batch">Whole batch</option>
-              <option value="mother">Momma{litter ? ` (${litter.mother_name})` : ''}</option>
+              <option value="mother">
+                {litter?.batch_type === 'single' ? 'Foster cat' : 'Momma'}
+                {litter?.primary_cat ? ` (${litter.primary_cat.name})` : ''}
+              </option>
               {kittens.map((kitten) => (
                 <option key={kitten.id} value={kitten.id}>
                   {kitten.name}
@@ -200,8 +205,13 @@ export function NotesPage({ litterId }: { litterId?: string }) {
                           <p className="mt-3 whitespace-pre-wrap text-sm text-ink">{entry.note}</p>
                           <p className="mt-3 text-xs text-muted">
                             {entry.time ? `${entry.time.slice(0, 5)} · ` : ''}
-                            {subjectLabel(entry, litter?.mother_name, kittens)} · Added by{' '}
-                            {logAuthorName(profiles, entry.user_id)}
+                            {subjectLabel(
+                              entry,
+                              litter?.primary_cat?.name,
+                              litter?.batch_type === 'single' ? 'Foster cat' : 'Momma',
+                              kittens,
+                            )}{' '}
+                            · Added by {logAuthorName(profiles, entry.user_id)}
                           </p>
                         </div>
                         {canEdit ? (
@@ -268,10 +278,12 @@ function formatMonth(month: string) {
 function subjectLabel(
   entry: DailyNoteRow,
   motherName: string | undefined,
+  primaryLabel: string,
   kittens: { id: string; name: string }[],
 ) {
   if (entry.subject_type === 'batch') return 'Whole batch'
-  if (entry.subject_type === 'mother') return motherName ? `Momma (${motherName})` : 'Momma'
+  if (entry.subject_type === 'mother')
+    return motherName ? `${primaryLabel} (${motherName})` : primaryLabel
   return (
     entry.kitten_ids
       .map((id) => kittens.find((kitten) => kitten.id === id)?.name)

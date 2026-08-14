@@ -9,7 +9,7 @@ import { CatAvatar } from '@/components/foster/ui/CatAvatar'
 import { KittensSection } from '@/components/foster/kittens/KittensSection'
 import { NewLitterDialog } from '@/components/foster/litters/NewLitterDialog'
 import { ConfirmDialog } from '@/components/foster/settings/ConfirmDialog'
-import { littersQueryOptions, type LitterRow } from '@/lib/foster-queries'
+import { batchDisplayName, littersQueryOptions, type LitterRow } from '@/lib/foster-queries'
 import { removeCatAvatars } from '@/lib/avatar-storage'
 import { formatDate } from '@/utils/formatDate'
 import { useLitterAccess } from '@/hooks/useLitterAccess'
@@ -77,18 +77,24 @@ function LitterDetailPage() {
         ← Back to dashboard
       </Link>
       <PageHeader
-        title={litter.litter_name || litter.mother_name}
+        title={batchDisplayName(litter)}
         subtitle={`Arrived ${formatDate(litter.arrived)}${litter.left_date ? ` · Left ${formatDate(litter.left_date)}` : ''}`}
         avatar={
-          <CatAvatar name={litter.mother_name} avatarPath={litter.mother_avatar_path} size="lg" />
+          <CatAvatar
+            name={batchDisplayName(litter)}
+            avatarPath={litter.primary_cat?.avatar_path ?? litter.mother_avatar_path}
+            size="lg"
+          />
         }
         action={isOwner ? <LitterActions litter={litter} /> : null}
       />
-      <KittensSection
-        litterId={litter.id}
-        canEdit={canEdit && litter.status === 'active'}
-        dateOfBirth={litter.date_of_birth}
-      />
+      {litter.batch_type !== 'single' ? (
+        <KittensSection
+          litterId={litter.id}
+          canEdit={canEdit && litter.status === 'active'}
+          dateOfBirth={litter.date_of_birth}
+        />
+      ) : null}
       <section className="mt-6">
         <h2 className="mb-3 text-lg font-semibold text-ink">Batch records</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -141,7 +147,7 @@ function LitterActions({ litter }: { litter: LitterRow }) {
       if (error) throw error
       try {
         await removeCatAvatars([
-          litter.mother_avatar_path,
+          litter.primary_cat?.avatar_path ?? litter.mother_avatar_path,
           ...litter.kittens.map((kitten) => kitten.avatar_path),
         ])
       } catch (removeError) {

@@ -22,6 +22,7 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
   const queryClient = useQueryClient()
   const isEdit = Boolean(litter)
 
+  const [batchType, setBatchType] = useState<'family' | 'single' | 'kittens_only'>('family')
   const [motherName, setMotherName] = useState('')
   const [litterName, setLitterName] = useState('')
   const [dateOfBirth, setDateOfBirth] = useState('')
@@ -34,6 +35,7 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
   const [removeMotherAvatar, setRemoveMotherAvatar] = useState(false)
 
   function reset() {
+    setBatchType('family')
     setMotherName('')
     setLitterName('')
     setDateOfBirth('')
@@ -49,7 +51,8 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
   useEffect(() => {
     if (!open) return
     if (litter) {
-      setMotherName(litter.mother_name)
+      setBatchType(litter.batch_type)
+      setMotherName(litter.primary_cat?.name ?? litter.mother_name)
       setLitterName(litter.litter_name ?? '')
       setDateOfBirth(litter.date_of_birth ?? '')
       setArrived(litter.arrived)
@@ -68,7 +71,9 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
     mutationFn: async () => {
       if (!user) throw new Error('You need to be signed in to add a batch.')
       const litterId = litter?.id ?? crypto.randomUUID()
-      let avatarPath = removeMotherAvatar ? null : (litter?.mother_avatar_path ?? null)
+      let avatarPath = removeMotherAvatar
+        ? null
+        : (litter?.primary_cat?.avatar_path ?? litter?.mother_avatar_path ?? null)
       let uploadedPath: string | null = null
 
       if (motherAvatar) {
@@ -77,6 +82,7 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
       }
 
       const payload = {
+        batch_type: batchType,
         mother_name: motherName.trim(),
         mother_avatar_path: avatarPath,
         litter_name: litterName.trim() || null,
@@ -101,6 +107,30 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
         throw error
       }
 
+      const primaryCat = litter?.primary_cat
+      if (batchType === 'kittens_only') {
+        if (primaryCat) {
+          const { error: catError } = await supabase
+            .from('kittens')
+            .delete()
+            .eq('id', primaryCat.id)
+          if (catError) throw catError
+        }
+      } else {
+        const { error: catError } = await supabase.from('kittens').upsert({
+          id: primaryCat?.id ?? crypto.randomUUID(),
+          user_id: user.id,
+          litter_id: litterId,
+          name: motherName.trim(),
+          sort_order: -1,
+          role: batchType === 'single' ? 'single' : 'mother',
+          date_of_birth: batchType === 'single' ? dateOfBirth || null : null,
+          avatar_path: avatarPath,
+          tag_colour: null,
+        })
+        if (catError) throw catError
+      }
+
       if (litter?.mother_avatar_path && litter.mother_avatar_path !== avatarPath) {
         try {
           await removeCatAvatars([litter.mother_avatar_path])
@@ -110,7 +140,10 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
       }
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['litters'] })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['litters'] }),
+        queryClient.invalidateQueries({ queryKey: ['cats', litter?.id] }),
+      ])
       toast.success(isEdit ? 'Batch updated' : 'Batch added')
       if (!isEdit) reset()
       onClose()
@@ -172,46 +205,88 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
               mutation.mutate()
             }}
           >
-            <label className="min-w-0 sm:col-span-2">
-              <span className="mb-1 block text-sm font-medium text-ink">Mother's name *</span>
-              <input
-                required
-                value={motherName}
-                onChange={(e) => setMotherName(e.target.value)}
-                className={inputClass}
-                placeholder="e.g. Willow"
-              />
-            </label>
-            <div className="flex min-w-0 items-center gap-3 overflow-hidden rounded-xl bg-gray-50 px-3 py-3 sm:col-span-2">
-              <CatAvatar
-                name={motherName || 'Mother cat'}
-                avatarPath={removeMotherAvatar ? null : (litter?.mother_avatar_path ?? null)}
-                size="lg"
-              />
-              <div className="min-w-0 flex-1">
-                <label className="block text-sm font-medium text-ink">
-                  Mother's photo
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif"
-                    className="mt-1 block w-full min-w-0 max-w-full text-sm text-muted file:mr-2 file:rounded-lg file:border-0 file:bg-brand-100 file:px-3 file:py-2 file:font-medium file:text-brand-800"
-                    onChange={(event) => {
-                      setMotherAvatar(event.target.files?.[0] ?? null)
-                      setRemoveMotherAvatar(false)
-                    }}
-                  />
-                </label>
-                {litter?.mother_avatar_path && !motherAvatar ? (
-                  <button
-                    type="button"
-                    className="mt-2 text-sm font-medium text-red-600 hover:text-red-700"
-                    onClick={() => setRemoveMotherAvatar((current) => !current)}
+            <fieldset className="min-w-0 sm:col-span-2">
+              <legend className="mb-2 text-sm font-medium text-ink">Who are you fostering?</legend>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {(
+                  [
+                    ['family', 'Mother + kittens'],
+                    ['single', 'Single cat'],
+                    ['kittens_only', 'Kittens only'],
+                  ] as const
+                ).map(([value, label]) => (
+                  <label
+                    key={value}
+                    className={`flex min-h-11 items-center justify-center rounded-xl border px-3 py-2 text-center text-sm font-medium transition ${(litter?.primary_cat && value === 'kittens_only') || (litter?.kittens.length && value === 'single') ? 'cursor-not-allowed bg-gray-50 text-muted opacity-50' : 'cursor-pointer'} ${batchType === value ? 'border-brand-400 bg-brand-100 text-brand-800' : 'border-border bg-white text-muted hover:bg-brand-50'}`}
                   >
-                    {removeMotherAvatar ? 'Keep current photo' : 'Remove photo'}
-                  </button>
-                ) : null}
+                    <input
+                      type="radio"
+                      name="batch-type"
+                      value={value}
+                      checked={batchType === value}
+                      disabled={Boolean(
+                        (litter?.primary_cat && value === 'kittens_only') ||
+                        (litter?.kittens.length && value === 'single'),
+                      )}
+                      onChange={() => setBatchType(value)}
+                      className="sr-only"
+                    />
+                    {label}
+                  </label>
+                ))}
               </div>
-            </div>
+            </fieldset>
+            {batchType !== 'kittens_only' ? (
+              <label className="min-w-0 sm:col-span-2">
+                <span className="mb-1 block text-sm font-medium text-ink">
+                  {batchType === 'single' ? "Cat's name *" : "Mother's name *"}
+                </span>
+                <input
+                  required
+                  value={motherName}
+                  onChange={(e) => setMotherName(e.target.value)}
+                  className={inputClass}
+                  placeholder="e.g. Willow"
+                />
+              </label>
+            ) : null}
+            {batchType !== 'kittens_only' ? (
+              <div className="flex min-w-0 items-center gap-3 overflow-hidden rounded-xl bg-gray-50 px-3 py-3 sm:col-span-2">
+                <CatAvatar
+                  name={motherName || (batchType === 'single' ? 'Foster cat' : 'Mother cat')}
+                  avatarPath={
+                    removeMotherAvatar
+                      ? null
+                      : (litter?.primary_cat?.avatar_path ?? litter?.mother_avatar_path ?? null)
+                  }
+                  size="lg"
+                />
+                <div className="min-w-0 flex-1">
+                  <label className="block text-sm font-medium text-ink">
+                    {batchType === 'single' ? "Cat's photo" : "Mother's photo"}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      className="mt-1 block w-full min-w-0 max-w-full text-sm text-muted file:mr-2 file:rounded-lg file:border-0 file:bg-brand-100 file:px-3 file:py-2 file:font-medium file:text-brand-800"
+                      onChange={(event) => {
+                        setMotherAvatar(event.target.files?.[0] ?? null)
+                        setRemoveMotherAvatar(false)
+                      }}
+                    />
+                  </label>
+                  {(litter?.primary_cat?.avatar_path ?? litter?.mother_avatar_path) &&
+                  !motherAvatar ? (
+                    <button
+                      type="button"
+                      className="mt-2 text-sm font-medium text-red-600 hover:text-red-700"
+                      onClick={() => setRemoveMotherAvatar((current) => !current)}
+                    >
+                      {removeMotherAvatar ? 'Keep current photo' : 'Remove photo'}
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
             <label className="min-w-0 sm:col-span-2">
               <span className="mb-1 block text-sm font-medium text-ink">Batch name</span>
               <input

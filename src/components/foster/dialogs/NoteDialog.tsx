@@ -38,6 +38,8 @@ export function NoteDialog({
   litterId,
   kittens,
   motherName,
+  primaryLabel,
+  showKittens,
   entry,
 }: {
   open: boolean
@@ -45,6 +47,8 @@ export function NoteDialog({
   litterId: string | undefined
   kittens: KittenRow[]
   motherName: string | undefined
+  primaryLabel: string
+  showKittens: boolean
   entry?: DailyNoteRow | null
 }) {
   const { user } = useAuth()
@@ -176,8 +180,11 @@ export function NoteDialog({
             className={inputClass}
           >
             <option value="batch">Whole batch</option>
-            <option value="mother">Momma{motherName ? ` (${motherName})` : ''}</option>
-            <option value="kittens">One or more kittens</option>
+            <option value="mother">
+              {primaryLabel}
+              {motherName ? ` (${motherName})` : ''}
+            </option>
+            {showKittens && <option value="kittens">One or more kittens</option>}
           </select>
         </label>
         {subject === 'kittens' ? (

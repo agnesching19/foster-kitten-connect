@@ -20,6 +20,8 @@ interface PoopDialogProps {
   litterId: string | undefined
   entries?: PoopRow[]
   motherName?: string | null
+  primaryLabel?: string
+  showKittens?: boolean
   /** Optional entry point hint: a Momma-specific launcher defaults to mother. */
   defaultSubject?: 'mother' | 'kitten'
 }
@@ -33,6 +35,8 @@ export function PoopDialog({
   litterId,
   entries = [],
   motherName,
+  primaryLabel = 'Momma',
+  showKittens = true,
   defaultSubject,
 }: PoopDialogProps) {
   const { user } = useAuth()
@@ -183,18 +187,20 @@ export function PoopDialog({
               onChange={(e) => setSubject(e.target.value as 'mother' | 'kitten')}
               className={inputClass}
             >
-              <option value="mother">{motherName ? `Mother (${motherName})` : 'Mother'}</option>
-              <option value="kitten">Kitten</option>
+              <option value="mother">
+                {motherName ? `${primaryLabel} (${motherName})` : primaryLabel}
+              </option>
+              {showKittens ? <option value="kitten">Kitten</option> : null}
             </select>
           </label>
         ) : (
-          <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
+          <div className={`grid gap-4 sm:col-span-2 ${showKittens ? 'sm:grid-cols-2' : ''}`}>
             <div>
               <label
                 htmlFor="mother-poop-count"
                 className="mb-1 block text-sm font-medium text-ink"
               >
-                {motherName ? `Momma (${motherName})` : 'Momma'}
+                {motherName ? `${primaryLabel} (${motherName})` : primaryLabel}
               </label>
               <CountStepper
                 id="mother-poop-count"
@@ -203,20 +209,22 @@ export function PoopDialog({
                 onChange={setMotherCount}
               />
             </div>
-            <div>
-              <label
-                htmlFor="kitten-poop-count"
-                className="mb-1 block text-sm font-medium text-ink"
-              >
-                Kittens
-              </label>
-              <CountStepper
-                id="kitten-poop-count"
-                value={kittenCount}
-                min={0}
-                onChange={setKittenCount}
-              />
-            </div>
+            {showKittens && (
+              <div>
+                <label
+                  htmlFor="kitten-poop-count"
+                  className="mb-1 block text-sm font-medium text-ink"
+                >
+                  Kittens
+                </label>
+                <CountStepper
+                  id="kitten-poop-count"
+                  value={kittenCount}
+                  min={0}
+                  onChange={setKittenCount}
+                />
+              </div>
+            )}
             <p className="text-xs text-muted sm:col-span-2">
               Each poop is saved separately and counted in the daily totals.
             </p>

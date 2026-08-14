@@ -151,9 +151,11 @@ export type Database = {
         Row: {
           avatar_path: string | null
           created_at: string
+          date_of_birth: string | null
           id: string
           litter_id: string
           name: string
+          role: Database['public']['Enums']['foster_cat_role']
           sort_order: number
           tag_colour: Database['public']['Enums']['tag_colour'] | null
           updated_at: string
@@ -162,9 +164,11 @@ export type Database = {
         Insert: {
           avatar_path?: string | null
           created_at?: string
+          date_of_birth?: string | null
           id?: string
           litter_id: string
           name: string
+          role?: Database['public']['Enums']['foster_cat_role']
           sort_order?: number
           tag_colour?: Database['public']['Enums']['tag_colour'] | null
           updated_at?: string
@@ -173,9 +177,11 @@ export type Database = {
         Update: {
           avatar_path?: string | null
           created_at?: string
+          date_of_birth?: string | null
           id?: string
           litter_id?: string
           name?: string
+          role?: Database['public']['Enums']['foster_cat_role']
           sort_order?: number
           tag_colour?: Database['public']['Enums']['tag_colour'] | null
           updated_at?: string
@@ -280,6 +286,7 @@ export type Database = {
         Row: {
           album_url: string | null
           arrived: string
+          batch_type: Database['public']['Enums']['foster_batch_type']
           created_at: string
           date_of_birth: string | null
           external_record: string | null
@@ -296,6 +303,7 @@ export type Database = {
         Insert: {
           album_url?: string | null
           arrived: string
+          batch_type?: Database['public']['Enums']['foster_batch_type']
           created_at?: string
           date_of_birth?: string | null
           external_record?: string | null
@@ -312,6 +320,7 @@ export type Database = {
         Update: {
           album_url?: string | null
           arrived?: string
+          batch_type?: Database['public']['Enums']['foster_batch_type']
           created_at?: string
           date_of_birth?: string | null
           external_record?: string | null
@@ -529,6 +538,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      foster_batch_type: 'family' | 'single' | 'kittens_only'
+      foster_cat_role: 'mother' | 'single' | 'kitten'
       litter_status: 'active' | 'completed'
       poop_subject_type: 'mother' | 'kitten'
       tag_colour:
@@ -664,6 +675,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      foster_batch_type: ['family', 'single', 'kittens_only'],
+      foster_cat_role: ['mother', 'single', 'kitten'],
       litter_status: ['active', 'completed'],
       poop_subject_type: ['mother', 'kitten'],
       tag_colour: [

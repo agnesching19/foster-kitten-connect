@@ -7,6 +7,8 @@ export interface LitterRow {
   user_id: string
   mother_name: string
   mother_avatar_path: string | null
+  batch_type: 'family' | 'single' | 'kittens_only'
+  primary_cat: CatRow | null
   litter_name: string | null
   date_of_birth: string | null
   arrived: string
@@ -15,13 +17,18 @@ export interface LitterRow {
   external_record: string | null
   album_url: string | null
   litter_change_interval_hours: number
-  kittens: {
-    id: string
-    name: string
-    sort_order: number
-    tag_colour: TagColour | null
-    avatar_path: string | null
-  }[]
+  kittens: CatRow[]
+}
+
+export interface CatRow {
+  id: string
+  name: string
+  sort_order: number
+  litter_id: string
+  role: 'mother' | 'single' | 'kitten'
+  date_of_birth: string | null
+  tag_colour: TagColour | null
+  avatar_path: string | null
 }
 
 export const littersQueryOptions = queryOptions({
@@ -30,21 +37,29 @@ export const littersQueryOptions = queryOptions({
     const { data, error } = await supabase
       .from('litters')
       .select(
-        'id, user_id, mother_name, mother_avatar_path, litter_name, date_of_birth, arrived, left_date, status, external_record, album_url, litter_change_interval_hours, kittens(id, name, sort_order, tag_colour, avatar_path)',
+        'id, user_id, mother_name, mother_avatar_path, batch_type, litter_name, date_of_birth, arrived, left_date, status, external_record, album_url, litter_change_interval_hours, kittens(id, litter_id, name, sort_order, role, date_of_birth, tag_colour, avatar_path)',
       )
       .order('arrived', { ascending: false })
     if (error) throw error
-    return (data ?? []).map((litter) => ({
-      ...litter,
-      kittens: [...(litter.kittens ?? [])].sort(
-        (a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name),
-      ),
-    })) as LitterRow[]
+    return (data ?? []).map((litter) => {
+      const cats = [...(litter.kittens ?? [])] as CatRow[]
+      return {
+        ...litter,
+        primary_cat: cats.find((cat) => cat.role === 'mother' || cat.role === 'single') ?? null,
+        kittens: cats
+          .filter((cat) => cat.role === 'kitten')
+          .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name)),
+      }
+    }) as LitterRow[]
   },
 })
 
 export function pickCurrentLitter(litters: LitterRow[]): LitterRow | undefined {
   return litters.find((litter) => litter.status === 'active') ?? litters[0]
+}
+
+export function batchDisplayName(litter: LitterRow): string {
+  return litter.litter_name || litter.primary_cat?.name || litter.mother_name || 'Kittens'
 }
 
 export interface DashboardQuickView {
@@ -166,14 +181,7 @@ export const dailyNotesQueryOptions = (litterId: string | undefined) =>
     },
   })
 
-export interface KittenRow {
-  id: string
-  name: string
-  sort_order: number
-  litter_id: string
-  tag_colour: TagColour | null
-  avatar_path: string | null
-}
+export type KittenRow = CatRow
 
 export const kittensQueryOptions = (litterId: string | undefined) =>
   queryOptions({
@@ -182,12 +190,28 @@ export const kittensQueryOptions = (litterId: string | undefined) =>
     queryFn: async (): Promise<KittenRow[]> => {
       const { data, error } = await supabase
         .from('kittens')
-        .select('id, name, sort_order, litter_id, tag_colour, avatar_path')
+        .select('id, name, sort_order, litter_id, role, date_of_birth, tag_colour, avatar_path')
         .eq('litter_id', litterId!)
+        .eq('role', 'kitten')
         .order('sort_order', { ascending: true })
         .order('name', { ascending: true })
       if (error) throw error
       return (data ?? []) as KittenRow[]
+    },
+  })
+
+export const catsQueryOptions = (litterId: string | undefined) =>
+  queryOptions({
+    queryKey: ['cats', litterId],
+    enabled: Boolean(litterId),
+    queryFn: async (): Promise<CatRow[]> => {
+      const { data, error } = await supabase
+        .from('kittens')
+        .select('id, name, sort_order, litter_id, role, date_of_birth, tag_colour, avatar_path')
+        .eq('litter_id', litterId!)
+        .order('sort_order', { ascending: true })
+      if (error) throw error
+      return (data ?? []) as CatRow[]
     },
   })
 

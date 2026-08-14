@@ -52,6 +52,14 @@ export async function runLegacyImport(
       .single()
     if (error) throw error
     litterId = data.id
+    const { error: primaryError } = await supabase.from('kittens').insert({
+      user_id: userId,
+      litter_id: litterId,
+      name: target.newLitter.mother_name,
+      sort_order: -1,
+      role: 'mother',
+    })
+    if (primaryError) throw primaryError
   }
 
   // Resolve kitten names -> ids, creating any that are missing.
@@ -60,6 +68,7 @@ export async function runLegacyImport(
     .from('kittens')
     .select('id, name, sort_order')
     .eq('litter_id', litterId)
+    .eq('role', 'kitten')
   if (kittenError) throw kittenError
 
   const byName = new Map<string, string>()

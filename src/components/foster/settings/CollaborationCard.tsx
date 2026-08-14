@@ -5,7 +5,12 @@ import { Button } from '@/components/foster/ui/Button'
 import { Card, CardHeader } from '@/components/foster/ui/Card'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/integrations/supabase/client'
-import { littersQueryOptions, pickCurrentLitter, profilesQueryOptions } from '@/lib/foster-queries'
+import {
+  batchDisplayName,
+  littersQueryOptions,
+  pickCurrentLitter,
+  profilesQueryOptions,
+} from '@/lib/foster-queries'
 
 const inputClass =
   'min-h-11 min-w-0 flex-1 rounded-xl border border-border bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100'
@@ -82,7 +87,7 @@ export function CollaborationCard() {
         title="Batch access"
         subtitle={
           litter
-            ? `Choose who can add, edit and delete records for ${litter.litter_name || litter.mother_name}.`
+            ? `Choose who can add, edit and delete records for ${batchDisplayName(litter)}.`
             : 'Add a batch before inviting another editor.'
         }
       />

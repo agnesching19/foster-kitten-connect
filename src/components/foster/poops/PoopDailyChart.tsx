@@ -8,12 +8,17 @@ import {
 } from '@/components/ui/chart'
 import type { PoopRow } from '@/lib/foster-queries'
 
-const config = {
-  mother: { label: 'Momma', color: '#f59e0b' },
-  kitten: { label: 'Kittens', color: '#f97316' },
-} satisfies ChartConfig
-
-export function PoopDailyChart({ entries }: { entries: PoopRow[] }) {
+export function PoopDailyChart({
+  entries,
+  primaryLabel = 'Momma',
+}: {
+  entries: PoopRow[]
+  primaryLabel?: string
+}) {
+  const config = {
+    mother: { label: primaryLabel, color: '#f59e0b' },
+    kitten: { label: 'Kittens', color: '#f97316' },
+  } satisfies ChartConfig
   const data = useMemo(() => {
     const totals = new Map<string, { date: string; mother: number; kitten: number }>()
     for (const entry of [...entries].reverse()) {
@@ -50,7 +55,13 @@ export function PoopDailyChart({ entries }: { entries: PoopRow[] }) {
             />
           }
         />
-        <Bar dataKey="mother" stackId="poops" fill="var(--color-mother)" radius={[0, 0, 0, 0]} />
+        <Bar
+          dataKey="mother"
+          name={primaryLabel}
+          stackId="poops"
+          fill="var(--color-mother)"
+          radius={[0, 0, 0, 0]}
+        />
         <Bar dataKey="kitten" stackId="poops" fill="var(--color-kitten)" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ChartContainer>

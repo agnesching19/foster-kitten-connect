@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/foster/ui/Button'
 import { Card, CardHeader } from '@/components/foster/ui/Card'
 import { buildExportZip, downloadBlob } from '@/lib/data-transfer/export'
-import { littersQueryOptions, pickCurrentLitter } from '@/lib/foster-queries'
+import { batchDisplayName, littersQueryOptions, pickCurrentLitter } from '@/lib/foster-queries'
 import { ProgressBar } from './ProgressBar'
 
 type Scope = 'current' | 'selected' | 'all'
@@ -65,7 +65,7 @@ export function ExportDataCard() {
             className={inputClass}
           >
             <option value="current">
-              Current batch{current ? ` — ${current.litter_name || current.mother_name}` : ''}
+              Current batch{current ? ` — ${batchDisplayName(current)}` : ''}
             </option>
             <option value="selected">Selected batches</option>
             <option value="all">All data</option>
@@ -92,7 +92,7 @@ export function ExportDataCard() {
                           )
                         }
                       />
-                      <span>{litter.litter_name || litter.mother_name}</span>
+                      <span>{batchDisplayName(litter)}</span>
                     </label>
                   </li>
                 ))}

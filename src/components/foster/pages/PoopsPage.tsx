@@ -95,7 +95,9 @@ export function PoopsPage({ litterId }: { litterId?: string }) {
         onClose={() => setDialogOpen(false)}
         litterId={litter?.id}
         entries={editing}
-        motherName={litter?.mother_name ?? null}
+        motherName={litter?.primary_cat?.name ?? null}
+        primaryLabel={litter?.batch_type === 'single' ? 'Foster cat' : 'Momma'}
+        showKittens={litter?.batch_type !== 'single'}
       />
 
       <ConfirmDialog
@@ -155,7 +157,10 @@ export function PoopsPage({ litterId }: { litterId?: string }) {
               <h2 className="font-semibold text-ink">Daily poop totals</h2>
               <p className="text-sm text-muted">Each stacked bar represents individual poops.</p>
             </div>
-            <PoopDailyChart entries={visibleDays.flatMap((day) => day.items)} />
+            <PoopDailyChart
+              entries={visibleDays.flatMap((day) => day.items)}
+              primaryLabel={litter?.batch_type === 'single' ? 'Foster cat' : 'Momma'}
+            />
           </Card>
 
           <div className="grid items-start gap-3 lg:grid-cols-2 lg:gap-4">
@@ -167,7 +172,8 @@ export function PoopsPage({ litterId }: { litterId?: string }) {
                   date={day.date}
                   entries={day.items}
                   profiles={profiles}
-                  motherName={litter?.mother_name ?? null}
+                  motherName={litter?.primary_cat?.name ?? null}
+                  primaryLabel={litter?.batch_type === 'single' ? 'Foster cat' : 'Momma'}
                   canEdit={canEdit}
                   open={open}
                   onOpenChange={(nextOpen) =>
@@ -201,6 +207,7 @@ function PoopDayCard({
   entries,
   profiles,
   motherName,
+  primaryLabel,
   canEdit,
   open,
   onOpenChange,
@@ -211,6 +218,7 @@ function PoopDayCard({
   entries: PoopRow[]
   profiles: ProfileRow[]
   motherName: string | null
+  primaryLabel: string
   canEdit: boolean
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -220,7 +228,7 @@ function PoopDayCard({
   const groups = [
     {
       key: 'mother',
-      label: `Momma${motherName ? ` (${motherName})` : ''}`,
+      label: `${primaryLabel}${motherName ? ` (${motherName})` : ''}`,
       entries: groupPoopEntries(entries.filter((entry) => entry.subject_type === 'mother')),
     },
     {
@@ -290,7 +298,7 @@ function PoopDayCard({
                               <Badge label={`×${entryGroup.length}`} color="brand" />
                             ) : null}
                             {entry.subject_type === 'mother' ? (
-                              <Badge label="Momma" color="neutral" />
+                              <Badge label={primaryLabel} color="neutral" />
                             ) : entry.kitten_id ? (
                               <span className="flex items-center gap-1.5">
                                 <KittenAvatar

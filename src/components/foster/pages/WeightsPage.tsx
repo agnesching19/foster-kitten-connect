@@ -44,7 +44,10 @@ export function WeightsPage({ litterId }: { litterId?: string }) {
   const canEdit = hasEditAccess && litter?.status === 'active'
   const { data: weighIns = [], isLoading } = useQuery(weighInsQueryOptions(litter?.id))
   const historicalLitterIds = litters
-    .filter((item) => item.id !== litter?.id && item.status === 'completed')
+    .filter(
+      (item) =>
+        item.id !== litter?.id && item.status === 'completed' && item.batch_type !== 'single',
+    )
     .map((item) => item.id)
   const { data: historicalWeighIns = [] } = useQuery(
     historicalWeighInsQueryOptions(historicalLitterIds),
@@ -104,15 +107,17 @@ export function WeightsPage({ litterId }: { litterId?: string }) {
   const visibleSessionCount = visibleDays.reduce((total, day) => total + day.sessions.length, 0)
   const isDayOpen = (date: string, index: number) => openDays[date] ?? index < 2
   const allDaysOpen = visibleDays.every((day, index) => isDayOpen(day.date, index))
-  const kittensWithWeights = (litter?.kittens ?? []).filter((kitten) =>
-    weighIns.some((session) => session.weights.some((weight) => weight.kitten_id === kitten.id)),
-  )
+  const catsWithWeights = [litter?.primary_cat, ...(litter?.kittens ?? [])]
+    .filter((cat): cat is NonNullable<typeof cat> => Boolean(cat))
+    .filter((cat) =>
+      weighIns.some((session) => session.weights.some((weight) => weight.kitten_id === cat.id)),
+    )
 
   return (
     <div>
       <PageHeader
         title="Weights"
-        subtitle="Kitten growth tracking"
+        subtitle="Growth and weight tracking"
         action={
           canEdit ? (
             <Button
@@ -141,7 +146,7 @@ export function WeightsPage({ litterId }: { litterId?: string }) {
       <ConfirmDialog
         open={Boolean(pendingDelete)}
         title="Delete this weigh-in?"
-        description="Every kitten weight in this session will be removed too."
+        description="Every cat weight in this session will be removed too."
         confirmLabel="Delete"
         busy={remove.isPending}
         onCancel={() => setPendingDelete(null)}
@@ -161,16 +166,16 @@ export function WeightsPage({ litterId }: { litterId?: string }) {
       ) : days.length ? (
         <div className="space-y-4 xl:space-y-6">
           <Card padding="lg">
-            <CardHeader title="Growth chart" subtitle="Kitten weight over time" />
+            <CardHeader title="Growth chart" subtitle="Cat weight over time" />
             <WeightChart
               weighIns={weighIns}
               dateOfBirth={dob}
-              historicalSeries={historicalWeighIns}
+              historicalSeries={litter?.batch_type === 'single' ? [] : historicalWeighIns}
             />
             <div className="mt-4 border-t border-border pt-4">
               <p className="mb-3 text-sm font-medium text-ink">View individual history</p>
               <div className="flex flex-wrap gap-2">
-                {kittensWithWeights.map((kitten) => (
+                {catsWithWeights.map((kitten) => (
                   <button
                     key={kitten.id}
                     type="button"

@@ -11,7 +11,7 @@ import {
   todayIso,
 } from '@/components/foster/ui/FormDialog'
 import { KittenAvatar } from '@/components/foster/ui/KittenAvatar'
-import { daysBetween, kittensQueryOptions, type WeighInRow } from '@/lib/foster-queries'
+import { catsQueryOptions, daysBetween, type WeighInRow } from '@/lib/foster-queries'
 import { sendLogNotification } from '@/lib/push-notifications'
 
 interface WeighInDialogProps {
@@ -31,7 +31,7 @@ export function WeighInDialog({
 }: WeighInDialogProps) {
   const { user } = useAuth()
   const queryClient = useQueryClient()
-  const { data: kittens = [] } = useQuery(kittensQueryOptions(litterId))
+  const { data: kittens = [] } = useQuery(catsQueryOptions(litterId))
   const [date, setDate] = useState(todayIso())
   const [time, setTime] = useState(nowTime())
   const [notes, setNotes] = useState('')
@@ -111,7 +111,7 @@ export function WeighInDialog({
       open={open}
       onClose={onClose}
       title={session ? 'Edit weigh-in' : 'New weigh-in'}
-      subtitle="One session records every kitten's weight"
+      subtitle="One session records every cat's weight"
     >
       <form
         className="grid min-w-0 gap-4 sm:grid-cols-2"
@@ -179,7 +179,7 @@ export function WeighInDialog({
             </div>
           ) : (
             <p className="rounded-xl bg-gray-50 px-3 py-3 text-sm text-muted">
-              Add kittens to this batch first.
+              Add cats to this batch first.
             </p>
           )}
         </div>

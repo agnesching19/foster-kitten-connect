@@ -199,7 +199,12 @@ export async function runImport(
           : rowLitterId(spec, row)
         return !(litterId && skipped.has(litterId))
       })
-      .map((row) => ({ ...row, user_id: userId }))
+      .map((row) => ({
+        ...row,
+        ...(spec.table === 'litters' && !row['batch_type'] ? { batch_type: 'family' } : {}),
+        ...(spec.table === 'kittens' && !row['role'] ? { role: 'kitten' } : {}),
+        user_id: userId,
+      }))
 
     inserted[spec.label] = payload.length
     if (!payload.length) continue
@@ -208,6 +213,32 @@ export async function runImport(
     for (let start = 0; start < payload.length; start += chunkSize) {
       const chunk = payload.slice(start, start + chunkSize)
       const { error } = await supabase.from(spec.table).upsert(chunk as never, { onConflict: 'id' })
+      if (error) throw error
+    }
+  }
+
+  // Older backups stored the primary cat directly on the batch. Promote those
+  // rows after import when no role-bearing primary cat was included.
+  const importedLitters = preview.tables.find((table) => table.spec.table === 'litters')?.rows ?? []
+  for (const row of importedLitters) {
+    const litterId = String(row['id'])
+    if (skipped.has(litterId)) continue
+    const { data: existingPrimary, error: lookupError } = await supabase
+      .from('kittens')
+      .select('id')
+      .eq('litter_id', litterId)
+      .in('role', ['mother', 'single'])
+      .maybeSingle()
+    if (lookupError) throw lookupError
+    if (!existingPrimary && row['mother_name']) {
+      const batchType = row['batch_type'] === 'single' ? 'single' : 'family'
+      const { error } = await supabase.from('kittens').insert({
+        user_id: userId,
+        litter_id: litterId,
+        name: String(row['mother_name']),
+        sort_order: -1,
+        role: batchType === 'single' ? 'single' : 'mother',
+      })
       if (error) throw error
     }
   }

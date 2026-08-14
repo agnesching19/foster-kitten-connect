@@ -7,6 +7,7 @@ import { NewLitterDialog } from '@/components/foster/litters/NewLitterDialog'
 import { KittenAvatar } from '@/components/foster/ui/KittenAvatar'
 import { CatAvatar } from '@/components/foster/ui/CatAvatar'
 import {
+  batchDisplayName,
   dashboardQuickViewQueryOptions,
   littersQueryOptions,
   pickCurrentLitter,
@@ -49,7 +50,8 @@ export function DashboardPage() {
       const matchesFilter = filter === 'all' || litter.status === filter
       const matchesSearch =
         !search ||
-        litter.mother_name.toLowerCase().includes(search) ||
+        batchDisplayName(litter).toLowerCase().includes(search) ||
+        litter.primary_cat?.name.toLowerCase().includes(search) ||
         litter.kittens.some((kitten) => kitten.name.toLowerCase().includes(search))
       return matchesFilter && matchesSearch
     })
@@ -81,9 +83,7 @@ export function DashboardPage() {
             Quick view
           </h2>
           <p className="truncate text-sm text-muted">
-            {currentLitter
-              ? currentLitter.litter_name || currentLitter.mother_name
-              : 'No active batch'}
+            {currentLitter ? batchDisplayName(currentLitter) : 'No active batch'}
           </p>
         </div>
         <div className="grid gap-3 sm:grid-cols-3">
@@ -97,7 +97,7 @@ export function DashboardPage() {
           />
           <QuickViewCard
             to="/weights"
-            label="Heaviest kitten"
+            label="Heaviest cat"
             value={heaviestKitten?.kittens?.name ?? '—'}
             note={
               heaviestKitten
@@ -232,18 +232,34 @@ function QuickViewCard({
 
 function BatchCard({ litter }: { litter: LitterRow }) {
   const isActive = litter.status === 'active'
+  const primaryCat = litter.primary_cat
+  const displayName =
+    litter.batch_type === 'kittens_only'
+      ? batchDisplayName(litter)
+      : (primaryCat?.name ?? litter.mother_name)
   return (
     <Card
       className="group flex h-full flex-col transition hover:-translate-y-0.5 hover:shadow-md"
       padding="lg"
     >
       <div className="flex items-start gap-4">
-        <CatAvatar name={litter.mother_name} avatarPath={litter.mother_avatar_path} size="lg" />
+        <CatAvatar
+          name={displayName}
+          avatarPath={primaryCat?.avatar_path ?? litter.mother_avatar_path}
+          size="lg"
+        />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-lg font-semibold text-ink">{litter.mother_name}</h3>
+                <h3 className="text-lg font-semibold text-ink">{displayName}</h3>
+                <span className="rounded-full bg-brand-100 px-2 py-0.5 text-xs font-semibold text-brand-800">
+                  {litter.batch_type === 'single'
+                    ? 'Single foster'
+                    : litter.batch_type === 'kittens_only'
+                      ? 'Kittens only'
+                      : 'Family'}
+                </span>
                 <span
                   className={`rounded-full px-2 py-0.5 text-xs font-semibold ${isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}
                 >
@@ -255,34 +271,40 @@ function BatchCard({ litter }: { litter: LitterRow }) {
                 {litter.left_date ? ` · Left ${formatDate(litter.left_date)}` : ''}
               </p>
             </div>
-            <p className="text-right">
-              <span className="text-2xl font-bold text-ink">{litter.kittens.length}</span>
-              <span className="ml-1 text-sm text-muted">kittens</span>
-            </p>
+            {litter.batch_type !== 'single' ? (
+              <p className="text-right">
+                <span className="text-2xl font-bold text-ink">{litter.kittens.length}</span>
+                <span className="ml-1 text-sm text-muted">kittens</span>
+              </p>
+            ) : null}
           </div>
         </div>
       </div>
 
-      <div className="mt-4 w-full rounded-xl bg-gray-50 px-3 py-3">
-        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">The kittens</p>
-        {litter.kittens.length ? (
-          <ul className="flex flex-wrap items-center gap-2 text-sm leading-relaxed text-ink">
-            {litter.kittens.map((k) => (
-              <li key={k.id} className="flex items-center gap-2 rounded-lg bg-white px-2 py-1.5">
-                <KittenAvatar
-                  name={k.name}
-                  avatarPath={k.avatar_path}
-                  colour={k.tag_colour}
-                  size="sm"
-                />
-                <span className="leading-snug">{k.name}</span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm leading-relaxed text-ink">No kittens recorded</p>
-        )}
-      </div>
+      {litter.batch_type !== 'single' ? (
+        <div className="mt-4 w-full rounded-xl bg-gray-50 px-3 py-3">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">
+            The kittens
+          </p>
+          {litter.kittens.length ? (
+            <ul className="flex flex-wrap items-center gap-2 text-sm leading-relaxed text-ink">
+              {litter.kittens.map((k) => (
+                <li key={k.id} className="flex items-center gap-2 rounded-lg bg-white px-2 py-1.5">
+                  <KittenAvatar
+                    name={k.name}
+                    avatarPath={k.avatar_path}
+                    colour={k.tag_colour}
+                    size="sm"
+                  />
+                  <span className="leading-snug">{k.name}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm leading-relaxed text-ink">No kittens recorded</p>
+          )}
+        </div>
+      ) : null}
 
       <div className="mt-auto flex w-full flex-wrap items-center gap-2 pt-4">
         {isActive ? (

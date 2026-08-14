@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useLocation } from '@tanstack/react-router'
 import { Layers, MoreHorizontal, NotebookPen, Settings, Video } from 'lucide-react'
-import { littersQueryOptions, pickCurrentLitter } from '@/lib/foster-queries'
+import { batchDisplayName, littersQueryOptions, pickCurrentLitter } from '@/lib/foster-queries'
 import { useLiveCamAccess } from '@/hooks/useLiveCamAccess'
 import {
   DropdownMenu,
@@ -30,7 +30,7 @@ export function MobileHeader() {
           </p>
           <p className="text-sm font-medium text-ink">
             {current
-              ? `${litters.length} batches · ${current.mother_name} + ${kittens.length} active`
+              ? `${litters.length} batches · ${batchDisplayName(current)}${current.batch_type === 'single' ? '' : ` + ${kittens.length}`} active`
               : `${litters.length} batches`}
           </p>
         </div>
@@ -62,9 +62,7 @@ export function MobileHeader() {
                   className="min-h-11 min-w-0 cursor-pointer rounded-lg px-3"
                 >
                   <Link to={batchRouteForPathname(pathname)} params={{ litterId: litter.id }}>
-                    <span className="min-w-0 flex-1 truncate">
-                      {litter.litter_name || litter.mother_name}
-                    </span>
+                    <span className="min-w-0 flex-1 truncate">{batchDisplayName(litter)}</span>
                     <span className="shrink-0 text-xs text-muted">
                       {litter.status === 'completed' ? 'Completed' : 'Active'}
                     </span>

@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { littersQueryOptions, pickCurrentLitter } from '@/lib/foster-queries'
+import { batchDisplayName, littersQueryOptions, pickCurrentLitter } from '@/lib/foster-queries'
 import { KittenAvatar } from '@/components/foster/ui/KittenAvatar'
 import { CatAvatar } from '@/components/foster/ui/CatAvatar'
 import { useLiveCamAccess } from '@/hooks/useLiveCamAccess'
@@ -18,7 +18,10 @@ export function SidebarNav() {
   const { canAccess: canAccessLiveCams } = useLiveCamAccess()
   const pathname = useLocation({ select: (location) => location.pathname })
   const { data: litters = [] } = useQuery(littersQueryOptions)
-  const totalCats = litters.reduce((sum, litter) => sum + litter.kittens.length + 1, 0)
+  const totalCats = litters.reduce(
+    (sum, litter) => sum + litter.kittens.length + (litter.primary_cat ? 1 : 0),
+    0,
+  )
   const current = pickCurrentLitter(litters)
   const isActivePath = (to: string) =>
     to === '/'
@@ -65,7 +68,7 @@ export function SidebarNav() {
             </option>
             {litters.map((litter) => (
               <option key={litter.id} value={litter.id}>
-                {litter.litter_name || litter.mother_name} ·{' '}
+                {batchDisplayName(litter)} ·{' '}
                 {litter.status === 'completed' ? 'Completed' : 'Active'}
               </option>
             ))}
@@ -129,14 +132,18 @@ export function SidebarNav() {
           <ul className="space-y-2">
             <li className="flex items-center gap-2">
               <CatAvatar
-                name={selectedBatch.mother_name}
-                avatarPath={selectedBatch.mother_avatar_path}
+                name={batchDisplayName(selectedBatch)}
+                avatarPath={
+                  selectedBatch.primary_cat?.avatar_path ?? selectedBatch.mother_avatar_path
+                }
                 size="sm"
               />
               <span className="min-w-0 flex-1 truncate text-sm text-ink">
-                {selectedBatch.mother_name}
+                {batchDisplayName(selectedBatch)}
               </span>
-              <span className="shrink-0 text-xs text-muted">Momma</span>
+              <span className="shrink-0 text-xs text-muted">
+                {selectedBatch.batch_type === 'single' ? 'Foster cat' : 'Momma'}
+              </span>
             </li>
             {kittens.map((kitten) => (
               <li key={kitten.id} className="flex items-center gap-2">

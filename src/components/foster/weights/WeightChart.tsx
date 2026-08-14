@@ -69,7 +69,7 @@ export function WeightChart({
         if (!kittenDetails.has(weight.kitten_id)) {
           kittenDetails.set(weight.kitten_id, {
             id: weight.kitten_id,
-            name: weight.kittens?.name ?? 'Kitten',
+            name: weight.kittens?.name ?? 'Cat',
             colour: weight.kittens?.tag_colour ?? null,
           })
         }
@@ -162,7 +162,7 @@ export function WeightChart({
       <ChartContainer
         config={config}
         className="h-[280px] w-full min-w-0 sm:h-[340px]"
-        aria-label="Kitten weight over time"
+        aria-label="Cat weight over time"
       >
         <ComposedChart
           accessibilityLayer
