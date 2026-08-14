@@ -10,6 +10,7 @@ import { KittenDot, TAG_COLOURS, type TagColour } from '@/components/foster/ui/K
 import { KittenAvatar } from '@/components/foster/ui/KittenAvatar'
 import { kittensQueryOptions, type KittenRow } from '@/lib/foster-queries'
 import { removeCatAvatars, uploadCatAvatar } from '@/lib/avatar-storage'
+import { formatDate, formatKittenAge } from '@/utils/formatDate'
 
 const inputClass =
   'min-h-11 w-full rounded-xl border border-border bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100'
@@ -47,7 +48,15 @@ function ColourSelect({
   )
 }
 
-export function KittensSection({ litterId, canEdit }: { litterId: string; canEdit: boolean }) {
+export function KittensSection({
+  litterId,
+  canEdit,
+  dateOfBirth,
+}: {
+  litterId: string
+  canEdit: boolean
+  dateOfBirth: string | null
+}) {
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const { data: kittens = [], isLoading } = useQuery(kittensQueryOptions(litterId))
@@ -60,6 +69,7 @@ export function KittensSection({ litterId, canEdit }: { litterId: string; canEdi
   const [editingAvatar, setEditingAvatar] = useState<File | null>(null)
   const [removeAvatar, setRemoveAvatar] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<KittenRow | null>(null)
+  const age = dateOfBirth ? formatKittenAge(dateOfBirth) : null
 
   async function refresh() {
     await Promise.all([
@@ -164,7 +174,22 @@ export function KittensSection({ litterId, canEdit }: { litterId: string; canEdi
   return (
     <section aria-label="Kittens">
       <Card>
-        <CardHeader title="Kittens" subtitle={`${kittens.length} recorded in this batch`} />
+        <CardHeader
+          title={
+            <span className="flex flex-wrap items-center gap-2">
+              <span>Kittens</span>
+              {age ? (
+                <span
+                  className="rounded-full bg-brand-100 px-2.5 py-1 text-xs font-semibold text-brand-800"
+                  title={`Born ${formatDate(dateOfBirth!)}`}
+                >
+                  {age} old
+                </span>
+              ) : null}
+            </span>
+          }
+          subtitle={`${kittens.length} recorded in this batch`}
+        />
 
         {canEdit ? (
           <form
