@@ -2,6 +2,8 @@ import { createFileRoute } from '@tanstack/react-router'
 import { AuthPage } from '@/components/foster/pages/AuthPage'
 
 export const Route = createFileRoute('/auth')({
+  validateSearch: (search: Record<string, unknown>): { mode?: 'reset' } =>
+    search['mode'] === 'reset' ? { mode: 'reset' } : {},
   head: () => ({
     meta: [
       { title: 'Sign In | Kitty Tracker' },
@@ -19,5 +21,10 @@ export const Route = createFileRoute('/auth')({
       { name: 'twitter:card', content: 'summary_large_image' },
     ],
   }),
-  component: AuthPage,
+  component: AuthRoute,
 })
+
+function AuthRoute() {
+  const { mode } = Route.useSearch()
+  return mode === 'reset' ? <AuthPage initialMode="reset" /> : <AuthPage />
+}
