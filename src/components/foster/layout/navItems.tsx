@@ -225,6 +225,8 @@ export const navItems: NavItem[] = [
   },
 ]
 
+export const communityNavItem = navItems.find((item) => item.to === '/community')!
+
 export function getNavLinkClass(isActive: boolean, variant: 'bottom' | 'sidebar') {
   return getNavLinkClasses(isActive, variant)
 }

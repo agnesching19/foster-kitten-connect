@@ -38,6 +38,8 @@ export const tableSpecs: TableSpec[] = [
       { name: 'id', required: true, type: 'uuid' },
       { name: 'mother_name', required: true },
       { name: 'batch_type' },
+      { name: 'visibility' },
+      { name: 'community_summary' },
       { name: 'litter_name' },
       { name: 'date_of_birth', type: 'date' },
       { name: 'arrived', required: true, type: 'date' },

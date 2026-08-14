@@ -6,6 +6,7 @@ import { CatAvatar } from '@/components/foster/ui/CatAvatar'
 import { useLiveCamAccess } from '@/hooks/useLiveCamAccess'
 import {
   batchRouteForPathname,
+  communityNavItem,
   getNavLinkClass,
   liveCamsNavItem,
   navItems,
@@ -43,7 +44,7 @@ export function SidebarNav() {
         </p>
       </div>
 
-      <nav aria-label="Main navigation" className="flex-1 px-3 py-4">
+      <nav aria-label="Main navigation" className="px-3 pt-4">
         <div className="mb-4">
           <label
             htmlFor="sidebar-batch-selector"
@@ -75,27 +76,29 @@ export function SidebarNav() {
           </select>
         </div>
         <ul className="space-y-1">
-          {navItems.map((item) => {
-            const isActive = isActivePath(item.to)
-            const batchDestination = item.batchSection
-              ? (`/litters/$litterId/${item.batchSection}` as const)
-              : '/litters/$litterId'
-            return (
-              <li key={item.to}>
-                <Link
-                  to={selectedBatchId ? batchDestination : item.to}
-                  params={{ litterId: selectedBatchId }}
-                  className={getNavLinkClass(isActive, 'sidebar')}
-                >
-                  {item.icon(isActive)}
-                  <span>{item.label}</span>
-                </Link>
-              </li>
-            )
-          })}
+          {navItems
+            .filter((item) => item.to !== communityNavItem.to)
+            .map((item) => {
+              const isActive = isActivePath(item.to)
+              const batchDestination = item.batchSection
+                ? (`/litters/$litterId/${item.batchSection}` as const)
+                : '/litters/$litterId'
+              return (
+                <li key={item.to}>
+                  <Link
+                    to={selectedBatchId ? batchDestination : item.to}
+                    params={{ litterId: selectedBatchId }}
+                    className={getNavLinkClass(isActive, 'sidebar')}
+                  >
+                    {item.icon(isActive)}
+                    <span>{item.label}</span>
+                  </Link>
+                </li>
+              )
+            })}
         </ul>
 
-        <ul className="mt-4 space-y-1 border-t border-border pt-4">
+        <ul className="mt-4 space-y-1 border-t border-border pt-2">
           <li>
             <Link
               to={settingsNavItem.to}
@@ -121,6 +124,15 @@ export function SidebarNav() {
               </a>
             </li>
           )}
+          <li className="border-t border-border pt-2 pb-2">
+            <Link
+              to={communityNavItem.to}
+              className={getNavLinkClass(pathname.startsWith(communityNavItem.to), 'sidebar')}
+            >
+              {communityNavItem.icon(pathname.startsWith(communityNavItem.to))}
+              <span>{communityNavItem.label}</span>
+            </Link>
+          </li>
         </ul>
       </nav>
 

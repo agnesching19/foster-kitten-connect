@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/foster/ui/Button'
 import { CatAvatar } from '@/components/foster/ui/CatAvatar'
+import { KittenAvatar } from '@/components/foster/ui/KittenAvatar'
 import { inputClass } from '@/components/foster/ui/FormDialog'
 import { removeCatAvatars, uploadCatAvatar } from '@/lib/avatar-storage'
-import type { LitterRow } from '@/lib/foster-queries'
+import { profilesQueryOptions, type LitterRow } from '@/lib/foster-queries'
+import { formatDate } from '@/utils/formatDate'
 
 interface NewLitterDialogProps {
   open: boolean
@@ -20,6 +22,7 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
   const { user } = useAuth()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { data: profiles = [] } = useQuery(profilesQueryOptions)
   const isEdit = Boolean(litter)
 
   const [batchType, setBatchType] = useState<'family' | 'single' | 'kittens_only'>('family')
@@ -31,6 +34,8 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
   const [status, setStatus] = useState<'active' | 'completed'>('active')
   const [externalRecord, setExternalRecord] = useState('')
   const [albumUrl, setAlbumUrl] = useState('')
+  const [visibility, setVisibility] = useState<'private' | 'community'>('private')
+  const [communitySummary, setCommunitySummary] = useState('')
   const [motherAvatar, setMotherAvatar] = useState<File | null>(null)
   const [removeMotherAvatar, setRemoveMotherAvatar] = useState(false)
 
@@ -44,6 +49,8 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
     setStatus('active')
     setExternalRecord('')
     setAlbumUrl('')
+    setVisibility('private')
+    setCommunitySummary('')
     setMotherAvatar(null)
     setRemoveMotherAvatar(false)
   }
@@ -60,6 +67,8 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
       setStatus(litter.status)
       setExternalRecord(litter.external_record ?? '')
       setAlbumUrl(litter.album_url ?? '')
+      setVisibility(litter.visibility)
+      setCommunitySummary(litter.community_summary ?? '')
       setMotherAvatar(null)
       setRemoveMotherAvatar(false)
     } else {
@@ -92,6 +101,8 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
         status,
         external_record: externalRecord.trim() || null,
         album_url: albumUrl.trim() || null,
+        visibility,
+        community_summary: visibility === 'community' ? communitySummary.trim() || null : null,
       }
       const { error } = litter
         ? await supabase.from('litters').update(payload).eq('id', litter.id)
@@ -143,6 +154,7 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['litters'] }),
         queryClient.invalidateQueries({ queryKey: ['cats', litter?.id] }),
+        queryClient.invalidateQueries({ queryKey: ['community-batches'] }),
       ])
       toast.success(isEdit ? 'Batch updated' : 'Batch added')
       if (!isEdit) reset()
@@ -154,6 +166,11 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
   })
 
   if (!open) return null
+
+  const fostererName =
+    profiles.find((profile) => profile.id === user?.id)?.display_name ?? 'Foster carer'
+  const previewName = litterName.trim() || motherName.trim() || 'Foster kittens'
+  const previewPrimary = litter?.primary_cat
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4">
@@ -354,6 +371,135 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
                 placeholder="https://"
               />
             </label>
+
+            <fieldset className="rounded-2xl border border-brand-200 bg-brand-50 p-4 sm:col-span-2">
+              <legend className="px-1 text-sm font-semibold text-ink">Community sharing</legend>
+              <label className="flex cursor-pointer items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={visibility === 'community'}
+                  onChange={(event) =>
+                    setVisibility(event.target.checked ? 'community' : 'private')
+                  }
+                  className="mt-1 h-4 w-4 rounded border-border accent-orange-500"
+                />
+                <span>
+                  <span className="block text-sm font-medium text-ink">
+                    Share this foster on the community board
+                  </span>
+                  <span className="mt-0.5 block text-xs text-muted">
+                    Off by default. You can stop sharing at any time.
+                  </span>
+                </span>
+              </label>
+
+              {visibility === 'community' ? (
+                <div className="mt-4 space-y-3">
+                  <label className="block">
+                    <span className="mb-1 block text-sm font-medium text-ink">
+                      Community update
+                    </span>
+                    <textarea
+                      value={communitySummary}
+                      onChange={(event) => setCommunitySummary(event.target.value)}
+                      maxLength={500}
+                      rows={3}
+                      className={inputClass}
+                      placeholder="Optional introduction or update about this foster…"
+                    />
+                    <span className="mt-1 block text-right text-xs text-muted">
+                      {communitySummary.length}/500
+                    </span>
+                  </label>
+
+                  <div>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
+                      Public preview
+                    </p>
+                    <div className="rounded-xl border border-border bg-white p-3">
+                      <div className="flex items-start gap-3">
+                        <CatAvatar
+                          name={previewName}
+                          avatarPath={
+                            removeMotherAvatar
+                              ? null
+                              : (previewPrimary?.avatar_path ?? litter?.mother_avatar_path ?? null)
+                          }
+                          size="lg"
+                          photoPreview={false}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-semibold text-ink">{previewName}</p>
+                            <span className="rounded-full bg-brand-100 px-2 py-0.5 text-xs font-semibold text-brand-800">
+                              {batchType === 'single'
+                                ? 'Single foster'
+                                : batchType === 'kittens_only'
+                                  ? 'Kittens only'
+                                  : 'Family'}
+                            </span>
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-xs font-semibold ${status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-muted'}`}
+                            >
+                              {status === 'active' ? 'In care' : 'Completed'}
+                            </span>
+                          </div>
+                          <p className="mt-0.5 text-xs text-muted">Fostered by {fostererName}</p>
+                          <p className="mt-1 text-xs text-muted">
+                            {arrived ? `Arrived ${formatDate(arrived)}` : 'Arrival date not set'}
+                            {leftDate ? ` · Left ${formatDate(leftDate)}` : ''}
+                          </p>
+                        </div>
+                      </div>
+                      {communitySummary.trim() ? (
+                        <p className="mt-3 whitespace-pre-wrap text-sm text-ink">
+                          {communitySummary.trim()}
+                        </p>
+                      ) : null}
+                      {batchType !== 'kittens_only' || litter?.kittens.length ? (
+                        <ul className="mt-3 flex flex-wrap gap-2">
+                          {batchType !== 'kittens_only' && motherName.trim() ? (
+                            <li className="flex items-center gap-1.5 rounded-lg bg-gray-50 px-2 py-1.5 text-xs text-ink">
+                              <CatAvatar
+                                name={motherName.trim()}
+                                avatarPath={
+                                  removeMotherAvatar
+                                    ? null
+                                    : (previewPrimary?.avatar_path ??
+                                      litter?.mother_avatar_path ??
+                                      null)
+                                }
+                                size="sm"
+                                photoPreview={false}
+                              />
+                              {motherName.trim()}
+                            </li>
+                          ) : null}
+                          {(litter?.kittens ?? []).map((kitten) => (
+                            <li
+                              key={kitten.id}
+                              className="flex items-center gap-1.5 rounded-lg bg-gray-50 px-2 py-1.5 text-xs text-ink"
+                            >
+                              <KittenAvatar
+                                name={kitten.name}
+                                avatarPath={kitten.avatar_path}
+                                colour={kitten.tag_colour}
+                                size="sm"
+                                photoPreview={false}
+                              />
+                              {kitten.name}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </div>
+                    <p className="mt-2 text-xs text-muted">
+                      Care logs, notes, weights, external references and album links stay private.
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+            </fieldset>
 
             <div className="mt-1 flex gap-2 sm:col-span-2">
               <Button type="submit" size="md" fullWidth disabled={mutation.isPending}>

@@ -21,7 +21,7 @@ export function MobileNav() {
     >
       <ul className="mx-auto flex max-w-lg items-stretch justify-around px-1 sm:max-w-none sm:px-4">
         {navItems
-          .filter((item) => item.to !== '/notes')
+          .filter((item) => item.to !== '/notes' && item.to !== '/community')
           .map((item) => {
             const isActive = isActivePath(item.to)
             const batchDestination = item.batchSection

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '@/integrations/supabase/client'
-import { CAT_AVATAR_BUCKET } from '@/lib/avatar-storage'
+import { getCatAvatarUrl } from '@/lib/avatar-storage'
 import { AvatarPreviewDialog } from './AvatarPreviewDialog'
 import { catAvatarSizeClasses, type CatAvatarSize } from './avatar-styles'
 
@@ -30,13 +29,11 @@ export function CatAvatar({
         setImageUrl(null)
         return
       }
-      const { data, error } = await supabase.storage
-        .from(CAT_AVATAR_BUCKET)
-        .createSignedUrl(avatarPath, 60 * 60)
+      const signedUrl = await getCatAvatarUrl(avatarPath)
       if (!active) return
-      setImageUrl(error ? null : data.signedUrl)
+      setImageUrl(signedUrl)
       setFailed(false)
-      if (!error) refreshTimer = setTimeout(loadImage, 50 * 60 * 1000)
+      if (signedUrl) refreshTimer = setTimeout(loadImage, 50 * 60 * 1000)
     }
 
     void loadImage()

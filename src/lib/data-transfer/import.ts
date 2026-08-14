@@ -202,6 +202,7 @@ export async function runImport(
       .map((row) => ({
         ...row,
         ...(spec.table === 'litters' && !row['batch_type'] ? { batch_type: 'family' } : {}),
+        ...(spec.table === 'litters' && !row['visibility'] ? { visibility: 'private' } : {}),
         ...(spec.table === 'kittens' && !row['role'] ? { role: 'kitten' } : {}),
         user_id: userId,
       }))

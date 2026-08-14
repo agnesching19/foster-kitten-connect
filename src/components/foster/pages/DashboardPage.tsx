@@ -37,7 +37,7 @@ export function DashboardPage() {
   const [filter, setFilter] = useState<Filter>('all')
   const [query, setQuery] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
-  const { data: litters = [], isLoading } = useQuery(littersQueryOptions)
+  const { data: litters = [], isLoading, error: littersError } = useQuery(littersQueryOptions)
   const currentLitter = pickCurrentLitter(litters)
   const today = todayIso()
   const { data: quickView } = useQuery(dashboardQuickViewQueryOptions(currentLitter?.id, today))
@@ -90,6 +90,20 @@ export function DashboardPage() {
               Visit community
             </Link>
           </div>
+        </Card>
+      </div>
+    )
+  }
+
+  if (littersError) {
+    return (
+      <div>
+        <PageHeader title="My fosters" subtitle="Your foster batches, past and present" />
+        <Card className="py-12 text-center">
+          <h2 className="font-semibold text-ink">Your fosters could not be loaded</h2>
+          <p role="alert" className="mt-1 text-sm text-muted">
+            Please refresh the page. If this continues, check the database connection.
+          </p>
         </Card>
       </div>
     )

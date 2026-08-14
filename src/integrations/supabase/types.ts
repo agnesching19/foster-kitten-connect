@@ -294,9 +294,11 @@ export type Database = {
           left_date: string | null
           litter_change_interval_hours: number
           litter_name: string | null
+          community_summary: string | null
           mother_avatar_path: string | null
           mother_name: string
           status: Database['public']['Enums']['litter_status']
+          visibility: string
           updated_at: string
           user_id: string
         }
@@ -311,9 +313,11 @@ export type Database = {
           left_date?: string | null
           litter_change_interval_hours?: number
           litter_name?: string | null
+          community_summary?: string | null
           mother_avatar_path?: string | null
           mother_name: string
           status?: Database['public']['Enums']['litter_status']
+          visibility?: string
           updated_at?: string
           user_id: string
         }
@@ -328,9 +332,11 @@ export type Database = {
           left_date?: string | null
           litter_change_interval_hours?: number
           litter_name?: string | null
+          community_summary?: string | null
           mother_avatar_path?: string | null
           mother_name?: string
           status?: Database['public']['Enums']['litter_status']
+          visibility?: string
           updated_at?: string
           user_id?: string
         }
@@ -535,7 +541,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      community_batches: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          arrived: string
+          batch_type: Database['public']['Enums']['foster_batch_type']
+          cats: Json
+          community_summary: string | null
+          display_name: string
+          fosterer_name: string
+          id: string
+          left_date: string | null
+          status: Database['public']['Enums']['litter_status']
+        }[]
+      }
+      is_community_cat_avatar: { Args: { target_path: string }; Returns: boolean }
     }
     Enums: {
       foster_batch_type: 'family' | 'single' | 'kittens_only'

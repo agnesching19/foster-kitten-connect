@@ -10,6 +10,8 @@ export interface LitterRow {
   batch_type: 'family' | 'single' | 'kittens_only'
   primary_cat: CatRow | null
   litter_name: string | null
+  visibility: 'private' | 'community'
+  community_summary: string | null
   date_of_birth: string | null
   arrived: string
   left_date: string | null
@@ -37,7 +39,7 @@ export const littersQueryOptions = queryOptions({
     const { data, error } = await supabase
       .from('litters')
       .select(
-        'id, user_id, mother_name, mother_avatar_path, batch_type, litter_name, date_of_birth, arrived, left_date, status, external_record, album_url, litter_change_interval_hours, kittens(id, litter_id, name, sort_order, role, date_of_birth, tag_colour, avatar_path)',
+        'id, user_id, mother_name, mother_avatar_path, batch_type, litter_name, visibility, community_summary, date_of_birth, arrived, left_date, status, external_record, album_url, litter_change_interval_hours, kittens(id, litter_id, name, sort_order, role, date_of_birth, tag_colour, avatar_path)',
       )
       .order('arrived', { ascending: false })
     if (error) throw error
@@ -61,6 +63,37 @@ export function pickCurrentLitter(litters: LitterRow[]): LitterRow | undefined {
 export function batchDisplayName(litter: LitterRow): string {
   return litter.litter_name || litter.primary_cat?.name || litter.mother_name || 'Kittens'
 }
+
+export interface CommunityCat {
+  name: string
+  role: 'mother' | 'single' | 'kitten'
+  avatar_path: string | null
+  tag_colour: TagColour | null
+}
+
+export interface CommunityBatch {
+  id: string
+  batch_type: 'family' | 'single' | 'kittens_only'
+  display_name: string
+  arrived: string
+  left_date: string | null
+  status: 'active' | 'completed'
+  community_summary: string | null
+  fosterer_name: string
+  cats: CommunityCat[]
+}
+
+export const communityBatchesQueryOptions = queryOptions({
+  queryKey: ['community-batches'],
+  queryFn: async (): Promise<CommunityBatch[]> => {
+    const { data, error } = await supabase.rpc('community_batches')
+    if (error) throw error
+    return (data ?? []).map((batch) => ({
+      ...batch,
+      cats: Array.isArray(batch.cats) ? (batch.cats as unknown as CommunityCat[]) : [],
+    }))
+  },
+})
 
 export interface DashboardQuickView {
   mealsToday: number

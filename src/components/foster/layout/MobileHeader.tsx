@@ -12,27 +12,33 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { AuthStatus } from './AuthStatus'
-import { batchRouteForPathname } from './navItems'
+import { batchRouteForPathname, communityNavItem } from './navItems'
 
 export function MobileHeader() {
   const pathname = useLocation({ select: (location) => location.pathname })
   const { canAccess: canAccessLiveCams } = useLiveCamAccess()
   const { data: litters = [] } = useQuery(littersQueryOptions)
   const current = pickCurrentLitter(litters)
-  const kittens = current?.kittens ?? []
 
   return (
     <div className="border-b border-border bg-brand-50/90 px-4 py-3 backdrop-blur-md pt-[max(0.75rem,env(safe-area-inset-top))] md:hidden">
       <div className="flex items-center justify-between">
-        <div>
+        <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wider text-brand-600">
             Kitty Tracker
           </p>
-          <p className="text-sm font-medium text-ink">
-            {current
-              ? `${litters.length} batches · ${batchDisplayName(current)}${current.batch_type === 'single' ? '' : ` + ${kittens.length}`} active`
-              : `${litters.length} batches`}
-          </p>
+          {current ? (
+            <div className="mt-0.5 flex min-w-0 items-center gap-2">
+              <p className="truncate text-sm font-medium text-ink">{batchDisplayName(current)}</p>
+              <span
+                className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${current.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-muted'}`}
+              >
+                {current.status === 'active' ? 'Active' : 'Completed'}
+              </span>
+            </div>
+          ) : (
+            <p className="text-sm font-medium text-ink">No active batch</p>
+          )}
         </div>
         <div className="flex items-center gap-3">
           <AuthStatus variant="mobile" />
@@ -76,6 +82,13 @@ export function MobileHeader() {
                   Notes
                 </Link>
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild className="min-h-11 cursor-pointer rounded-lg px-3">
+                <Link to="/settings">
+                  <Settings aria-hidden />
+                  Settings
+                </Link>
+              </DropdownMenuItem>
               {canAccessLiveCams ? (
                 <DropdownMenuItem asChild className="min-h-11 cursor-pointer rounded-lg px-3">
                   <a href="https://kittycams.bosh.me/" target="_blank" rel="noreferrer">
@@ -87,10 +100,11 @@ export function MobileHeader() {
                   </a>
                 </DropdownMenuItem>
               ) : null}
+              <DropdownMenuSeparator />
               <DropdownMenuItem asChild className="min-h-11 cursor-pointer rounded-lg px-3">
-                <Link to="/settings">
-                  <Settings aria-hidden />
-                  Settings
+                <Link to="/community">
+                  {communityNavItem.icon(false)}
+                  Community
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
