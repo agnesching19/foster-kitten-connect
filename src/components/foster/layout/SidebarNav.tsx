@@ -37,7 +37,7 @@ export function SidebarNav() {
         <p className="text-xs font-semibold uppercase tracking-wider text-brand-600">
           Kitty Tracker
         </p>
-        <p className="mt-1 text-base font-semibold text-ink">All foster batches</p>
+        <p className="mt-1 text-base font-semibold text-ink">My foster batches</p>
         <p className="text-sm text-muted">
           {litters.length} batches · {totalCats} cats
         </p>

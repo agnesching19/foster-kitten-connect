@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { CAT_AVATAR_BUCKET } from '@/lib/avatar-storage'
 import { AvatarPreviewDialog } from './AvatarPreviewDialog'
@@ -19,20 +19,37 @@ export function CatAvatar({
 }) {
   const [failed, setFailed] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
-  const publicUrl = useMemo(
-    () =>
-      avatarPath
-        ? supabase.storage.from(CAT_AVATAR_BUCKET).getPublicUrl(avatarPath).data.publicUrl
-        : null,
-    [avatarPath],
-  )
+  const [imageUrl, setImageUrl] = useState<string | null>(null)
 
-  useEffect(() => setFailed(false), [publicUrl])
+  useEffect(() => {
+    let active = true
+    let refreshTimer: ReturnType<typeof setTimeout> | undefined
 
-  if (publicUrl && !failed) {
+    async function loadImage() {
+      if (!avatarPath) {
+        setImageUrl(null)
+        return
+      }
+      const { data, error } = await supabase.storage
+        .from(CAT_AVATAR_BUCKET)
+        .createSignedUrl(avatarPath, 60 * 60)
+      if (!active) return
+      setImageUrl(error ? null : data.signedUrl)
+      setFailed(false)
+      if (!error) refreshTimer = setTimeout(loadImage, 50 * 60 * 1000)
+    }
+
+    void loadImage()
+    return () => {
+      active = false
+      if (refreshTimer) clearTimeout(refreshTimer)
+    }
+  }, [avatarPath])
+
+  if (imageUrl && !failed) {
     const image = (
       <img
-        src={publicUrl}
+        src={imageUrl}
         alt={`${name} avatar`}
         className="h-full w-full rounded-full border border-border object-cover"
         loading="lazy"
@@ -62,7 +79,7 @@ export function CatAvatar({
         <AvatarPreviewDialog
           open={previewOpen}
           name={name}
-          imageUrl={publicUrl}
+          imageUrl={imageUrl}
           onClose={() => setPreviewOpen(false)}
         />
       </>

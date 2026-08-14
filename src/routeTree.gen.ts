@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CommunityRouteImport } from './routes/community'
 import { Route as FeedingsRouteImport } from './routes/feedings'
 import { Route as LitterRouteImport } from './routes/litter'
 import { Route as NotesRouteImport } from './routes/notes'
@@ -33,6 +34,11 @@ const IndexRoute = IndexRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommunityRoute = CommunityRouteImport.update({
+  id: '/community',
+  path: '/community',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FeedingsRoute = FeedingsRouteImport.update({
@@ -104,6 +110,7 @@ const LittersLitterIdWeightsRoute = LittersLitterIdWeightsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/community': typeof CommunityRoute
   '/feedings': typeof FeedingsRoute
   '/litter': typeof LitterRoute
   '/notes': typeof NotesRoute
@@ -121,6 +128,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/community': typeof CommunityRoute
   '/feedings': typeof FeedingsRoute
   '/litter': typeof LitterRoute
   '/notes': typeof NotesRoute
@@ -138,6 +146,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/community': typeof CommunityRoute
   '/feedings': typeof FeedingsRoute
   '/litter': typeof LitterRoute
   '/notes': typeof NotesRoute
@@ -157,6 +166,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/community'
     | '/feedings'
     | '/litter'
     | '/notes'
@@ -174,6 +184,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/community'
     | '/feedings'
     | '/litter'
     | '/notes'
@@ -190,6 +201,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/auth'
+    | '/community'
     | '/feedings'
     | '/litter'
     | '/notes'
@@ -208,6 +220,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  CommunityRoute: typeof CommunityRoute
   FeedingsRoute: typeof FeedingsRoute
   LitterRoute: typeof LitterRoute
   NotesRoute: typeof NotesRoute
@@ -231,6 +244,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/community': {
+      id: '/community'
+      path: '/community'
+      fullPath: '/community'
+      preLoaderRoute: typeof CommunityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/feedings': {
@@ -352,6 +372,7 @@ const LittersLitterIdRouteWithChildren = LittersLitterIdRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  CommunityRoute: CommunityRoute,
   FeedingsRoute: FeedingsRoute,
   LitterRoute: LitterRoute,
   NotesRoute: NotesRoute,

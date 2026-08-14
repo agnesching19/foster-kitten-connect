@@ -6,6 +6,7 @@ import { Card } from '@/components/foster/ui/Card'
 import { NewLitterDialog } from '@/components/foster/litters/NewLitterDialog'
 import { KittenAvatar } from '@/components/foster/ui/KittenAvatar'
 import { CatAvatar } from '@/components/foster/ui/CatAvatar'
+import { useAuth } from '@/hooks/useAuth'
 import {
   batchDisplayName,
   dashboardQuickViewQueryOptions,
@@ -32,6 +33,7 @@ function todayIso() {
 }
 
 export function DashboardPage() {
+  const { user, loading: authLoading } = useAuth()
   const [filter, setFilter] = useState<Filter>('all')
   const [query, setQuery] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -57,11 +59,47 @@ export function DashboardPage() {
     })
   }, [filter, query, litters])
 
+  if (authLoading) {
+    return (
+      <Card className="py-12 text-center">
+        <p className="text-sm text-muted">Loading your fosters…</p>
+      </Card>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div>
+        <PageHeader title="My fosters" subtitle="Your private foster workspace" />
+        <Card className="py-12 text-center">
+          <h2 className="font-semibold text-ink">Sign in to see your foster cats</h2>
+          <p className="mt-1 text-sm text-muted">
+            Your batches and care records are private to you and invited collaborators.
+          </p>
+          <div className="mt-5 flex flex-wrap justify-center gap-2">
+            <Link
+              to="/auth"
+              className="inline-flex min-h-11 items-center rounded-xl bg-brand-500 px-4 text-sm font-semibold text-white transition hover:bg-brand-600"
+            >
+              Sign in
+            </Link>
+            <Link
+              to="/community"
+              className="inline-flex min-h-11 items-center rounded-xl border border-border bg-white px-4 text-sm font-semibold text-ink transition hover:bg-brand-50"
+            >
+              Visit community
+            </Link>
+          </div>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div>
       <PageHeader
-        title="Kitty dashboard"
-        subtitle="Every batch, past and present, in one place"
+        title="My fosters"
+        subtitle="Your foster batches, past and present"
         action={
           <button
             type="button"
