@@ -14,7 +14,7 @@ const inputClass =
 export function LiveCamAccessCard() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
-  const [selectedUserId, setSelectedUserId] = useState('')
+  const [accessEmail, setAccessEmail] = useState('')
   const admin = isLiveCamsAdmin(user?.email)
   const { data: profiles = [] } = useQuery(profilesQueryOptions)
 
@@ -31,19 +31,22 @@ export function LiveCamAccessCard() {
     },
   })
 
-  const accessIds = new Set(accessList.map((entry) => entry.user_id))
-  const availableProfiles = profiles.filter((profile) => !accessIds.has(profile.id))
   const profileName = (userId: string) =>
     profiles.find((profile) => profile.id === userId)?.display_name ?? 'Kitty Tracker user'
 
   const grantAccess = useMutation({
-    mutationFn: async (userId: string) => {
-      const { error } = await supabase.from('live_cam_access').insert({ user_id: userId })
+    mutationFn: async (email: string) => {
+      const { error } = await supabase.rpc('grant_live_cam_access_by_email', {
+        target_email: email.trim(),
+      })
       if (error) throw error
     },
     onSuccess: async () => {
-      setSelectedUserId('')
-      await queryClient.invalidateQueries({ queryKey: ['live-cam-access-list'] })
+      setAccessEmail('')
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['live-cam-access-list'] }),
+        queryClient.invalidateQueries({ queryKey: ['profiles'] }),
+      ])
       toast.success('Live cam access granted')
     },
     onError: (error: Error) => toast.error(error.message || 'Could not grant access'),
@@ -107,23 +110,18 @@ export function LiveCamAccessCard() {
         )}
 
         <div className="flex flex-col gap-2 sm:flex-row">
-          <select
-            aria-label="Select a user for live cam access"
-            value={selectedUserId}
-            onChange={(event) => setSelectedUserId(event.target.value)}
+          <input
+            type="email"
+            aria-label="User email for live cam access"
+            placeholder="Registered account email"
+            value={accessEmail}
+            onChange={(event) => setAccessEmail(event.target.value)}
             className={inputClass}
-          >
-            <option value="">Select a user…</option>
-            {availableProfiles.map((profile) => (
-              <option key={profile.id} value={profile.id}>
-                {profile.display_name}
-              </option>
-            ))}
-          </select>
+          />
           <Button
             size="md"
-            disabled={!selectedUserId || grantAccess.isPending}
-            onClick={() => grantAccess.mutate(selectedUserId)}
+            disabled={!accessEmail.trim() || grantAccess.isPending}
+            onClick={() => grantAccess.mutate(accessEmail)}
           >
             {grantAccess.isPending ? 'Adding…' : 'Grant access'}
           </Button>

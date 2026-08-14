@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/integrations/supabase/client'
 
 type FoodPreset = {
+  created_by: string | null
   id: string
   name: string
 }
@@ -28,7 +29,7 @@ export function FeedingFlavoursCard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('feeding_food_presets')
-        .select('id, name')
+        .select('id, name, created_by')
         .order('name')
       if (error) throw error
       return data
@@ -155,25 +156,29 @@ export function FeedingFlavoursCard() {
                         <span className="min-w-0 flex-1 truncate text-sm capitalize text-ink">
                           {preset.name}
                         </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditing(preset)
-                            setEditingName(preset.name)
-                          }}
-                          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border text-muted transition hover:bg-brand-50 hover:text-brand-700"
-                          aria-label={`Edit ${preset.name}`}
-                        >
-                          <Pencil aria-hidden="true" className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeleting(preset)}
-                          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border text-muted transition hover:bg-red-50 hover:text-red-600"
-                          aria-label={`Delete ${preset.name}`}
-                        >
-                          <Trash2 aria-hidden="true" className="h-4 w-4" />
-                        </button>
+                        {preset.created_by === user.id ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditing(preset)
+                                setEditingName(preset.name)
+                              }}
+                              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border text-muted transition hover:bg-brand-50 hover:text-brand-700"
+                              aria-label={`Edit ${preset.name}`}
+                            >
+                              <Pencil aria-hidden="true" className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeleting(preset)}
+                              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border text-muted transition hover:bg-red-50 hover:text-red-600"
+                              aria-label={`Delete ${preset.name}`}
+                            >
+                              <Trash2 aria-hidden="true" className="h-4 w-4" />
+                            </button>
+                          </>
+                        ) : null}
                       </>
                     )}
                   </li>
@@ -181,7 +186,7 @@ export function FeedingFlavoursCard() {
               </ul>
             )}
             <p className="text-xs text-muted">
-              Renaming or removing a preset does not change existing feeding records.
+              You can rename or remove flavours you added. Existing feeding records are unchanged.
             </p>
           </div>
         ) : (

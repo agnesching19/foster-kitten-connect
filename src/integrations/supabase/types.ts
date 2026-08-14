@@ -541,6 +541,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_litter_collaborator_by_email: {
+        Args: { target_email: string; target_litter_id: string }
+        Returns: string
+      }
+      can_view_profile: { Args: { target_user_id: string }; Returns: boolean }
       community_batches: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -555,6 +560,7 @@ export type Database = {
           status: Database['public']['Enums']['litter_status']
         }[]
       }
+      grant_live_cam_access_by_email: { Args: { target_email: string }; Returns: string }
       is_community_cat_avatar: { Args: { target_path: string }; Returns: boolean }
     }
     Enums: {

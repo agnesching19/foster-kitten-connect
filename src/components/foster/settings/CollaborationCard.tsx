@@ -22,7 +22,7 @@ export function CollaborationCard() {
   const { data: profiles = [] } = useQuery(profilesQueryOptions)
   const litter = pickCurrentLitter(litters)
   const isOwner = Boolean(user && litter?.user_id === user.id)
-  const [selectedUserId, setSelectedUserId] = useState('')
+  const [collaboratorEmail, setCollaboratorEmail] = useState('')
 
   const { data: collaborators = [], isLoading } = useQuery({
     queryKey: ['litter-collaborators', litter?.id],
@@ -38,24 +38,21 @@ export function CollaborationCard() {
     },
   })
 
-  const collaboratorIds = new Set(collaborators.map((entry) => entry.user_id))
-  const availableProfiles = profiles.filter(
-    (profile) => profile.id !== litter?.user_id && !collaboratorIds.has(profile.id),
-  )
-
   const addCollaborator = useMutation({
-    mutationFn: async (userId: string) => {
+    mutationFn: async (email: string) => {
       if (!litter) throw new Error('No batch selected')
-      const { error } = await supabase.from('litter_collaborators').insert({
-        litter_id: litter.id,
-        user_id: userId,
-        role: 'editor',
+      const { error } = await supabase.rpc('add_litter_collaborator_by_email', {
+        target_litter_id: litter.id,
+        target_email: email.trim(),
       })
       if (error) throw error
     },
     onSuccess: async () => {
-      setSelectedUserId('')
-      await queryClient.invalidateQueries({ queryKey: ['litter-collaborators', litter?.id] })
+      setCollaboratorEmail('')
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['litter-collaborators', litter?.id] }),
+        queryClient.invalidateQueries({ queryKey: ['profiles'] }),
+      ])
       toast.success('Editor added')
     },
     onError: (error: Error) => toast.error(error.message || 'Could not add the editor'),
@@ -141,23 +138,18 @@ export function CollaborationCard() {
 
           {isOwner ? (
             <div className="flex flex-col gap-2 sm:flex-row">
-              <select
-                aria-label="Select an editor"
-                value={selectedUserId}
-                onChange={(event) => setSelectedUserId(event.target.value)}
+              <input
+                type="email"
+                aria-label="Editor's email address"
+                placeholder="Editor’s account email"
+                value={collaboratorEmail}
+                onChange={(event) => setCollaboratorEmail(event.target.value)}
                 className={inputClass}
-              >
-                <option value="">Select a user…</option>
-                {availableProfiles.map((profile) => (
-                  <option key={profile.id} value={profile.id}>
-                    {profile.display_name}
-                  </option>
-                ))}
-              </select>
+              />
               <Button
                 size="md"
-                disabled={!selectedUserId || addCollaborator.isPending}
-                onClick={() => addCollaborator.mutate(selectedUserId)}
+                disabled={!collaboratorEmail.trim() || addCollaborator.isPending}
+                onClick={() => addCollaborator.mutate(collaboratorEmail)}
               >
                 {addCollaborator.isPending ? 'Adding…' : 'Add editor'}
               </Button>
