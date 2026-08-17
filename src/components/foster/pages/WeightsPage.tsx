@@ -18,7 +18,7 @@ import { WeighInDialog } from '@/components/foster/dialogs/WeighInDialog'
 import { ConfirmDialog } from '@/components/foster/settings/ConfirmDialog'
 import {
   daysBetween,
-  historicalWeighInsQueryOptions,
+  historicalWeightRangeQueryOptions,
   littersQueryOptions,
   logAuthorName,
   pickCurrentLitter,
@@ -43,14 +43,8 @@ export function WeightsPage({ litterId }: { litterId?: string }) {
   const { canEdit: hasEditAccess } = useLitterAccess(litter)
   const canEdit = hasEditAccess && litter?.status === 'active'
   const { data: weighIns = [], isLoading } = useQuery(weighInsQueryOptions(litter?.id))
-  const historicalLitterIds = litters
-    .filter(
-      (item) =>
-        item.id !== litter?.id && item.status === 'completed' && item.batch_type !== 'single',
-    )
-    .map((item) => item.id)
-  const { data: historicalWeighIns = [] } = useQuery(
-    historicalWeighInsQueryOptions(historicalLitterIds),
+  const { data: historicalWeightRange = [] } = useQuery(
+    historicalWeightRangeQueryOptions(litter?.id),
   )
   const { data: profiles = [] } = useQuery(profilesQueryOptions)
   const dob = litter?.date_of_birth ?? null
@@ -170,7 +164,7 @@ export function WeightsPage({ litterId }: { litterId?: string }) {
             <WeightChart
               weighIns={weighIns}
               dateOfBirth={dob}
-              historicalSeries={litter?.batch_type === 'single' ? [] : historicalWeighIns}
+              historicalRange={litter?.batch_type === 'single' ? [] : historicalWeightRange}
             />
             <div className="mt-4 border-t border-border pt-4">
               <p className="mb-3 text-sm font-medium text-ink">View individual history</p>

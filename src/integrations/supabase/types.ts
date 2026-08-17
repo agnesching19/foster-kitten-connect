@@ -545,6 +545,14 @@ export type Database = {
         Args: { target_email: string; target_litter_id: string }
         Returns: string
       }
+      batch_historical_weight_range: {
+        Args: { target_litter_id: string }
+        Returns: {
+          age_days: number
+          max_grams: number
+          min_grams: number
+        }[]
+      }
       can_view_profile: { Args: { target_user_id: string }; Returns: boolean }
       community_batches: {
         Args: Record<PropertyKey, never>

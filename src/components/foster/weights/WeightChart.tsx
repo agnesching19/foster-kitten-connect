@@ -8,7 +8,7 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart'
 import type { TagColour } from '@/components/foster/ui/KittenDot'
-import { daysBetween, type HistoricalWeightPoint, type WeighInRow } from '@/lib/foster-queries'
+import { daysBetween, type HistoricalWeightRange, type WeighInRow } from '@/lib/foster-queries'
 import { groupWeighInsByDay } from '@/lib/weight-history'
 
 const lineColours: Record<TagColour, string> = {
@@ -51,12 +51,12 @@ export function WeightChart({
   weighIns,
   showLegend = true,
   dateOfBirth,
-  historicalSeries = [],
+  historicalRange = [],
 }: {
   weighIns: WeighInRow[]
   showLegend?: boolean
   dateOfBirth?: string | null
-  historicalSeries?: HistoricalWeightPoint[]
+  historicalRange?: HistoricalWeightRange[]
 }) {
   const [hiddenKittenIds, setHiddenKittenIds] = useState<Set<string>>(() => new Set())
   const [compareHistory, setCompareHistory] = useState(false)
@@ -108,26 +108,17 @@ export function WeightChart({
       })
       byAge.set(age, row)
     }
-    const historicalByAge = new Map<number, number[]>()
-    historicalSeries.forEach((point) => {
-      const dob = point.litters?.date_of_birth
-      if (!dob) return
-      const age = daysBetween(dob, point.date)
-      historicalByAge.set(age, [...(historicalByAge.get(age) ?? []), point.grams])
-    })
-    historicalByAge.forEach((weights, age) => {
-      const row = byAge.get(age) ?? {}
-      row['historicalRange'] = [Math.min(...weights), Math.max(...weights)]
-      byAge.set(age, row)
+    historicalRange.forEach((range) => {
+      const row = byAge.get(range.age_days) ?? {}
+      row['historicalRange'] = [range.min_grams, range.max_grams]
+      byAge.set(range.age_days, row)
     })
     return [...byAge]
       .sort(([left], [right]) => left - right)
       .map(([age, values]) => ({ age, ...values }))
-  }, [dateOfBirth, historicalSeries, weighIns])
+  }, [dateOfBirth, historicalRange, weighIns])
 
-  const canCompare = Boolean(
-    dateOfBirth && historicalSeries.some((point) => point.litters?.date_of_birth),
-  )
+  const canCompare = Boolean(dateOfBirth && historicalRange.length)
   const showingHistory = compareHistory && canCompare
   const displayedData = showingHistory ? ageChartData : chartData
 
@@ -149,16 +140,25 @@ export function WeightChart({
 
   return (
     <div>
-      {canCompare ? (
-        <label className="mb-3 flex min-h-11 items-center gap-2 text-sm font-medium text-ink">
+      <div className="mb-3">
+        <label
+          className={`flex min-h-11 items-center gap-2 text-sm font-medium ${canCompare ? 'text-ink' : 'text-muted'}`}
+        >
           <input
             type="checkbox"
-            checked={compareHistory}
+            checked={showingHistory}
+            disabled={!canCompare}
             onChange={(event) => setCompareHistory(event.target.checked)}
           />
-          Compare with previous kittens’ range by age
+          Compare with previous kittens' range by age
         </label>
-      ) : null}
+        {!canCompare ? (
+          <p className="text-xs text-muted">
+            Available when the batch owner has another completed kitten batch with a date of birth
+            and weight records.
+          </p>
+        ) : null}
+      </div>
       <ChartContainer
         config={config}
         className="h-[280px] w-full min-w-0 sm:h-[340px]"

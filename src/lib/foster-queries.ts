@@ -366,34 +366,22 @@ export const weighInsQueryOptions = (litterId: string | undefined) =>
     },
   })
 
-export interface HistoricalWeightPoint {
-  date: string
-  grams: number
-  litter_id: string
-  kitten_id: string
-  litters: { date_of_birth: string | null } | null
+export interface HistoricalWeightRange {
+  age_days: number
+  min_grams: number
+  max_grams: number
 }
 
-export const historicalWeighInsQueryOptions = (litterIds: string[]) =>
+export const historicalWeightRangeQueryOptions = (litterId: string | undefined) =>
   queryOptions({
-    queryKey: ['historical-weight-points', litterIds],
-    enabled: litterIds.length > 0,
-    queryFn: async (): Promise<HistoricalWeightPoint[]> => {
-      const { data, error } = await supabase
-        .from('weigh_ins')
-        .select('date, litter_id, litters(date_of_birth), weights(kitten_id, grams)')
-        .in('litter_id', litterIds)
-        .order('date', { ascending: true })
+    queryKey: ['historical-weight-range', litterId],
+    enabled: Boolean(litterId),
+    queryFn: async (): Promise<HistoricalWeightRange[]> => {
+      const { data, error } = await supabase.rpc('batch_historical_weight_range', {
+        target_litter_id: litterId!,
+      })
       if (error) throw error
-      return (data ?? []).flatMap((session) =>
-        (session.weights ?? []).map((weight) => ({
-          date: session.date,
-          litter_id: session.litter_id,
-          litters: session.litters,
-          kitten_id: weight.kitten_id,
-          grams: weight.grams,
-        })),
-      ) as HistoricalWeightPoint[]
+      return data ?? []
     },
   })
 

@@ -31,7 +31,8 @@ export function WeighInDialog({
 }: WeighInDialogProps) {
   const { user } = useAuth()
   const queryClient = useQueryClient()
-  const { data: kittens = [] } = useQuery(catsQueryOptions(litterId))
+  const { data: cats = [] } = useQuery(catsQueryOptions(litterId))
+  const kittens = cats.filter((cat) => cat.role === 'kitten')
   const [date, setDate] = useState(todayIso())
   const [time, setTime] = useState(nowTime())
   const [notes, setNotes] = useState('')
@@ -111,7 +112,7 @@ export function WeighInDialog({
       open={open}
       onClose={onClose}
       title={session ? 'Edit weigh-in' : 'New weigh-in'}
-      subtitle="One session records every cat's weight"
+      subtitle="One session records the kittens' weights"
     >
       <form
         className="grid min-w-0 gap-4 sm:grid-cols-2"
@@ -179,7 +180,7 @@ export function WeighInDialog({
             </div>
           ) : (
             <p className="rounded-xl bg-gray-50 px-3 py-3 text-sm text-muted">
-              Add cats to this batch first.
+              Add kittens to this batch first.
             </p>
           )}
         </div>
