@@ -121,6 +121,8 @@ export function WeightChart({
   const canCompare = Boolean(dateOfBirth && historicalRange.length)
   const showingHistory = compareHistory && canCompare
   const displayedData = showingHistory ? ageChartData : chartData
+  const comparisonKittenCount = historicalRange[0]?.kitten_count ?? 0
+  const comparisonBatchCount = historicalRange[0]?.batch_count ?? 0
 
   const visibleKittenCount = kittens.filter((kitten) => !hiddenKittenIds.has(kitten.id)).length
 
@@ -221,7 +223,7 @@ export function WeightChart({
               />
             )}
           />
-          {showingHistory ? (
+          {showingHistory && (
             <Area
               type="monotone"
               dataKey="historicalRange"
@@ -232,8 +234,8 @@ export function WeightChart({
               connectNulls
               name="Previous kittens’ range"
             />
-          ) : null}
-          {showLegend ? (
+          )}
+          {showLegend && (
             <ChartLegend
               content={() => (
                 <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 pt-3">
@@ -265,7 +267,7 @@ export function WeightChart({
                 </div>
               )}
             />
-          ) : null}
+          )}
           {kittens.map((kitten) => (
             <Line
               key={kitten.id}
@@ -282,9 +284,18 @@ export function WeightChart({
         </ComposedChart>
       </ChartContainer>
       {showingHistory ? (
-        <p className="mt-2 text-center text-xs text-muted">
-          Shaded area: observed range from completed batches with known dates of birth.
-        </p>
+        <div className="mx-auto mt-2 max-w-2xl text-center text-xs text-muted">
+          <p className="font-medium text-ink">How the range is calculated</p>
+          <p className="mt-0.5">
+            Age is the weigh-in date minus the date of birth. At each age, the shaded area runs from
+            the lightest to the heaviest recorded kitten in the batch owner’s previous completed
+            batches.
+          </p>
+          <p className="mt-1 font-medium text-ink">
+            Based on {comparisonKittenCount} kitten{comparisonKittenCount === 1 ? '' : 's'} across{' '}
+            {comparisonBatchCount} completed batch{comparisonBatchCount === 1 ? '' : 'es'}.
+          </p>
+        </div>
       ) : null}
     </div>
   )

@@ -368,8 +368,11 @@ export const weighInsQueryOptions = (litterId: string | undefined) =>
 
 export interface HistoricalWeightRange {
   age_days: number
+  batch_count: number
+  kitten_count: number
   min_grams: number
   max_grams: number
+  sample_count: number
 }
 
 export const historicalWeightRangeQueryOptions = (litterId: string | undefined) =>

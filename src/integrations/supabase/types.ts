@@ -549,8 +549,11 @@ export type Database = {
         Args: { target_litter_id: string }
         Returns: {
           age_days: number
+          batch_count: number
+          kitten_count: number
           max_grams: number
           min_grams: number
+          sample_count: number
         }[]
       }
       can_view_profile: { Args: { target_user_id: string }; Returns: boolean }
