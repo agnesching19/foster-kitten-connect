@@ -54,6 +54,9 @@ export function WeighInDialog({
     mutationFn: async () => {
       if (!user) throw new Error('You need to be signed in.')
       if (!litterId) throw new Error('Add a batch first.')
+      if (dateOfBirth && date < dateOfBirth) {
+        throw new Error("The weigh-in date cannot be before the kittens' date of birth.")
+      }
       const entries = kittens
         .map((kitten) => ({ kitten_id: kitten.id, grams: Number(grams[kitten.id]) }))
         .filter((entry) => Number.isFinite(entry.grams) && entry.grams > 0)
