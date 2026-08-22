@@ -9,6 +9,7 @@ export function KittenAvatar({
   size = 'md',
   className = '',
   photoPreview = true,
+  publicThumbnailPath,
 }: {
   name: string
   avatarPath?: string | null
@@ -16,6 +17,7 @@ export function KittenAvatar({
   size?: CatAvatarSize
   className?: string
   photoPreview?: boolean
+  publicThumbnailPath?: string | null
 }) {
   return (
     <span
@@ -27,6 +29,7 @@ export function KittenAvatar({
         avatarPath={avatarPath ?? null}
         size={size}
         photoPreview={photoPreview}
+        publicThumbnailPath={publicThumbnailPath ?? null}
       />
       <KittenDot
         colour={colour ?? null}

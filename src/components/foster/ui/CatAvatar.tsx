@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getCatAvatarUrl } from '@/lib/avatar-storage'
+import { getCatAvatarUrl, getCommunityThumbnailUrl } from '@/lib/avatar-storage'
 import { AvatarPreviewDialog } from './AvatarPreviewDialog'
 import { catAvatarSizeClasses, type CatAvatarSize } from './avatar-styles'
 
@@ -9,40 +9,43 @@ export function CatAvatar({
   size = 'md',
   className = '',
   photoPreview = true,
+  publicThumbnailPath,
 }: {
   name: string
   avatarPath?: string | null
   size?: CatAvatarSize
   className?: string
   photoPreview?: boolean
+  publicThumbnailPath?: string | null
 }) {
   const [failed, setFailed] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
+  const [usingPublicThumbnail, setUsingPublicThumbnail] = useState(false)
 
   useEffect(() => {
     let active = true
-    let refreshTimer: ReturnType<typeof setTimeout> | undefined
 
     async function loadImage() {
       if (!avatarPath) {
         setImageUrl(null)
         return
       }
-      const signedUrl = await getCatAvatarUrl(avatarPath)
+      const signedUrl = publicThumbnailPath
+        ? getCommunityThumbnailUrl(publicThumbnailPath)
+        : await getCatAvatarUrl(avatarPath)
       if (!active) return
       setImageUrl(signedUrl)
+      setUsingPublicThumbnail(Boolean(publicThumbnailPath))
       setFailed(false)
-      if (signedUrl) refreshTimer = setTimeout(loadImage, 50 * 60 * 1000)
     }
 
     void loadImage()
     return () => {
       active = false
-      if (refreshTimer) clearTimeout(refreshTimer)
     }
-  }, [avatarPath])
+  }, [avatarPath, publicThumbnailPath])
 
   useEffect(() => {
     let active = true
@@ -64,7 +67,17 @@ export function CatAvatar({
         alt={`${name} avatar`}
         className="h-full w-full rounded-full border border-border object-cover"
         loading="lazy"
-        onError={() => setFailed(true)}
+        onError={() => {
+          if (usingPublicThumbnail && avatarPath) {
+            setUsingPublicThumbnail(false)
+            void getCatAvatarUrl(avatarPath).then((fallbackUrl) => {
+              if (fallbackUrl) setImageUrl(fallbackUrl)
+              else setFailed(true)
+            })
+            return
+          }
+          setFailed(true)
+        }}
       />
     )
 

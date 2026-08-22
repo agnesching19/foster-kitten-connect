@@ -85,6 +85,7 @@ export interface CommunityBatch {
 
 export const communityBatchesQueryOptions = queryOptions({
   queryKey: ['community-batches'],
+  staleTime: 10 * 60 * 1000,
   queryFn: async (): Promise<CommunityBatch[]> => {
     const { data, error } = await supabase.rpc('community_batches')
     if (error) throw error

@@ -93,6 +93,7 @@ function LitterDetailPage() {
           litterId={litter.id}
           canEdit={canEdit && litter.status === 'active'}
           dateOfBirth={litter.date_of_birth}
+          isCommunity={litter.visibility === 'community'}
         />
       ) : null}
       <section className="mt-6">

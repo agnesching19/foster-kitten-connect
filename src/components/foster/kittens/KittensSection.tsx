@@ -9,7 +9,7 @@ import { EmptyState } from '@/components/foster/ui/EmptyState'
 import { KittenDot, TAG_COLOURS, type TagColour } from '@/components/foster/ui/KittenDot'
 import { KittenAvatar } from '@/components/foster/ui/KittenAvatar'
 import { kittensQueryOptions, type KittenRow } from '@/lib/foster-queries'
-import { removeCatAvatars, uploadCatAvatar } from '@/lib/avatar-storage'
+import { removeCatAvatars, syncCommunityThumbnails, uploadCatAvatar } from '@/lib/avatar-storage'
 import { formatDate, formatKittenAge } from '@/utils/formatDate'
 
 const inputClass =
@@ -52,10 +52,12 @@ export function KittensSection({
   litterId,
   canEdit,
   dateOfBirth,
+  isCommunity,
 }: {
   litterId: string
   canEdit: boolean
   dateOfBirth: string | null
+  isCommunity: boolean
 }) {
   const { user } = useAuth()
   const queryClient = useQueryClient()
@@ -139,6 +141,13 @@ export function KittensSection({
           await removeCatAvatars([kitten.avatar_path])
         } catch (removeError) {
           console.warn('Could not remove the previous kitten avatar', removeError)
+        }
+      }
+      if (avatarPath && isCommunity) {
+        try {
+          await syncCommunityThumbnails([avatarPath], true)
+        } catch (thumbnailError) {
+          console.warn('Could not sync the community avatar thumbnail', thumbnailError)
         }
       }
     },

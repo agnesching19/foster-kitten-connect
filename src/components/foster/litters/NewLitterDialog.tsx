@@ -8,7 +8,7 @@ import { Button } from '@/components/foster/ui/Button'
 import { CatAvatar } from '@/components/foster/ui/CatAvatar'
 import { KittenAvatar } from '@/components/foster/ui/KittenAvatar'
 import { inputClass } from '@/components/foster/ui/FormDialog'
-import { removeCatAvatars, uploadCatAvatar } from '@/lib/avatar-storage'
+import { removeCatAvatars, syncCommunityThumbnails, uploadCatAvatar } from '@/lib/avatar-storage'
 import { profilesQueryOptions, type LitterRow } from '@/lib/foster-queries'
 import { formatDate } from '@/utils/formatDate'
 
@@ -148,6 +148,15 @@ export function NewLitterDialog({ open, onClose, litter }: NewLitterDialogProps)
         } catch (removeError) {
           console.warn('Could not remove the previous mother avatar', removeError)
         }
+      }
+
+      try {
+        await syncCommunityThumbnails(
+          [avatarPath, ...(litter?.kittens.map((kitten) => kitten.avatar_path) ?? [])],
+          visibility === 'community',
+        )
+      } catch (thumbnailError) {
+        console.warn('Could not sync community avatar thumbnails', thumbnailError)
       }
     },
     onSuccess: async () => {

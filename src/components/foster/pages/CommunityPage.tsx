@@ -106,6 +106,7 @@ function CommunityBatchCard({ batch }: { batch: CommunityBatch }) {
         <CatAvatar
           name={batch.display_name}
           avatarPath={primaryCat?.avatar_path ?? null}
+          publicThumbnailPath={primaryCat?.avatar_path ?? null}
           size="lg"
         />
         <div className="min-w-0 flex-1">
@@ -148,6 +149,7 @@ function CommunityBatchCard({ batch }: { batch: CommunityBatch }) {
                 <KittenAvatar
                   name={cat.name}
                   avatarPath={cat.avatar_path}
+                  publicThumbnailPath={cat.avatar_path}
                   colour={cat.tag_colour}
                   size="sm"
                 />
