@@ -267,6 +267,24 @@ export type Database = {
           },
         ]
       }
+      foster_editor_defaults: {
+        Row: {
+          created_at: string
+          owner_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          owner_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          owner_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       live_cam_access: {
         Row: {
           created_at: string
@@ -543,6 +561,10 @@ export type Database = {
     Functions: {
       add_litter_collaborator_by_email: {
         Args: { target_email: string; target_litter_id: string }
+        Returns: string
+      }
+      add_foster_editor_by_email: {
+        Args: { include_future?: boolean; target_email: string }
         Returns: string
       }
       batch_historical_weight_range: {
