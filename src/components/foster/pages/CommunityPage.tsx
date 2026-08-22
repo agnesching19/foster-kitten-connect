@@ -1,17 +1,32 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 import { PageHeader } from '@/components/foster/layout/PageHeader'
 import { Card } from '@/components/foster/ui/Card'
 import { CatAvatar } from '@/components/foster/ui/CatAvatar'
 import { KittenAvatar } from '@/components/foster/ui/KittenAvatar'
 import { communityBatchesQueryOptions, type CommunityBatch } from '@/lib/foster-queries'
 import { formatDate } from '@/utils/formatDate'
+import { useAuth } from '@/hooks/useAuth'
 
 type Filter = 'all' | 'active' | 'completed'
 
 export function CommunityPage() {
   const [filter, setFilter] = useState<Filter>('all')
-  const { data: batches = [], isLoading, error } = useQuery(communityBatchesQueryOptions)
+  const { user, loading: authLoading } = useAuth()
+  const navigate = useNavigate()
+  const {
+    data: batches = [],
+    isLoading,
+    error,
+  } = useQuery({
+    ...communityBatchesQueryOptions,
+    enabled: Boolean(user),
+  })
+
+  useEffect(() => {
+    if (!authLoading && !user) void navigate({ to: '/auth', replace: true })
+  }, [authLoading, navigate, user])
   const visibleBatches = useMemo(
     () => batches.filter((batch) => filter === 'all' || batch.status === filter),
     [batches, filter],
@@ -40,7 +55,7 @@ export function CommunityPage() {
         <p className="text-sm text-muted">{visibleBatches.length} shared</p>
       </div>
 
-      {isLoading ? (
+      {authLoading || !user || isLoading ? (
         <Card className="py-12 text-center">
           <p className="text-sm text-muted">Loading community fosters…</p>
         </Card>

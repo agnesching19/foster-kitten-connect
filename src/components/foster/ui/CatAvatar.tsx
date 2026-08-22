@@ -19,6 +19,7 @@ export function CatAvatar({
   const [failed, setFailed] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
@@ -42,6 +43,19 @@ export function CatAvatar({
       if (refreshTimer) clearTimeout(refreshTimer)
     }
   }, [avatarPath])
+
+  useEffect(() => {
+    let active = true
+    if (!previewOpen || !avatarPath) return
+
+    void getCatAvatarUrl(avatarPath, 'preview').then((signedUrl) => {
+      if (active) setPreviewImageUrl(signedUrl)
+    })
+
+    return () => {
+      active = false
+    }
+  }, [avatarPath, previewOpen])
 
   if (imageUrl && !failed) {
     const image = (
@@ -76,7 +90,7 @@ export function CatAvatar({
         <AvatarPreviewDialog
           open={previewOpen}
           name={name}
-          imageUrl={imageUrl}
+          imageUrl={previewImageUrl ?? imageUrl}
           onClose={() => setPreviewOpen(false)}
         />
       </>
