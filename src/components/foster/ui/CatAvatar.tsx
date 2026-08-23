@@ -34,7 +34,7 @@ export function CatAvatar({
         return
       }
       const signedUrl = publicThumbnailPath
-        ? getCommunityThumbnailUrl(publicThumbnailPath)
+        ? await getCommunityThumbnailUrl(publicThumbnailPath)
         : await getCatAvatarUrl(avatarPath)
       if (!active) return
       setImageUrl(signedUrl)

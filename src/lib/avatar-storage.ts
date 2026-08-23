@@ -99,8 +99,8 @@ export async function uploadCatAvatar(file: File, pathPrefix: string): Promise<s
   return path
 }
 
-export function getCommunityThumbnailUrl(path: string): string {
-  return supabase.storage.from(COMMUNITY_AVATAR_BUCKET).getPublicUrl(path).data.publicUrl
+export function getCommunityThumbnailUrl(path: string): Promise<string | null> {
+  return getCachedSignedUrl(COMMUNITY_AVATAR_BUCKET, path, 'community-thumbnail')
 }
 
 export async function syncCommunityThumbnails(
@@ -141,7 +141,16 @@ export function getCatAvatarUrl(
   path: string,
   variant: CatAvatarVariant = 'thumbnail',
 ): Promise<string | null> {
-  const cacheKey = `${variant}:${path}`
+  return getCachedSignedUrl(CAT_AVATAR_BUCKET, path, variant, avatarTransforms[variant])
+}
+
+function getCachedSignedUrl(
+  bucket: string,
+  path: string,
+  cacheVariant: string,
+  transform?: (typeof avatarTransforms)[CatAvatarVariant],
+): Promise<string | null> {
+  const cacheKey = `${bucket}:${cacheVariant}:${path}`
   const cached = signedUrlCache.get(cacheKey) ?? readStoredUrl(cacheKey)
   if (cached) signedUrlCache.set(cacheKey, cached)
   if (cached && cached.expiresAt > Date.now()) return Promise.resolve(cached.url)
@@ -150,10 +159,8 @@ export function getCatAvatarUrl(
   if (pending) return pending
 
   const request = supabase.storage
-    .from(CAT_AVATAR_BUCKET)
-    .createSignedUrl(path, SIGNED_URL_LIFETIME_SECONDS, {
-      transform: avatarTransforms[variant],
-    })
+    .from(bucket)
+    .createSignedUrl(path, SIGNED_URL_LIFETIME_SECONDS, transform ? { transform } : undefined)
     .then(({ data, error }) => {
       if (error) return null
 
@@ -181,9 +188,14 @@ export async function removeCatAvatars(paths: Array<string | null | undefined>) 
     .remove(existingPaths)
   if (thumbnailError) console.warn('Could not remove community avatar thumbnails', thumbnailError)
   existingPaths.forEach((path) => {
-    signedUrlCache.delete(`thumbnail:${path}`)
-    signedUrlCache.delete(`preview:${path}`)
-    removeStoredUrl(`thumbnail:${path}`)
-    removeStoredUrl(`preview:${path}`)
+    const cacheKeys = [
+      `${CAT_AVATAR_BUCKET}:thumbnail:${path}`,
+      `${CAT_AVATAR_BUCKET}:preview:${path}`,
+      `${COMMUNITY_AVATAR_BUCKET}:community-thumbnail:${path}`,
+    ]
+    cacheKeys.forEach((cacheKey) => {
+      signedUrlCache.delete(cacheKey)
+      removeStoredUrl(cacheKey)
+    })
   })
 }
