@@ -143,7 +143,7 @@ export function DashboardPage() {
             to="/feedings"
             label="Meals today"
             value={String(quickView?.mealsToday ?? 0)}
-            note={quickView?.mealsToday === 1 ? 'feeding logged today' : 'feedings logged today'}
+            note={quickView?.mealsToday === 1 ? 'wet-food meal today' : 'wet-food meals today'}
             icon="🍼"
             active
           />

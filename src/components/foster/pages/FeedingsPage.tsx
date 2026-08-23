@@ -55,7 +55,10 @@ export function FeedingsPage({ litterId }: { litterId?: string }) {
   const activeMonth = months.includes(selectedMonth) ? selectedMonth : (months[0] ?? '')
   const visibleDays = days.filter((day) => day.date.startsWith(activeMonth))
   const visibleFeedings = visibleDays.flatMap((day) => day.items)
-  const visibleFeedingCount = visibleDays.reduce((total, day) => total + day.items.length, 0)
+  const visibleMealCount = visibleDays.reduce(
+    (total, day) => total + day.items.filter((feeding) => feeding.feeding_type === 'wet').length,
+    0,
+  )
   const visiblePouchCount = visibleDays.reduce(
     (total, day) =>
       total +
@@ -152,8 +155,8 @@ export function FeedingsPage({ litterId }: { litterId?: string }) {
                 ))}
               </select>
               <p className="hidden text-sm text-muted md:block">
-                {visibleDays.length} day{visibleDays.length === 1 ? '' : 's'} ·{' '}
-                {visibleFeedingCount} feeding{visibleFeedingCount === 1 ? '' : 's'}
+                {visibleDays.length} day{visibleDays.length === 1 ? '' : 's'} · {visibleMealCount}{' '}
+                meal{visibleMealCount === 1 ? '' : 's'}
                 {' · '}
                 {visiblePouchCount} pouch{visiblePouchCount === 1 ? '' : 'es'}
                 {visibleDryTopUpCount > 0 ? (
@@ -272,6 +275,7 @@ function FeedingDayCard({
     (total, feeding) => total + (feeding.feeding_type === 'wet' ? feeding.pouch_count : 0),
     0,
   )
+  const mealCount = feedings.filter((feeding) => feeding.feeding_type === 'wet').length
   const dryTopUpCount = feedings.filter((feeding) => feeding.feeding_type === 'dry').length
   const dryBowlTotal = dryBowlEquivalent(feedings)
 
@@ -286,7 +290,7 @@ function FeedingDayCard({
             <span>
               <span className="block font-semibold text-ink">{formatRelativeDay(date)}</span>
               <span className="mt-0.5 block text-sm text-muted">
-                {feedings.length} feeding{feedings.length === 1 ? '' : 's'}
+                {mealCount} meal{mealCount === 1 ? '' : 's'}
                 {pouchCount > 0 ? (
                   <>
                     {' · '}
@@ -324,7 +328,7 @@ function FeedingDayCard({
                     <p className="text-base font-semibold tabular-nums text-ink">
                       {feeding.time.slice(0, 5)}
                     </p>
-                    {feeding.meal_number != null ? (
+                    {feeding.feeding_type === 'wet' && feeding.meal_number != null ? (
                       <Badge label={`Feed ${feeding.meal_number}`} color="brand" />
                     ) : null}
                     {feeding.feeding_type === 'wet' && feeding.pouch_count > 1 ? (
