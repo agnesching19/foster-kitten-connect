@@ -7,6 +7,7 @@ import {
   Clock3,
   Database,
   PawPrint,
+  Activity,
   UserRound,
   UsersRound,
 } from 'lucide-react'
@@ -21,9 +22,12 @@ import { LiveCamAccessCard } from '@/components/foster/settings/LiveCamAccessCar
 import { LitterRoutineCard } from '@/components/foster/settings/LitterRoutineCard'
 import { ProfileCard } from '@/components/foster/settings/ProfileCard'
 import { NotificationsCard } from '@/components/foster/settings/NotificationsCard'
+import { TrafficMonitoringCard } from '@/components/foster/settings/TrafficMonitoringCard'
+import { useAuth } from '@/hooks/useAuth'
+import { isLiveCamsAdmin } from '@/lib/live-cams'
 
 export type SettingsSection =
-  'profile' | 'notifications' | 'feeding' | 'litter-routine' | 'access' | 'data'
+  'profile' | 'notifications' | 'feeding' | 'litter-routine' | 'access' | 'data' | 'traffic'
 
 const settingsSections: Array<{
   id: SettingsSection
@@ -31,6 +35,12 @@ const settingsSections: Array<{
   description: string
   icon: typeof UserRound
 }> = [
+  {
+    id: 'traffic',
+    title: 'Traffic monitoring',
+    description: 'Review recent request volume, errors and observable transfer usage.',
+    icon: Activity,
+  },
   {
     id: 'notifications',
     title: 'Notifications',
@@ -70,6 +80,7 @@ const settingsSections: Array<{
 ]
 
 export function SettingsPage() {
+  const { user } = useAuth()
   const { section } = useSearch({ from: '/settings' })
   const importRef = useRef<HTMLDivElement>(null)
   const [importMethod, setImportMethod] = useState<ImportMethod>('sheets')
@@ -79,31 +90,33 @@ export function SettingsPage() {
       <div>
         <PageHeader title="Settings" subtitle="Choose what you would like to manage." />
         <div className="grid gap-4 sm:grid-cols-2">
-          {settingsSections.map((item) => {
-            const Icon = item.icon
-            return (
-              <Link
-                key={item.id}
-                to="/settings"
-                search={{ section: item.id }}
-                className="group flex min-h-36 items-start gap-4 rounded-2xl border border-border bg-surface-raised p-5 shadow-sm transition hover:border-brand-300 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2"
-              >
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-brand-700">
-                  <Icon aria-hidden="true" className="h-6 w-6" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-base font-semibold text-ink">{item.title}</span>
-                  <span className="mt-1 block text-sm leading-5 text-muted">
-                    {item.description}
+          {settingsSections
+            .filter((item) => item.id !== 'traffic' || isLiveCamsAdmin(user?.email))
+            .map((item) => {
+              const Icon = item.icon
+              return (
+                <Link
+                  key={item.id}
+                  to="/settings"
+                  search={{ section: item.id }}
+                  className="group flex min-h-36 items-start gap-4 rounded-2xl border border-border bg-surface-raised p-5 shadow-sm transition hover:border-brand-300 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2"
+                >
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-brand-700">
+                    <Icon aria-hidden="true" className="h-6 w-6" />
                   </span>
-                </span>
-                <ChevronRight
-                  aria-hidden="true"
-                  className="mt-3 h-5 w-5 shrink-0 text-muted transition group-hover:translate-x-0.5 group-hover:text-brand-700"
-                />
-              </Link>
-            )
-          })}
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-base font-semibold text-ink">{item.title}</span>
+                    <span className="mt-1 block text-sm leading-5 text-muted">
+                      {item.description}
+                    </span>
+                  </span>
+                  <ChevronRight
+                    aria-hidden="true"
+                    className="mt-3 h-5 w-5 shrink-0 text-muted transition group-hover:translate-x-0.5 group-hover:text-brand-700"
+                  />
+                </Link>
+              )
+            })}
         </div>
       </div>
     )
@@ -154,6 +167,7 @@ export function SettingsPage() {
             />
           </>
         ) : null}
+        {section === 'traffic' ? <TrafficMonitoringCard /> : null}
       </div>
     </div>
   )

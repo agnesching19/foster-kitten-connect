@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Minus, Plus, RotateCcw, X } from 'lucide-react'
+import { recordImageTraffic } from '@/lib/traffic-monitor'
 
 const MIN_SCALE = 1
 const MAX_SCALE = 4
@@ -74,6 +75,7 @@ export function AvatarPreviewDialog({
             className={`max-h-[76dvh] max-w-[92vw] select-none rounded-2xl object-contain shadow-2xl transition-transform duration-200 ${scale < MAX_SCALE ? 'cursor-zoom-in' : 'cursor-zoom-out'}`}
             style={{ transform: `scale(${scale})` }}
             draggable={false}
+            onLoad={(event) => recordImageTraffic('preview', event.currentTarget.currentSrc)}
             onClick={() => updateScale(scale === MAX_SCALE ? MIN_SCALE : scale + SCALE_STEP)}
             onWheel={(event) => {
               event.preventDefault()

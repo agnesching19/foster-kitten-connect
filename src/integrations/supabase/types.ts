@@ -8,6 +8,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      traffic_metrics_daily: {
+        Row: {
+          day: string
+          error_count: number
+          metric: string
+          request_count: number
+          response_bytes: number
+          updated_at: string
+        }
+        Insert: {
+          day?: string
+          error_count?: number
+          metric: string
+          request_count?: number
+          response_bytes?: number
+          updated_at?: string
+        }
+        Update: {
+          day?: string
+          error_count?: number
+          metric?: string
+          request_count?: number
+          response_bytes?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       daily_notes: {
         Row: {
           category: string
@@ -599,6 +626,17 @@ export type Database = {
       }
       grant_live_cam_access_by_email: { Args: { target_email: string }; Returns: string }
       is_community_cat_avatar: { Args: { target_path: string }; Returns: boolean }
+      record_traffic_metrics: { Args: { metric_batch: Json }; Returns: undefined }
+      traffic_metrics_summary: {
+        Args: { days_back?: number }
+        Returns: {
+          day: string
+          error_count: number
+          metric: string
+          request_count: number
+          response_bytes: number
+        }[]
+      }
     }
     Enums: {
       foster_batch_type: 'family' | 'single' | 'kittens_only'

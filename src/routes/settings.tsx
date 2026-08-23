@@ -8,6 +8,7 @@ const settingsSections: SettingsSection[] = [
   'litter-routine',
   'access',
   'data',
+  'traffic',
 ]
 
 export const Route = createFileRoute('/settings')({

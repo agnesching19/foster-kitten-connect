@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '@/integrations/supabase/client'
 import { clearCachedCatAvatarUrls } from '@/lib/avatar-storage'
+import { setTrafficMonitorAuthToken } from '@/lib/traffic-monitor'
 
 interface AuthContextValue {
   session: Session | null
@@ -22,11 +23,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (event === 'SIGNED_OUT') clearCachedCatAvatarUrls()
+      setTrafficMonitorAuthToken(nextSession?.access_token ?? null)
       setSession(nextSession)
       setLoading(false)
     })
 
     supabase.auth.getSession().then(({ data: { session: current } }) => {
+      setTrafficMonitorAuthToken(current?.access_token ?? null)
       setSession(current)
       setLoading(false)
     })

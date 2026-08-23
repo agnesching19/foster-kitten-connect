@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { getCatAvatarUrl, getCommunityThumbnailUrl } from '@/lib/avatar-storage'
 import { AvatarPreviewDialog } from './AvatarPreviewDialog'
 import { catAvatarSizeClasses, type CatAvatarSize } from './avatar-styles'
+import { recordImageTraffic } from '@/lib/traffic-monitor'
 
 export function CatAvatar({
   name,
@@ -67,6 +68,12 @@ export function CatAvatar({
         alt={`${name} avatar`}
         className="h-full w-full rounded-full border border-border object-cover"
         loading="lazy"
+        onLoad={(event) =>
+          recordImageTraffic(
+            usingPublicThumbnail ? 'community-thumbnail' : 'private-thumbnail',
+            event.currentTarget.currentSrc,
+          )
+        }
         onError={() => {
           if (usingPublicThumbnail && avatarPath) {
             setUsingPublicThumbnail(false)
