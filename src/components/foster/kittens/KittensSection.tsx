@@ -435,12 +435,25 @@ export function KittensSection({
                           {adoptionLabels[kitten.adoption_status]}
                         </span>
                       </div>
-                      {kitten.adopter_name &&
-                      (kitten.adoption_status === 'reserved' ||
-                        kitten.adoption_status === 'adopted') ? (
-                        <p className="mt-0.5 truncate text-xs text-muted">
-                          Adopter: {kitten.adopter_name}
-                        </p>
+                      {(kitten.adoption_status === 'reserved' ||
+                        kitten.adoption_status === 'adopted') &&
+                      (kitten.adopter_name || kitten.adoption_date || kitten.adoption_notes) ? (
+                        <div className="mt-0.5 grid gap-0.5 text-xs text-muted">
+                          {kitten.adopter_name || kitten.adoption_date ? (
+                            <p>
+                              {kitten.adopter_name ? `Adopter: ${kitten.adopter_name}` : null}
+                              {kitten.adopter_name && kitten.adoption_date ? ' · ' : null}
+                              {kitten.adoption_date
+                                ? `${kitten.adoption_status === 'adopted' ? 'Adopted' : 'Collection'} ${formatDate(kitten.adoption_date)}`
+                                : null}
+                            </p>
+                          ) : null}
+                          {kitten.adoption_notes ? (
+                            <p className="whitespace-pre-wrap break-words">
+                              Private note: {kitten.adoption_notes}
+                            </p>
+                          ) : null}
+                        </div>
                       ) : null}
                     </div>
                     {canEdit ? (
