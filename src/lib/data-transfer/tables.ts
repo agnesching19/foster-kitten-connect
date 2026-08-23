@@ -11,7 +11,7 @@ export type TableName =
 export interface ColumnSpec {
   name: string
   required?: boolean
-  type?: 'text' | 'date' | 'time' | 'int' | 'uuid' | 'status' | 'string-array'
+  type?: 'text' | 'date' | 'time' | 'int' | 'uuid' | 'status' | 'string-array' | 'boolean'
 }
 
 export interface TableSpec {
@@ -153,6 +153,7 @@ export const tableSpecs: TableSpec[] = [
       { name: 'importance' },
       { name: 'subject_type' },
       { name: 'kitten_ids', type: 'string-array' },
+      { name: 'includes_mother', type: 'boolean' },
     ],
   },
 ]
@@ -258,6 +259,17 @@ export function normaliseRow(
           valid = false
         }
         payload[column.name] = raw
+        break
+      case 'boolean':
+        if (raw !== 'true' && raw !== 'false') {
+          issues.push({
+            file: spec.file,
+            row: rowNumber,
+            message: `"${column.name}" must be "true" or "false"`,
+          })
+          valid = false
+        }
+        payload[column.name] = raw === 'true'
         break
       case 'string-array':
         try {

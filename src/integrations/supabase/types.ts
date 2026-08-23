@@ -42,6 +42,7 @@ export type Database = {
           date: string
           id: string
           importance: string
+          includes_mother: boolean
           kitten_ids: string[]
           litter_id: string
           note: string
@@ -56,6 +57,7 @@ export type Database = {
           date: string
           id?: string
           importance?: string
+          includes_mother?: boolean
           kitten_ids?: string[]
           litter_id: string
           note: string
@@ -70,6 +72,7 @@ export type Database = {
           date?: string
           id?: string
           importance?: string
+          includes_mother?: boolean
           kitten_ids?: string[]
           litter_id?: string
           note?: string

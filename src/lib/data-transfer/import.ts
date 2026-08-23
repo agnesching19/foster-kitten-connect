@@ -204,6 +204,9 @@ export async function runImport(
         ...(spec.table === 'litters' && !row['batch_type'] ? { batch_type: 'family' } : {}),
         ...(spec.table === 'litters' && !row['visibility'] ? { visibility: 'private' } : {}),
         ...(spec.table === 'kittens' && !row['role'] ? { role: 'kitten' } : {}),
+        ...(spec.table === 'daily_notes' && row['includes_mother'] == null
+          ? { includes_mother: row['subject_type'] === 'mother' }
+          : {}),
         user_id: userId,
       }))
 

@@ -10,13 +10,7 @@ import {
   nowTime,
   todayIso,
 } from '@/components/foster/ui/FormDialog'
-import type {
-  DailyNoteRow,
-  KittenRow,
-  NoteCategory,
-  NoteImportance,
-  NoteSubject,
-} from '@/lib/foster-queries'
+import type { DailyNoteRow, KittenRow, NoteCategory, NoteImportance } from '@/lib/foster-queries'
 import { noteCategories } from '@/lib/note-categories'
 
 const healthTerms = [
@@ -57,7 +51,8 @@ export function NoteDialog({
   const [time, setTime] = useState(nowTime())
   const [category, setCategory] = useState<NoteCategory>('general')
   const [importance, setImportance] = useState<NoteImportance>('normal')
-  const [subject, setSubject] = useState<NoteSubject>('batch')
+  const [about, setAbout] = useState<'batch' | 'cats'>('batch')
+  const [includesMother, setIncludesMother] = useState(false)
   const [kittenIds, setKittenIds] = useState<string[]>([])
   const [note, setNote] = useState('')
 
@@ -67,7 +62,8 @@ export function NoteDialog({
     setTime(entry?.time?.slice(0, 5) ?? nowTime())
     setCategory(entry?.category ?? 'general')
     setImportance(entry?.importance ?? 'normal')
-    setSubject(entry?.subject_type ?? 'batch')
+    setAbout(entry && entry.subject_type !== 'batch' ? 'cats' : 'batch')
+    setIncludesMother(entry?.includes_mother ?? entry?.subject_type === 'mother')
     setKittenIds(entry?.kitten_ids ?? [])
     setNote(entry?.note ?? '')
   }, [entry, open])
@@ -82,16 +78,22 @@ export function NoteDialog({
       if (!user) throw new Error('You need to be signed in.')
       if (!litterId) throw new Error('Add a batch first.')
       if (!note.trim()) throw new Error('Add a note first.')
-      if (subject === 'kittens' && kittenIds.length === 0)
-        throw new Error('Choose at least one kitten.')
+      if (about === 'cats' && !includesMother && kittenIds.length === 0)
+        throw new Error(`Choose ${primaryLabel} or at least one kitten.`)
       const payload = {
         date,
         time,
         note: note.trim(),
         category,
         importance,
-        subject_type: subject,
-        kitten_ids: subject === 'kittens' ? kittenIds : [],
+        subject_type:
+          about === 'batch'
+            ? ('batch' as const)
+            : includesMother
+              ? ('mother' as const)
+              : ('kittens' as const),
+        kitten_ids: about === 'cats' ? kittenIds : [],
+        includes_mother: about === 'cats' && includesMother,
       }
       const { error } = entry
         ? await supabase.from('daily_notes').update(payload).eq('id', entry.id)
@@ -172,44 +174,55 @@ export function NoteDialog({
         <label className="sm:col-span-2">
           <span className="mb-1 block text-sm font-medium text-ink">About *</span>
           <select
-            value={subject}
+            value={about}
             onChange={(e) => {
-              setSubject(e.target.value as NoteSubject)
-              if (e.target.value !== 'kittens') setKittenIds([])
+              const nextAbout = e.target.value as 'batch' | 'cats'
+              setAbout(nextAbout)
+              if (nextAbout === 'batch') {
+                setIncludesMother(false)
+                setKittenIds([])
+              }
             }}
             className={inputClass}
           >
             <option value="batch">Whole batch</option>
-            <option value="mother">
-              {primaryLabel}
-              {motherName ? ` (${motherName})` : ''}
-            </option>
-            {showKittens && <option value="kittens">One or more kittens</option>}
+            <option value="cats">Specific cats</option>
           </select>
         </label>
-        {subject === 'kittens' ? (
+        {about === 'cats' ? (
           <fieldset className="rounded-xl border border-border p-3 sm:col-span-2">
-            <legend className="px-1 text-sm font-medium text-ink">Kittens *</legend>
+            <legend className="px-1 text-sm font-medium text-ink">Select cats *</legend>
             <div className="grid gap-2 sm:grid-cols-2">
-              {kittens.map((kitten) => (
-                <label
-                  key={kitten.id}
-                  className="flex min-h-11 items-center gap-2 rounded-xl bg-gray-50 px-3 text-sm text-ink"
-                >
-                  <input
-                    type="checkbox"
-                    checked={kittenIds.includes(kitten.id)}
-                    onChange={(e) =>
-                      setKittenIds((current) =>
-                        e.target.checked
-                          ? [...current, kitten.id]
-                          : current.filter((id) => id !== kitten.id),
-                      )
-                    }
-                  />
-                  {kitten.name}
-                </label>
-              ))}
+              <label className="flex min-h-11 items-center gap-2 rounded-xl bg-gray-50 px-3 text-sm text-ink">
+                <input
+                  type="checkbox"
+                  checked={includesMother}
+                  onChange={(event) => setIncludesMother(event.target.checked)}
+                />
+                {primaryLabel}
+                {motherName ? ` (${motherName})` : ''}
+              </label>
+              {showKittens
+                ? kittens.map((kitten) => (
+                    <label
+                      key={kitten.id}
+                      className="flex min-h-11 items-center gap-2 rounded-xl bg-gray-50 px-3 text-sm text-ink"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={kittenIds.includes(kitten.id)}
+                        onChange={(e) =>
+                          setKittenIds((current) =>
+                            e.target.checked
+                              ? [...current, kitten.id]
+                              : current.filter((id) => id !== kitten.id),
+                          )
+                        }
+                      />
+                      {kitten.name}
+                    </label>
+                  ))
+                : null}
             </div>
           </fieldset>
         ) : null}

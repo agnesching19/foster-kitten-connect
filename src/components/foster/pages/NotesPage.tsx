@@ -53,8 +53,9 @@ export function NotesPage({ litterId }: { litterId?: string }) {
       notes.filter((entry) => {
         if (!entry.date.startsWith(activeMonth)) return false
         if (category !== 'all' && entry.category !== category) return false
-        if (subject === 'batch' || subject === 'mother') return entry.subject_type === subject
-        if (subject !== 'all') return entry.kitten_ids.includes(subject)
+        if (subject === 'mother') return entry.subject_type === 'batch' || entry.includes_mother
+        if (subject !== 'all')
+          return entry.subject_type === 'batch' || entry.kitten_ids.includes(subject)
         return true
       }),
     [activeMonth, category, notes, subject],
@@ -152,8 +153,7 @@ export function NotesPage({ litterId }: { litterId?: string }) {
               onChange={(e) => setSubject(e.target.value)}
               className="min-h-11 w-full rounded-xl border border-border bg-white px-3 text-sm text-ink"
             >
-              <option value="all">Everyone</option>
-              <option value="batch">Whole batch</option>
+              <option value="all">Whole batch</option>
               <option value="mother">
                 {litter?.batch_type === 'single' ? 'Foster cat' : 'Momma'}
                 {litter?.primary_cat ? ` (${litter.primary_cat.name})` : ''}
@@ -294,12 +294,13 @@ function subjectLabel(
   kittens: { id: string; name: string }[],
 ) {
   if (entry.subject_type === 'batch') return 'Whole batch'
-  if (entry.subject_type === 'mother')
-    return motherName ? `${primaryLabel} (${motherName})` : primaryLabel
-  return (
-    entry.kitten_ids
+  const labels = [
+    ...(entry.includes_mother
+      ? [motherName ? `${primaryLabel} (${motherName})` : primaryLabel]
+      : []),
+    ...entry.kitten_ids
       .map((id) => kittens.find((kitten) => kitten.id === id)?.name)
-      .filter(Boolean)
-      .join(', ') || 'Kittens'
-  )
+      .filter((name): name is string => Boolean(name)),
+  ]
+  return labels.join(', ') || 'Kittens'
 }

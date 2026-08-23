@@ -173,6 +173,7 @@ export interface DailyNoteRow {
   importance: NoteImportance
   subject_type: NoteSubject
   kitten_ids: string[]
+  includes_mother: boolean
 }
 
 export const dailyNotesQueryOptions = (litterId: string | undefined) =>
@@ -184,7 +185,7 @@ export const dailyNotesQueryOptions = (litterId: string | undefined) =>
       const { data, error } = await supabase
         .from('daily_notes')
         .select(
-          'id, user_id, litter_id, date, time, note, category, importance, subject_type, kitten_ids',
+          'id, user_id, litter_id, date, time, note, category, importance, subject_type, kitten_ids, includes_mother',
         )
         .eq('litter_id', litterId!)
         .order('date', { ascending: false })
