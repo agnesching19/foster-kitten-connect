@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-type NotificationType = 'feeding' | 'dry_top_up' | 'poop' | 'weigh_in' | 'litter_change'
+type NotificationType = 'feeding' | 'dry_top_up' | 'treat' | 'poop' | 'weigh_in' | 'litter_change'
 
 interface RequestBody {
   litterId: string
@@ -33,7 +33,10 @@ Deno.serve(async (request) => {
     if (authError || !actor) return json({ error: 'Invalid authorization' }, 401)
 
     const body = (await request.json()) as RequestBody
-    if (!body.litterId || !['feeding', 'poop', 'weigh_in', 'litter_change'].includes(body.type)) {
+    if (
+      !body.litterId ||
+      !['feeding', 'dry_top_up', 'treat', 'poop', 'weigh_in', 'litter_change'].includes(body.type)
+    ) {
       return json({ error: 'Invalid notification request' }, 400)
     }
     const count = Math.max(1, Math.min(50, Math.round(Number(body.count) || 1)))
@@ -131,6 +134,14 @@ function notificationContent(
       body: `${actor} topped up ${count} shared bowl${count === 1 ? '' : 's'}.`,
       url: '/feedings',
       tag: `${litterId}-dry-top-up`,
+    }
+  }
+  if (type === 'treat') {
+    return {
+      title: `${batch}: treat logged`,
+      body: `${actor} logged a treat.`,
+      url: '/feedings',
+      tag: `${litterId}-treat`,
     }
   }
   if (type === 'poop') {

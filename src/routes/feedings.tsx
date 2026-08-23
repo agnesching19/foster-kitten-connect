@@ -8,12 +8,12 @@ export const Route = createFileRoute('/feedings')({
       {
         name: 'description',
         content:
-          'Daily feeding log for foster cats — wet-food pouches and dry-food top-ups at a glance.',
+          'Daily food log for foster cats — wet-food meals, dry-food top-ups and treats at a glance.',
       },
       { property: 'og:title', content: 'Feedings Log | Kitty Tracker' },
       {
         property: 'og:description',
-        content: 'Track wet-food feeds and shared-bowl dry-food top-ups for foster cats.',
+        content: 'Track wet-food meals, shared-bowl dry-food top-ups and treats for foster cats.',
       },
       { property: 'og:type', content: 'website' },
       { name: 'twitter:card', content: 'summary_large_image' },

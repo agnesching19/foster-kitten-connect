@@ -22,7 +22,7 @@ interface FeedingDialogProps {
   feeding?: FeedingRow | null
 }
 
-type FeedingType = 'wet' | 'dry'
+type FeedingType = 'wet' | 'dry' | 'treat'
 type DryFoodType = 'kitten' | 'adult' | 'mixed'
 
 export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialogProps) {
@@ -38,6 +38,7 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
   const [dryFoodType, setDryFoodType] = useState<DryFoodType>('kitten')
   const [bowlCount, setBowlCount] = useState(1)
   const [topUpPercent, setTopUpPercent] = useState(50)
+  const [treatName, setTreatName] = useState('')
   const { data: storedPresets } = useQuery({
     queryKey: ['feeding-food-presets'],
     queryFn: async () => {
@@ -60,7 +61,7 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
     setDate(feeding?.date ?? todayIso())
     setTime(feeding?.time.slice(0, 5) ?? nowTime())
     const nextFlavours =
-      feeding?.feeding_type === 'dry'
+      feeding?.feeding_type !== 'wet'
         ? ['']
         : feeding?.flavours?.length
           ? feeding.flavours
@@ -70,11 +71,12 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
       nextFlavours.map((flavour) => Boolean(flavour) && !foodPresets.includes(flavour)),
     )
     setNotes(feeding?.notes ?? '')
-    setPouchCount(feeding?.feeding_type === 'dry' ? 1 : (feeding?.pouch_count ?? 1))
+    setPouchCount(feeding?.feeding_type === 'wet' ? (feeding.pouch_count ?? 1) : 1)
     setFeedingType(feeding?.feeding_type ?? 'wet')
     setDryFoodType(feeding?.dry_food_type ?? 'kitten')
     setBowlCount(feeding?.bowl_count ?? 1)
     setTopUpPercent(feeding?.top_up_percent ?? 50)
+    setTreatName(feeding?.feeding_type === 'treat' ? feeding.food : '')
   }, [open, feeding, foodPresets])
 
   const mutation = useMutation({
@@ -86,8 +88,15 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
       if (feedingType === 'wet' && normalisedFlavours.some((flavour) => !flavour)) {
         throw new Error('Choose a flavour for every pouch.')
       }
+      if (feedingType === 'treat' && !treatName.trim()) {
+        throw new Error('Enter the type of treat.')
+      }
       const normalisedFood =
-        feedingType === 'wet' ? normalisedFlavours.join(' + ') : `${dryFoodType} dry food`
+        feedingType === 'wet'
+          ? normalisedFlavours.join(' + ')
+          : feedingType === 'dry'
+            ? `${dryFoodType} dry food`
+            : treatName.trim()
       const payload = {
         date,
         time,
@@ -122,8 +131,8 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
       if (!feeding && litterId) {
         void sendLogNotification(
           litterId,
-          feedingType === 'wet' ? 'feeding' : 'dry_top_up',
-          feedingType === 'wet' ? pouchCount : bowlCount,
+          feedingType === 'wet' ? 'feeding' : feedingType === 'dry' ? 'dry_top_up' : 'treat',
+          feedingType === 'wet' ? pouchCount : feedingType === 'dry' ? bowlCount : 1,
         )
       }
       await Promise.all([
@@ -172,8 +181,8 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
         </label>
         <fieldset className="sm:col-span-2">
           <legend className="mb-2 text-sm font-medium text-ink">Food type *</legend>
-          <div className="grid grid-cols-2 rounded-xl bg-surface p-1">
-            {(['wet', 'dry'] as const).map((type) => (
+          <div className="grid grid-cols-3 rounded-xl bg-surface p-1">
+            {(['wet', 'dry', 'treat'] as const).map((type) => (
               <button
                 key={type}
                 type="button"
@@ -192,7 +201,7 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
                   }
                 }}
               >
-                {type === 'wet' ? 'Wet food' : 'Dry top-up'}
+                {type === 'wet' ? 'Wet food' : type === 'dry' ? 'Dry top-up' : 'Treat'}
               </button>
             ))}
           </div>
@@ -294,7 +303,7 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
               </p>
             </fieldset>
           </>
-        ) : (
+        ) : feedingType === 'dry' ? (
           <>
             <label className="sm:col-span-2">
               <span className="mb-1 block text-sm font-medium text-ink">Dry food *</span>
@@ -373,6 +382,18 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
               full bowl{(bowlCount * topUpPercent) / 100 === 1 ? '' : 's'}.
             </p>
           </>
+        ) : (
+          <label className="sm:col-span-2">
+            <span className="mb-1 block text-sm font-medium text-ink">Treat *</span>
+            <input
+              required
+              value={treatName}
+              onChange={(event) => setTreatName(event.target.value)}
+              className={inputClass}
+              placeholder="e.g. Lick-e-Lix, Dreamies or cooked chicken"
+              maxLength={120}
+            />
+          </label>
         )}
         <label className="sm:col-span-2">
           <span className="mb-1 block text-sm font-medium text-ink">Notes</span>

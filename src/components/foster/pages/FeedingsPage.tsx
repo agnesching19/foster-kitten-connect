@@ -72,6 +72,10 @@ export function FeedingsPage({ litterId }: { litterId?: string }) {
     (total, day) => total + day.items.filter((feeding) => feeding.feeding_type === 'dry').length,
     0,
   )
+  const visibleTreatCount = visibleDays.reduce(
+    (total, day) => total + day.items.filter((feeding) => feeding.feeding_type === 'treat').length,
+    0,
+  )
   const visibleDryBowlEquivalent = visibleDays.reduce(
     (total, day) => total + dryBowlEquivalent(day.items),
     0,
@@ -96,7 +100,9 @@ export function FeedingsPage({ litterId }: { litterId?: string }) {
     <div>
       <PageHeader
         title="Feedings"
-        subtitle={litter ? 'Wet food and dry-food top-ups for the whole batch' : 'Daily food log'}
+        subtitle={
+          litter ? 'Wet food, dry-food top-ups and treats for the whole batch' : 'Daily food log'
+        }
         action={
           canEdit ? (
             <Button
@@ -165,6 +171,12 @@ export function FeedingsPage({ litterId }: { litterId?: string }) {
                     {visibleDryTopUpCount} dry top-up{visibleDryTopUpCount === 1 ? '' : 's'}
                     {' · '}
                     {formatBowlEquivalent(visibleDryBowlEquivalent)}
+                  </>
+                ) : null}
+                {visibleTreatCount > 0 ? (
+                  <>
+                    {' · '}
+                    {visibleTreatCount} treat{visibleTreatCount === 1 ? '' : 's'}
                   </>
                 ) : null}
               </p>
@@ -273,6 +285,7 @@ function FeedingDayCard({
 }) {
   const mealCount = feedings.filter((feeding) => feeding.feeding_type === 'wet').length
   const dryTopUpCount = feedings.filter((feeding) => feeding.feeding_type === 'dry').length
+  const treatCount = feedings.filter((feeding) => feeding.feeding_type === 'treat').length
   const dryBowlTotal = dryBowlEquivalent(feedings)
 
   return (
@@ -295,6 +308,12 @@ function FeedingDayCard({
                     {formatBowlEquivalent(dryBowlTotal)}
                   </>
                 ) : null}
+                {treatCount > 0 ? (
+                  <>
+                    {' · '}
+                    {treatCount} treat{treatCount === 1 ? '' : 's'}
+                  </>
+                ) : null}
               </span>
             </span>
             <ChevronDown
@@ -311,7 +330,11 @@ function FeedingDayCard({
                 className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-3 gap-y-1 py-3 last:pb-0"
               >
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-lg">
-                  {feeding.feeding_type === 'dry' ? '🥣' : '🍼'}
+                  {feeding.feeding_type === 'dry'
+                    ? '🥣'
+                    : feeding.feeding_type === 'treat'
+                      ? '🦴'
+                      : '🍼'}
                 </span>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -327,16 +350,21 @@ function FeedingDayCard({
                     {feeding.feeding_type === 'dry' ? (
                       <Badge label="Dry top-up" color="neutral" />
                     ) : null}
+                    {feeding.feeding_type === 'treat' ? (
+                      <Badge label="Treat" color="neutral" />
+                    ) : null}
                   </div>
                   {feeding.feeding_type === 'dry' ? (
                     <p className="mt-0.5 text-sm capitalize text-muted">
                       {feeding.bowl_count} shared bowl{feeding.bowl_count === 1 ? '' : 's'} ·{' '}
                       {feeding.top_up_percent}% · {feeding.dry_food_type} food
                     </p>
-                  ) : (
+                  ) : feeding.feeding_type === 'wet' ? (
                     <p className="mt-0.5 text-sm capitalize text-muted">
                       {formatFlavours(feeding.flavours)}
                     </p>
+                  ) : (
+                    <p className="mt-0.5 text-sm text-muted">{feeding.food}</p>
                   )}
                   {feeding.notes && <p className="mt-0.5 text-xs text-muted">{feeding.notes}</p>}
                   <p className="mt-1 text-xs text-muted">

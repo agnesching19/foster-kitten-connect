@@ -242,7 +242,7 @@ export interface FeedingRow {
   meal_number: number | null
   notes: string | null
   pouch_count: number
-  feeding_type: 'wet' | 'dry'
+  feeding_type: 'wet' | 'dry' | 'treat'
   dry_food_type: 'kitten' | 'adult' | 'mixed' | null
   bowl_count: number | null
   top_up_percent: number | null

@@ -101,7 +101,7 @@ function LitterDetailPage() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {(
             [
-              ['Feedings', 'Wet and dry food history', 'feedings', '🍽️'],
+              ['Feedings', 'Wet food, dry top-ups and treats', 'feedings', '🍽️'],
               ['Poops', 'Bathroom log', 'poops', '💩'],
               ['Weights', 'Growth chart and weigh-ins', 'weights', '↗️'],
               ['Litter box', 'Cleaning history', 'litter', '🧹'],

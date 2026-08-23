@@ -3,7 +3,8 @@ import { supabase } from '@/integrations/supabase/client'
 export const VAPID_PUBLIC_KEY =
   'BOrv7AvwBvotcnsq_uy0y3DEA2asqhZ-a1G3Z13rzaqLK4SGQvoVRd06-pel07FswiD3AtsVWz44rjS0bsFSZts'
 
-export type LogNotificationType = 'feeding' | 'dry_top_up' | 'poop' | 'weigh_in' | 'litter_change'
+export type LogNotificationType =
+  'feeding' | 'dry_top_up' | 'treat' | 'poop' | 'weigh_in' | 'litter_change'
 
 export function supportsPushNotifications() {
   return (

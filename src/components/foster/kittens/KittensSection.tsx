@@ -284,7 +284,7 @@ export function KittensSection({
                 key={kitten.id}
                 className={`flex min-w-0 items-center gap-2 rounded-xl border border-border bg-white px-3 py-2 sm:gap-3 ${editingId === kitten.id ? 'flex-wrap' : ''}`}
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-sm font-semibold text-brand-800">
+                <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-sm font-semibold text-brand-800 sm:flex">
                   {index + 1}
                 </span>
                 <KittenAvatar
