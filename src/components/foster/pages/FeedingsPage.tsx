@@ -271,10 +271,6 @@ function FeedingDayCard({
   onEdit: (feeding: FeedingRow) => void
   onDelete: (feeding: FeedingRow) => void
 }) {
-  const pouchCount = feedings.reduce(
-    (total, feeding) => total + (feeding.feeding_type === 'wet' ? feeding.pouch_count : 0),
-    0,
-  )
   const mealCount = feedings.filter((feeding) => feeding.feeding_type === 'wet').length
   const dryTopUpCount = feedings.filter((feeding) => feeding.feeding_type === 'dry').length
   const dryBowlTotal = dryBowlEquivalent(feedings)
@@ -291,12 +287,6 @@ function FeedingDayCard({
               <span className="block font-semibold text-ink">{formatRelativeDay(date)}</span>
               <span className="mt-0.5 block text-sm text-muted">
                 {mealCount} meal{mealCount === 1 ? '' : 's'}
-                {pouchCount > 0 ? (
-                  <>
-                    {' · '}
-                    {pouchCount} pouch{pouchCount === 1 ? '' : 'es'}
-                  </>
-                ) : null}
                 {dryTopUpCount > 0 ? (
                   <>
                     {' · '}

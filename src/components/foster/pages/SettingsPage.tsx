@@ -24,7 +24,7 @@ import { ProfileCard } from '@/components/foster/settings/ProfileCard'
 import { NotificationsCard } from '@/components/foster/settings/NotificationsCard'
 import { TrafficMonitoringCard } from '@/components/foster/settings/TrafficMonitoringCard'
 import { useAuth } from '@/hooks/useAuth'
-import { isLiveCamsAdmin } from '@/lib/live-cams'
+import { isTrafficMonitoringAdmin } from '@/lib/traffic-monitoring-access'
 
 export type SettingsSection =
   'profile' | 'notifications' | 'feeding' | 'litter-routine' | 'access' | 'data' | 'traffic'
@@ -91,7 +91,7 @@ export function SettingsPage() {
         <PageHeader title="Settings" subtitle="Choose what you would like to manage." />
         <div className="grid gap-4 sm:grid-cols-2">
           {settingsSections
-            .filter((item) => item.id !== 'traffic' || isLiveCamsAdmin(user?.email))
+            .filter((item) => item.id !== 'traffic' || isTrafficMonitoringAdmin(user?.email))
             .map((item) => {
               const Icon = item.icon
               return (

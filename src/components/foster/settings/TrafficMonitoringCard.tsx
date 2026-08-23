@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Card, CardHeader } from '@/components/foster/ui/Card'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/integrations/supabase/client'
-import { isLiveCamsAdmin } from '@/lib/live-cams'
+import { isTrafficMonitoringAdmin } from '@/lib/traffic-monitoring-access'
 
 type TrafficSummaryRow = {
   day: string
@@ -15,7 +15,7 @@ type TrafficSummaryRow = {
 
 export function TrafficMonitoringCard() {
   const { user } = useAuth()
-  const admin = isLiveCamsAdmin(user?.email)
+  const admin = isTrafficMonitoringAdmin(user?.email)
   const {
     data: rows = [],
     isLoading,
@@ -68,30 +68,38 @@ export function TrafficMonitoringCard() {
           Traffic metrics could not be loaded.
         </p>
       ) : days.length ? (
-        <div className="grid gap-4">
-          <div className="overflow-x-auto rounded-xl border border-border">
-            <table className="w-full min-w-[32rem] text-left text-sm">
+        <div className="grid min-w-0 gap-4">
+          <div className="min-w-0 overflow-hidden rounded-xl border border-border">
+            <table className="w-full table-fixed text-left text-sm">
               <thead className="bg-gray-50 text-xs uppercase tracking-wide text-muted">
                 <tr>
-                  <th className="px-3 py-2 font-semibold">Day</th>
-                  <th className="px-3 py-2 text-right font-semibold">Requests</th>
-                  <th className="px-3 py-2 text-right font-semibold">Images</th>
-                  <th className="px-3 py-2 text-right font-semibold">Errors</th>
-                  <th className="px-3 py-2 text-right font-semibold">Observed transfer</th>
+                  <th className="px-2 py-2 font-semibold sm:px-3">Day</th>
+                  <th className="px-2 py-2 text-right font-semibold sm:px-3">Requests</th>
+                  <th className="px-2 py-2 text-right font-semibold sm:px-3">Images</th>
+                  <th className="px-2 py-2 text-right font-semibold sm:px-3">Errors</th>
+                  <th className="hidden px-3 py-2 text-right font-semibold sm:table-cell">
+                    Observed transfer
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {days.map((day) => (
                   <tr key={day.day}>
-                    <td className="px-3 py-2.5 font-medium text-ink">{formatDay(day.day)}</td>
-                    <td className="px-3 py-2.5 text-right tabular-nums text-ink">{day.requests}</td>
-                    <td className="px-3 py-2.5 text-right tabular-nums text-ink">{day.images}</td>
+                    <td className="px-2 py-2.5 font-medium text-ink sm:px-3">
+                      {formatDay(day.day)}
+                    </td>
+                    <td className="px-2 py-2.5 text-right tabular-nums text-ink sm:px-3">
+                      {day.requests}
+                    </td>
+                    <td className="px-2 py-2.5 text-right tabular-nums text-ink sm:px-3">
+                      {day.images}
+                    </td>
                     <td
-                      className={`px-3 py-2.5 text-right tabular-nums ${day.errors ? 'font-semibold text-red-600' : 'text-muted'}`}
+                      className={`px-2 py-2.5 text-right tabular-nums sm:px-3 ${day.errors ? 'font-semibold text-red-600' : 'text-muted'}`}
                     >
                       {day.errors}
                     </td>
-                    <td className="px-3 py-2.5 text-right tabular-nums text-ink">
+                    <td className="hidden px-3 py-2.5 text-right tabular-nums text-ink sm:table-cell">
                       {formatBytes(day.bytes)}
                     </td>
                   </tr>
@@ -101,20 +109,22 @@ export function TrafficMonitoringCard() {
           </div>
           <div>
             <h3 className="mb-2 text-sm font-semibold text-ink">Latest day by category</h3>
-            <div className="overflow-x-auto rounded-xl border border-border">
-              <table className="w-full min-w-[28rem] text-left text-sm">
+            <div className="min-w-0 overflow-hidden rounded-xl border border-border">
+              <table className="w-full table-fixed text-left text-sm">
                 <thead className="bg-gray-50 text-xs uppercase tracking-wide text-muted">
                   <tr>
-                    <th className="px-3 py-2 font-semibold">Category</th>
+                    <th className="w-1/2 px-3 py-2 font-semibold">Category</th>
                     <th className="px-3 py-2 text-right font-semibold">Requests</th>
                     <th className="px-3 py-2 text-right font-semibold">Errors</th>
-                    <th className="px-3 py-2 text-right font-semibold">Transfer</th>
+                    <th className="hidden px-3 py-2 text-right font-semibold sm:table-cell">
+                      Transfer
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {latestMetrics.map((metric) => (
                     <tr key={metric.metric}>
-                      <td className="px-3 py-2.5 font-medium text-ink">
+                      <td className="break-words px-3 py-2.5 font-medium text-ink">
                         {formatMetric(metric.metric)}
                       </td>
                       <td className="px-3 py-2.5 text-right tabular-nums text-ink">
@@ -123,7 +133,7 @@ export function TrafficMonitoringCard() {
                       <td className="px-3 py-2.5 text-right tabular-nums text-muted">
                         {Number(metric.error_count)}
                       </td>
-                      <td className="px-3 py-2.5 text-right tabular-nums text-ink">
+                      <td className="hidden px-3 py-2.5 text-right tabular-nums text-ink sm:table-cell">
                         {formatBytes(Number(metric.response_bytes))}
                       </td>
                     </tr>
