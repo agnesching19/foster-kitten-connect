@@ -176,6 +176,10 @@ export type Database = {
       }
       kittens: {
         Row: {
+          adoption_date: string | null
+          adoption_notes: string | null
+          adoption_status: Database['public']['Enums']['kitten_adoption_status']
+          adopter_name: string | null
           avatar_path: string | null
           created_at: string
           date_of_birth: string | null
@@ -189,6 +193,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          adoption_date?: string | null
+          adoption_notes?: string | null
+          adoption_status?: Database['public']['Enums']['kitten_adoption_status']
+          adopter_name?: string | null
           avatar_path?: string | null
           created_at?: string
           date_of_birth?: string | null
@@ -202,6 +210,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          adoption_date?: string | null
+          adoption_notes?: string | null
+          adoption_status?: Database['public']['Enums']['kitten_adoption_status']
+          adopter_name?: string | null
           avatar_path?: string | null
           created_at?: string
           date_of_birth?: string | null
@@ -641,6 +653,7 @@ export type Database = {
     Enums: {
       foster_batch_type: 'family' | 'single' | 'kittens_only'
       foster_cat_role: 'mother' | 'single' | 'kitten'
+      kitten_adoption_status: 'not_available' | 'available' | 'reserved' | 'adopted'
       litter_status: 'active' | 'completed'
       poop_subject_type: 'mother' | 'kitten'
       tag_colour:
@@ -778,6 +791,7 @@ export const Constants = {
     Enums: {
       foster_batch_type: ['family', 'single', 'kittens_only'],
       foster_cat_role: ['mother', 'single', 'kitten'],
+      kitten_adoption_status: ['not_available', 'available', 'reserved', 'adopted'],
       litter_status: ['active', 'completed'],
       poop_subject_type: ['mother', 'kitten'],
       tag_colour: [

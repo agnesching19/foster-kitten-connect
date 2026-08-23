@@ -8,7 +8,7 @@ import { Card, CardHeader } from '@/components/foster/ui/Card'
 import { EmptyState } from '@/components/foster/ui/EmptyState'
 import { KittenDot, TAG_COLOURS, type TagColour } from '@/components/foster/ui/KittenDot'
 import { KittenAvatar } from '@/components/foster/ui/KittenAvatar'
-import { kittensQueryOptions, type KittenRow } from '@/lib/foster-queries'
+import { kittensQueryOptions, type AdoptionStatus, type KittenRow } from '@/lib/foster-queries'
 import { removeCatAvatars, syncCommunityThumbnails, uploadCatAvatar } from '@/lib/avatar-storage'
 import { formatDate, formatKittenAge } from '@/utils/formatDate'
 
@@ -17,6 +17,20 @@ const inputClass =
 
 const iconButtonClass =
   'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border bg-white text-lg text-muted transition hover:bg-brand-50 hover:text-ink disabled:opacity-40 disabled:pointer-events-none'
+
+const adoptionLabels: Record<AdoptionStatus, string> = {
+  not_available: 'Not available',
+  available: 'Available',
+  reserved: 'Reserved',
+  adopted: 'Adopted',
+}
+
+const adoptionBadgeClasses: Record<AdoptionStatus, string> = {
+  not_available: 'bg-gray-100 text-gray-700',
+  available: 'bg-blue-100 text-blue-800',
+  reserved: 'bg-amber-100 text-amber-800',
+  adopted: 'bg-green-100 text-green-800',
+}
 
 function ColourSelect({
   value,
@@ -70,8 +84,21 @@ export function KittensSection({
   const [editingColour, setEditingColour] = useState<TagColour | ''>('')
   const [editingAvatar, setEditingAvatar] = useState<File | null>(null)
   const [removeAvatar, setRemoveAvatar] = useState(false)
+  const [editingAdoptionStatus, setEditingAdoptionStatus] =
+    useState<AdoptionStatus>('not_available')
+  const [editingAdopterName, setEditingAdopterName] = useState('')
+  const [editingAdoptionDate, setEditingAdoptionDate] = useState('')
+  const [editingAdoptionNotes, setEditingAdoptionNotes] = useState('')
   const [pendingDelete, setPendingDelete] = useState<KittenRow | null>(null)
   const age = dateOfBirth ? formatKittenAge(dateOfBirth) : null
+  const adoptionSummary = (['adopted', 'reserved', 'available'] as const)
+    .map((status) => ({
+      status,
+      count: kittens.filter((kitten) => kitten.adoption_status === status).length,
+    }))
+    .filter(({ count }) => count > 0)
+    .map(({ status, count }) => `${count} ${adoptionLabels[status].toLowerCase()}`)
+    .join(' · ')
 
   async function refresh() {
     await Promise.all([
@@ -110,12 +137,20 @@ export function KittensSection({
       tagColour,
       avatar,
       removeExistingAvatar,
+      adoptionStatus,
+      adopterName,
+      adoptionDate,
+      adoptionNotes,
     }: {
       kitten: KittenRow
       name: string
       tagColour: TagColour | ''
       avatar: File | null
       removeExistingAvatar: boolean
+      adoptionStatus: AdoptionStatus
+      adopterName: string
+      adoptionDate: string
+      adoptionNotes: string
     }) => {
       if (!user) throw new Error('You need to be signed in to edit a kitten.')
 
@@ -127,9 +162,18 @@ export function KittensSection({
         avatarPath = uploadedPath
       }
 
+      const hasAdopter = adoptionStatus === 'reserved' || adoptionStatus === 'adopted'
       const { error } = await supabase
         .from('kittens')
-        .update({ name, tag_colour: tagColour || null, avatar_path: avatarPath })
+        .update({
+          name,
+          tag_colour: tagColour || null,
+          avatar_path: avatarPath,
+          adoption_status: adoptionStatus,
+          adopter_name: hasAdopter ? adopterName.trim() || null : null,
+          adoption_date: hasAdopter ? adoptionDate || null : null,
+          adoption_notes: hasAdopter ? adoptionNotes.trim() || null : null,
+        })
         .eq('id', kitten.id)
       if (error) {
         if (uploadedPath) await removeCatAvatars([uploadedPath])
@@ -198,7 +242,7 @@ export function KittensSection({
               ) : null}
             </span>
           }
-          subtitle={`${kittens.length} recorded in this batch`}
+          subtitle={`${kittens.length} recorded in this batch${adoptionSummary ? ` · ${adoptionSummary}` : ''}`}
         />
 
         {canEdit ? (
@@ -238,7 +282,7 @@ export function KittensSection({
             {kittens.map((kitten, index) => (
               <li
                 key={kitten.id}
-                className={`flex min-w-0 items-center gap-2 rounded-xl border border-border bg-white px-3 py-2 sm:gap-3 ${editingId === kitten.id ? 'flex-wrap sm:flex-nowrap' : ''}`}
+                className={`flex min-w-0 items-center gap-2 rounded-xl border border-border bg-white px-3 py-2 sm:gap-3 ${editingId === kitten.id ? 'flex-wrap' : ''}`}
               >
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-sm font-semibold text-brand-800">
                   {index + 1}
@@ -251,7 +295,7 @@ export function KittensSection({
 
                 {editingId === kitten.id ? (
                   <form
-                    className="flex min-w-0 basis-full flex-1 flex-col gap-2 sm:basis-auto"
+                    className="flex min-w-0 basis-full flex-1 flex-col gap-2"
                     onSubmit={(event) => {
                       event.preventDefault()
                       const name = editingName.trim()
@@ -262,6 +306,10 @@ export function KittensSection({
                         tagColour: editingColour,
                         avatar: editingAvatar,
                         removeExistingAvatar: removeAvatar,
+                        adoptionStatus: editingAdoptionStatus,
+                        adopterName: editingAdopterName,
+                        adoptionDate: editingAdoptionDate,
+                        adoptionNotes: editingAdoptionNotes,
                       })
                     }}
                   >
@@ -320,10 +368,81 @@ export function KittensSection({
                         </span>
                       ) : null}
                     </div>
+                    <fieldset className="grid gap-3 rounded-xl border border-border bg-gray-50 p-3">
+                      <legend className="px-1 text-sm font-semibold text-ink">Adoption</legend>
+                      <label className="text-sm font-medium text-ink">
+                        Status
+                        <select
+                          value={editingAdoptionStatus}
+                          onChange={(event) =>
+                            setEditingAdoptionStatus(event.target.value as AdoptionStatus)
+                          }
+                          className={`mt-1 ${inputClass}`}
+                        >
+                          {Object.entries(adoptionLabels).map(([status, label]) => (
+                            <option key={status} value={status}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      {editingAdoptionStatus === 'reserved' ||
+                      editingAdoptionStatus === 'adopted' ? (
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <label className="text-sm font-medium text-ink">
+                            Adopter name
+                            <input
+                              value={editingAdopterName}
+                              onChange={(event) => setEditingAdopterName(event.target.value)}
+                              maxLength={120}
+                              className={`mt-1 ${inputClass}`}
+                            />
+                          </label>
+                          <label className="text-sm font-medium text-ink">
+                            Adoption / collection date
+                            <input
+                              type="date"
+                              value={editingAdoptionDate}
+                              onChange={(event) => setEditingAdoptionDate(event.target.value)}
+                              className={`mt-1 ${inputClass}`}
+                            />
+                          </label>
+                          <label className="text-sm font-medium text-ink sm:col-span-2">
+                            Private notes
+                            <textarea
+                              value={editingAdoptionNotes}
+                              onChange={(event) => setEditingAdoptionNotes(event.target.value)}
+                              maxLength={1000}
+                              rows={2}
+                              className={`mt-1 ${inputClass}`}
+                            />
+                          </label>
+                        </div>
+                      ) : null}
+                      <p className="text-xs text-muted">
+                        Adopter details are private and never shown on the Community page.
+                      </p>
+                    </fieldset>
                   </form>
                 ) : (
                   <>
-                    <p className="min-w-0 flex-1 truncate font-medium text-ink">{kitten.name}</p>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="truncate font-medium text-ink">{kitten.name}</p>
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${adoptionBadgeClasses[kitten.adoption_status]}`}
+                        >
+                          {adoptionLabels[kitten.adoption_status]}
+                        </span>
+                      </div>
+                      {kitten.adopter_name &&
+                      (kitten.adoption_status === 'reserved' ||
+                        kitten.adoption_status === 'adopted') ? (
+                        <p className="mt-0.5 truncate text-xs text-muted">
+                          Adopter: {kitten.adopter_name}
+                        </p>
+                      ) : null}
+                    </div>
                     {canEdit ? (
                       <div className="flex shrink-0 items-center gap-2">
                         <button
@@ -337,6 +456,10 @@ export function KittensSection({
                             setEditingColour(kitten.tag_colour ?? '')
                             setEditingAvatar(null)
                             setRemoveAvatar(false)
+                            setEditingAdoptionStatus(kitten.adoption_status)
+                            setEditingAdopterName(kitten.adopter_name ?? '')
+                            setEditingAdoptionDate(kitten.adoption_date ?? '')
+                            setEditingAdoptionNotes(kitten.adoption_notes ?? '')
                           }}
                         >
                           ✎

@@ -62,6 +62,10 @@ export const tableSpecs: TableSpec[] = [
       { name: 'sort_order', type: 'int' },
       { name: 'role' },
       { name: 'date_of_birth', type: 'date' },
+      { name: 'adoption_status' },
+      { name: 'adopter_name' },
+      { name: 'adoption_date', type: 'date' },
+      { name: 'adoption_notes' },
     ],
   },
   {

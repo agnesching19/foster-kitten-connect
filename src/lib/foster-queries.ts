@@ -31,7 +31,16 @@ export interface CatRow {
   date_of_birth: string | null
   tag_colour: TagColour | null
   avatar_path: string | null
+  adoption_status: AdoptionStatus
+  adopter_name: string | null
+  adoption_date: string | null
+  adoption_notes: string | null
 }
+
+export type AdoptionStatus = 'not_available' | 'available' | 'reserved' | 'adopted'
+
+const catSelect =
+  'id, litter_id, name, sort_order, role, date_of_birth, tag_colour, avatar_path, adoption_status, adopter_name, adoption_date, adoption_notes'
 
 export const littersQueryOptions = queryOptions({
   queryKey: ['litters'],
@@ -39,7 +48,7 @@ export const littersQueryOptions = queryOptions({
     const { data, error } = await supabase
       .from('litters')
       .select(
-        'id, user_id, mother_name, mother_avatar_path, batch_type, litter_name, visibility, community_summary, date_of_birth, arrived, left_date, status, external_record, album_url, litter_change_interval_hours, kittens(id, litter_id, name, sort_order, role, date_of_birth, tag_colour, avatar_path)',
+        `id, user_id, mother_name, mother_avatar_path, batch_type, litter_name, visibility, community_summary, date_of_birth, arrived, left_date, status, external_record, album_url, litter_change_interval_hours, kittens(${catSelect})`,
       )
       .order('arrived', { ascending: false })
     if (error) throw error
@@ -198,7 +207,7 @@ export const kittensQueryOptions = (litterId: string | undefined) =>
     queryFn: async (): Promise<KittenRow[]> => {
       const { data, error } = await supabase
         .from('kittens')
-        .select('id, name, sort_order, litter_id, role, date_of_birth, tag_colour, avatar_path')
+        .select(catSelect)
         .eq('litter_id', litterId!)
         .eq('role', 'kitten')
         .order('sort_order', { ascending: true })
@@ -215,7 +224,7 @@ export const catsQueryOptions = (litterId: string | undefined) =>
     queryFn: async (): Promise<CatRow[]> => {
       const { data, error } = await supabase
         .from('kittens')
-        .select('id, name, sort_order, litter_id, role, date_of_birth, tag_colour, avatar_path')
+        .select(catSelect)
         .eq('litter_id', litterId!)
         .order('sort_order', { ascending: true })
       if (error) throw error
