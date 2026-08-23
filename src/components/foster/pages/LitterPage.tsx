@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
@@ -21,6 +21,7 @@ import {
 import { formatRelativeDay } from '@/utils/formatDate'
 import { useLitterAccess } from '@/hooks/useLitterAccess'
 import { BatchContextBar } from '@/components/foster/layout/BatchContextBar'
+import { LoadMoreButton } from '@/components/foster/ui/LoadMoreButton'
 
 const iconButtonClass =
   'flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-white text-sm text-muted transition hover:bg-brand-50 hover:text-ink'
@@ -34,7 +35,9 @@ export function LitterPage({ litterId }: { litterId?: string }) {
     : pickCurrentLitter(litters)
   const { canEdit: hasEditAccess } = useLitterAccess(litter)
   const canEdit = hasEditAccess && litter?.status === 'active'
-  const { data: changes = [], isLoading } = useQuery(litterChangesQueryOptions(litter?.id))
+  const changesQuery = useInfiniteQuery(litterChangesQueryOptions(litter?.id))
+  const changes = useMemo(() => changesQuery.data?.pages.flat() ?? [], [changesQuery.data])
+  const { isLoading } = changesQuery
   const { data: profiles = [] } = useQuery(profilesQueryOptions)
   const lastChange = changes[0]
   const months = useMemo(
@@ -237,6 +240,11 @@ export function LitterPage({ litterId }: { litterId?: string }) {
                   />
                 ))}
               </div>
+              <LoadMoreButton
+                hasMore={Boolean(changesQuery.hasNextPage)}
+                loading={changesQuery.isFetchingNextPage}
+                onLoad={() => void changesQuery.fetchNextPage()}
+              />
             </div>
           ) : (
             <Card>

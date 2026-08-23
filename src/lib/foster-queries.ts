@@ -1,4 +1,4 @@
-import { queryOptions } from '@tanstack/react-query'
+import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query'
 import { supabase } from '@/integrations/supabase/client'
 import type { TagColour } from '@/components/foster/ui/KittenDot'
 
@@ -83,17 +83,25 @@ export interface CommunityBatch {
   cats: CommunityCat[]
 }
 
-export const communityBatchesQueryOptions = queryOptions({
+export const TIMELINE_PAGE_SIZE = 100
+export const COMMUNITY_PAGE_SIZE = 12
+
+export const communityBatchesQueryOptions = infiniteQueryOptions({
   queryKey: ['community-batches'],
   staleTime: 10 * 60 * 1000,
-  queryFn: async (): Promise<CommunityBatch[]> => {
-    const { data, error } = await supabase.rpc('community_batches')
+  initialPageParam: 0,
+  queryFn: async ({ pageParam }): Promise<CommunityBatch[]> => {
+    const { data, error } = await supabase
+      .rpc('community_batches')
+      .range(pageParam, pageParam + COMMUNITY_PAGE_SIZE - 1)
     if (error) throw error
     return (data ?? []).map((batch) => ({
       ...batch,
       cats: Array.isArray(batch.cats) ? (batch.cats as unknown as CommunityCat[]) : [],
     }))
   },
+  getNextPageParam: (lastPage, pages) =>
+    lastPage.length === COMMUNITY_PAGE_SIZE ? pages.length * COMMUNITY_PAGE_SIZE : undefined,
 })
 
 export interface DashboardQuickView {
@@ -111,52 +119,13 @@ export const dashboardQuickViewQueryOptions = (litterId: string | undefined, tod
     queryKey: ['dashboard-quick-view', litterId, today],
     enabled: Boolean(litterId),
     queryFn: async (): Promise<DashboardQuickView> => {
-      const [mealsResult, litterChangeResult, weighInResult] = await Promise.all([
-        supabase
-          .from('feedings')
-          .select('id', { count: 'exact', head: true })
-          .eq('litter_id', litterId!)
-          .eq('date', today),
-        supabase
-          .from('litter_changes')
-          .select('date, time')
-          .eq('litter_id', litterId!)
-          .order('date', { ascending: false })
-          .order('time', { ascending: false })
-          .limit(1)
-          .maybeSingle(),
-        supabase
-          .from('weigh_ins')
-          .select('date, time, weights(kitten_id, grams, kittens(name))')
-          .eq('litter_id', litterId!)
-          .order('date', { ascending: false })
-          .order('time', { ascending: false }),
-      ])
-
-      const error = mealsResult.error ?? litterChangeResult.error ?? weighInResult.error
+      const { data, error } = await supabase.rpc('dashboard_quick_view', {
+        target_litter_id: litterId!,
+        target_date: today,
+      })
       if (error) throw error
-
-      const latestWeights = new Map<
-        string,
-        { date: string; grams: number; kittens: { name: string } | null }
-      >()
-      for (const weighIn of weighInResult.data ?? []) {
-        for (const weight of weighIn.weights ?? []) {
-          if (!latestWeights.has(weight.kitten_id)) {
-            latestWeights.set(weight.kitten_id, {
-              date: weighIn.date,
-              grams: weight.grams,
-              kittens: weight.kittens,
-            })
-          }
-        }
-      }
-
-      return {
-        mealsToday: mealsResult.count ?? 0,
-        latestLitterChange: litterChangeResult.data,
-        latestWeights: [...latestWeights.values()],
-      }
+      const result = data as unknown as DashboardQuickView
+      return result
     },
   })
 
@@ -198,10 +167,11 @@ export interface DailyNoteRow {
 }
 
 export const dailyNotesQueryOptions = (litterId: string | undefined) =>
-  queryOptions({
+  infiniteQueryOptions({
     queryKey: ['daily-notes', litterId],
     enabled: Boolean(litterId),
-    queryFn: async (): Promise<DailyNoteRow[]> => {
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }): Promise<DailyNoteRow[]> => {
       const { data, error } = await supabase
         .from('daily_notes')
         .select(
@@ -210,9 +180,13 @@ export const dailyNotesQueryOptions = (litterId: string | undefined) =>
         .eq('litter_id', litterId!)
         .order('date', { ascending: false })
         .order('time', { ascending: false, nullsFirst: false })
+        .order('id', { ascending: false })
+        .range(pageParam, pageParam + TIMELINE_PAGE_SIZE - 1)
       if (error) throw error
       return (data ?? []) as DailyNoteRow[]
     },
+    getNextPageParam: (lastPage, pages) =>
+      lastPage.length === TIMELINE_PAGE_SIZE ? pages.length * TIMELINE_PAGE_SIZE : undefined,
   })
 
 export type KittenRow = CatRow
@@ -266,10 +240,11 @@ export interface FeedingRow {
 }
 
 export const feedingsQueryOptions = (litterId: string | undefined) =>
-  queryOptions({
+  infiniteQueryOptions({
     queryKey: ['feedings', litterId],
     enabled: Boolean(litterId),
-    queryFn: async (): Promise<FeedingRow[]> => {
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }): Promise<FeedingRow[]> => {
       const { data, error } = await supabase
         .from('feedings')
         .select(
@@ -278,9 +253,13 @@ export const feedingsQueryOptions = (litterId: string | undefined) =>
         .eq('litter_id', litterId!)
         .order('date', { ascending: false })
         .order('time', { ascending: false })
+        .order('id', { ascending: false })
+        .range(pageParam, pageParam + TIMELINE_PAGE_SIZE - 1)
       if (error) throw error
       return (data ?? []) as FeedingRow[]
     },
+    getNextPageParam: (lastPage, pages) =>
+      lastPage.length === TIMELINE_PAGE_SIZE ? pages.length * TIMELINE_PAGE_SIZE : undefined,
   })
 
 export interface PoopRow {
@@ -295,10 +274,11 @@ export interface PoopRow {
 }
 
 export const poopsQueryOptions = (litterId: string | undefined) =>
-  queryOptions({
+  infiniteQueryOptions({
     queryKey: ['poops', litterId],
     enabled: Boolean(litterId),
-    queryFn: async (): Promise<PoopRow[]> => {
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }): Promise<PoopRow[]> => {
       const { data, error } = await supabase
         .from('poop_entries')
         .select(
@@ -307,9 +287,13 @@ export const poopsQueryOptions = (litterId: string | undefined) =>
         .eq('litter_id', litterId!)
         .order('date', { ascending: false })
         .order('time', { ascending: false })
+        .order('id', { ascending: false })
+        .range(pageParam, pageParam + TIMELINE_PAGE_SIZE - 1)
       if (error) throw error
       return (data ?? []) as unknown as PoopRow[]
     },
+    getNextPageParam: (lastPage, pages) =>
+      lastPage.length === TIMELINE_PAGE_SIZE ? pages.length * TIMELINE_PAGE_SIZE : undefined,
   })
 
 export interface LitterChangeRow {
@@ -321,19 +305,24 @@ export interface LitterChangeRow {
 }
 
 export const litterChangesQueryOptions = (litterId: string | undefined) =>
-  queryOptions({
+  infiniteQueryOptions({
     queryKey: ['litter-changes', litterId],
     enabled: Boolean(litterId),
-    queryFn: async (): Promise<LitterChangeRow[]> => {
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }): Promise<LitterChangeRow[]> => {
       const { data, error } = await supabase
         .from('litter_changes')
         .select('id, user_id, date, time, notes')
         .eq('litter_id', litterId!)
         .order('date', { ascending: false })
         .order('time', { ascending: false })
+        .order('id', { ascending: false })
+        .range(pageParam, pageParam + TIMELINE_PAGE_SIZE - 1)
       if (error) throw error
       return (data ?? []) as LitterChangeRow[]
     },
+    getNextPageParam: (lastPage, pages) =>
+      lastPage.length === TIMELINE_PAGE_SIZE ? pages.length * TIMELINE_PAGE_SIZE : undefined,
   })
 
 export interface WeighInRow {
@@ -350,10 +339,11 @@ export interface WeighInRow {
 }
 
 export const weighInsQueryOptions = (litterId: string | undefined) =>
-  queryOptions({
+  infiniteQueryOptions({
     queryKey: ['weigh-ins', litterId],
     enabled: Boolean(litterId),
-    queryFn: async (): Promise<WeighInRow[]> => {
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }): Promise<WeighInRow[]> => {
       const { data, error } = await supabase
         .from('weigh_ins')
         .select(
@@ -362,9 +352,13 @@ export const weighInsQueryOptions = (litterId: string | undefined) =>
         .eq('litter_id', litterId!)
         .order('date', { ascending: false })
         .order('time', { ascending: false })
+        .order('id', { ascending: false })
+        .range(pageParam, pageParam + TIMELINE_PAGE_SIZE - 1)
       if (error) throw error
       return (data ?? []) as unknown as WeighInRow[]
     },
+    getNextPageParam: (lastPage, pages) =>
+      lastPage.length === TIMELINE_PAGE_SIZE ? pages.length * TIMELINE_PAGE_SIZE : undefined,
   })
 
 export interface HistoricalWeightRange {

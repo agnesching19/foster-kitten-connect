@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/integrations/supabase/client'
@@ -25,6 +25,7 @@ import {
 import { formatRelativeDay } from '@/utils/formatDate'
 import { useLitterAccess } from '@/hooks/useLitterAccess'
 import { BatchContextBar } from '@/components/foster/layout/BatchContextBar'
+import { LoadMoreButton } from '@/components/foster/ui/LoadMoreButton'
 
 const iconButtonClass =
   'flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-white text-sm text-muted transition hover:bg-brand-50 hover:text-ink'
@@ -37,7 +38,9 @@ export function FeedingsPage({ litterId }: { litterId?: string }) {
     : pickCurrentLitter(litters)
   const { canEdit: hasEditAccess } = useLitterAccess(litter)
   const canEdit = hasEditAccess && litter?.status === 'active'
-  const { data: feedings = [], isLoading } = useQuery(feedingsQueryOptions(litter?.id))
+  const feedingsQuery = useInfiniteQuery(feedingsQueryOptions(litter?.id))
+  const feedings = useMemo(() => feedingsQuery.data?.pages.flat() ?? [], [feedingsQuery.data])
+  const { isLoading } = feedingsQuery
   const { data: profiles = [] } = useQuery(profilesQueryOptions)
   const days = useMemo(() => groupByDate(feedings), [feedings])
   const months = useMemo(() => [...new Set(days.map((day) => day.date.slice(0, 7)))], [days])
@@ -227,6 +230,11 @@ export function FeedingsPage({ litterId }: { litterId?: string }) {
               )
             })}
           </div>
+          <LoadMoreButton
+            hasMore={Boolean(feedingsQuery.hasNextPage)}
+            loading={feedingsQuery.isFetchingNextPage}
+            onLoad={() => void feedingsQuery.fetchNextPage()}
+          />
         </div>
       ) : (
         <Card>

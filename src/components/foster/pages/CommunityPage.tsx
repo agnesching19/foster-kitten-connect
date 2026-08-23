@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { PageHeader } from '@/components/foster/layout/PageHeader'
 import { Card } from '@/components/foster/ui/Card'
@@ -8,6 +8,7 @@ import { KittenAvatar } from '@/components/foster/ui/KittenAvatar'
 import { communityBatchesQueryOptions, type CommunityBatch } from '@/lib/foster-queries'
 import { formatDate } from '@/utils/formatDate'
 import { useAuth } from '@/hooks/useAuth'
+import { LoadMoreButton } from '@/components/foster/ui/LoadMoreButton'
 
 type Filter = 'all' | 'active' | 'completed'
 
@@ -15,14 +16,12 @@ export function CommunityPage() {
   const [filter, setFilter] = useState<Filter>('all')
   const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
-  const {
-    data: batches = [],
-    isLoading,
-    error,
-  } = useQuery({
+  const batchesQuery = useInfiniteQuery({
     ...communityBatchesQueryOptions,
     enabled: Boolean(user),
   })
+  const batches = useMemo(() => batchesQuery.data?.pages.flat() ?? [], [batchesQuery.data])
+  const { isLoading, error } = batchesQuery
 
   useEffect(() => {
     if (!authLoading && !user) void navigate({ to: '/auth', replace: true })
@@ -66,11 +65,13 @@ export function CommunityPage() {
           </p>
         </Card>
       ) : visibleBatches.length ? (
-        <section className="grid gap-4 lg:grid-cols-2" aria-live="polite">
-          {visibleBatches.map((batch) => (
-            <CommunityBatchCard key={batch.id} batch={batch} />
-          ))}
-        </section>
+        <div>
+          <section className="grid gap-4 lg:grid-cols-2" aria-live="polite">
+            {visibleBatches.map((batch) => (
+              <CommunityBatchCard key={batch.id} batch={batch} />
+            ))}
+          </section>
+        </div>
       ) : (
         <Card className="py-12 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-100 text-2xl">
@@ -85,6 +86,14 @@ export function CommunityPage() {
               : 'Foster records stay private unless their carer chooses to share them here.'}
           </p>
         </Card>
+      )}
+      {!authLoading && user && !error && (
+        <LoadMoreButton
+          hasMore={Boolean(batchesQuery.hasNextPage)}
+          loading={batchesQuery.isFetchingNextPage}
+          onLoad={() => void batchesQuery.fetchNextPage()}
+          label="Load more fosters"
+        />
       )}
     </div>
   )

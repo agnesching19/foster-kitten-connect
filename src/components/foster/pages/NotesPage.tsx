@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { supabase } from '@/integrations/supabase/client'
 import { Button } from '@/components/foster/ui/Button'
@@ -22,6 +22,7 @@ import {
 } from '@/lib/foster-queries'
 import { formatRelativeDay } from '@/utils/formatDate'
 import { BatchContextBar } from '@/components/foster/layout/BatchContextBar'
+import { LoadMoreButton } from '@/components/foster/ui/LoadMoreButton'
 
 const iconButtonClass =
   'flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-white text-sm text-muted transition hover:bg-brand-50 hover:text-ink'
@@ -34,7 +35,9 @@ export function NotesPage({ litterId }: { litterId?: string }) {
     : pickCurrentLitter(litters)
   const { canEdit: hasEditAccess } = useLitterAccess(litter)
   const canEdit = hasEditAccess && litter?.status === 'active'
-  const { data: notes = [], isLoading } = useQuery(dailyNotesQueryOptions(litter?.id))
+  const notesQuery = useInfiniteQuery(dailyNotesQueryOptions(litter?.id))
+  const notes = useMemo(() => notesQuery.data?.pages.flat() ?? [], [notesQuery.data])
+  const { isLoading } = notesQuery
   const { data: kittens = [] } = useQuery(kittensQueryOptions(litter?.id))
   const { data: profiles = [] } = useQuery(profilesQueryOptions)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -170,80 +173,84 @@ export function NotesPage({ litterId }: { litterId?: string }) {
           <p className="text-sm text-muted">Loading notes…</p>
         </Card>
       ) : grouped.length ? (
-        <div className="grid items-start gap-5 lg:grid-cols-2">
-          {grouped.map((day) => (
-            <section key={day.date}>
-              <h2 className="mb-2 text-sm font-semibold text-muted">
-                {formatRelativeDay(day.date)}
-              </h2>
-              <div className="grid gap-3">
-                {day.items.map((entry) => {
-                  const categoryMeta =
-                    noteCategories.find((item) => item.value === entry.category) ??
-                    noteCategories.at(-1)!
-                  return (
-                    <Card
-                      key={entry.id}
-                      padding="sm"
-                      className={
-                        entry.importance === 'important' ? 'border-amber-300 bg-amber-50/40' : ''
-                      }
-                    >
-                      <div className="flex justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-xl">{categoryMeta.emoji}</span>
-                            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-ink">
-                              {categoryMeta.label}
-                            </span>
-                            {entry.importance === 'important' ? (
-                              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
-                                Important
+        <div>
+          <div className="grid items-start gap-5 lg:grid-cols-2">
+            {grouped.map((day) => (
+              <section key={day.date}>
+                <h2 className="mb-2 text-sm font-semibold text-muted">
+                  {formatRelativeDay(day.date)}
+                </h2>
+                <div className="grid gap-3">
+                  {day.items.map((entry) => {
+                    const categoryMeta =
+                      noteCategories.find((item) => item.value === entry.category) ??
+                      noteCategories.at(-1)!
+                    return (
+                      <Card
+                        key={entry.id}
+                        padding="sm"
+                        className={
+                          entry.importance === 'important' ? 'border-amber-300 bg-amber-50/40' : ''
+                        }
+                      >
+                        <div className="flex justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-xl">{categoryMeta.emoji}</span>
+                              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-ink">
+                                {categoryMeta.label}
                               </span>
-                            ) : null}
+                              {entry.importance === 'important' ? (
+                                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                                  Important
+                                </span>
+                              ) : null}
+                            </div>
+                            <p className="mt-3 whitespace-pre-wrap text-sm text-ink">
+                              {entry.note}
+                            </p>
+                            <p className="mt-3 text-xs text-muted">
+                              {entry.time ? `${entry.time.slice(0, 5)} · ` : ''}
+                              {subjectLabel(
+                                entry,
+                                litter?.primary_cat?.name,
+                                litter?.batch_type === 'single' ? 'Foster cat' : 'Momma',
+                                kittens,
+                              )}{' '}
+                              · Added by {logAuthorName(profiles, entry.user_id)}
+                            </p>
                           </div>
-                          <p className="mt-3 whitespace-pre-wrap text-sm text-ink">{entry.note}</p>
-                          <p className="mt-3 text-xs text-muted">
-                            {entry.time ? `${entry.time.slice(0, 5)} · ` : ''}
-                            {subjectLabel(
-                              entry,
-                              litter?.primary_cat?.name,
-                              litter?.batch_type === 'single' ? 'Foster cat' : 'Momma',
-                              kittens,
-                            )}{' '}
-                            · Added by {logAuthorName(profiles, entry.user_id)}
-                          </p>
+                          {canEdit ? (
+                            <div className="flex shrink-0 gap-1">
+                              <button
+                                type="button"
+                                className={iconButtonClass}
+                                aria-label="Edit note"
+                                onClick={() => {
+                                  setEditing(entry)
+                                  setDialogOpen(true)
+                                }}
+                              >
+                                ✎
+                              </button>
+                              <button
+                                type="button"
+                                className={iconButtonClass}
+                                aria-label="Delete note"
+                                onClick={() => setPendingDelete(entry)}
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ) : null}
                         </div>
-                        {canEdit ? (
-                          <div className="flex shrink-0 gap-1">
-                            <button
-                              type="button"
-                              className={iconButtonClass}
-                              aria-label="Edit note"
-                              onClick={() => {
-                                setEditing(entry)
-                                setDialogOpen(true)
-                              }}
-                            >
-                              ✎
-                            </button>
-                            <button
-                              type="button"
-                              className={iconButtonClass}
-                              aria-label="Delete note"
-                              onClick={() => setPendingDelete(entry)}
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ) : null}
-                      </div>
-                    </Card>
-                  )
-                })}
-              </div>
-            </section>
-          ))}
+                      </Card>
+                    )
+                  })}
+                </div>
+              </section>
+            ))}
+          </div>
         </div>
       ) : (
         <Card>
@@ -258,6 +265,11 @@ export function NotesPage({ litterId }: { litterId?: string }) {
           />
         </Card>
       )}
+      <LoadMoreButton
+        hasMore={Boolean(notesQuery.hasNextPage)}
+        loading={notesQuery.isFetchingNextPage}
+        onLoad={() => void notesQuery.fetchNextPage()}
+      />
     </div>
   )
 }

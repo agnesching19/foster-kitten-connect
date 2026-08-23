@@ -579,6 +579,10 @@ export type Database = {
         }[]
       }
       can_view_profile: { Args: { target_user_id: string }; Returns: boolean }
+      dashboard_quick_view: {
+        Args: { target_date: string; target_litter_id: string }
+        Returns: Json
+      }
       community_batches: {
         Args: Record<PropertyKey, never>
         Returns: {
