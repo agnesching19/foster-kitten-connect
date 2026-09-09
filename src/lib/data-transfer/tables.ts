@@ -11,7 +11,8 @@ export type TableName =
 export interface ColumnSpec {
   name: string
   required?: boolean
-  type?: 'text' | 'date' | 'time' | 'int' | 'uuid' | 'status' | 'string-array' | 'boolean'
+  type?:
+    'text' | 'date' | 'time' | 'int' | 'number' | 'uuid' | 'status' | 'string-array' | 'boolean'
 }
 
 export interface TableSpec {
@@ -105,7 +106,7 @@ export const tableSpecs: TableSpec[] = [
       { name: 'food', required: true },
       { name: 'flavours', type: 'string-array' },
       { name: 'meal_number', type: 'int' },
-      { name: 'pouch_count', type: 'int' },
+      { name: 'pouch_count', type: 'number' },
       { name: 'feeding_type' },
       { name: 'dry_food_type' },
       { name: 'bowl_count', type: 'int' },
@@ -243,6 +244,19 @@ export function normaliseRow(
             file: spec.file,
             row: rowNumber,
             message: `"${column.name}" must be a whole number`,
+          })
+          valid = false
+        }
+        payload[column.name] = parsed
+        break
+      }
+      case 'number': {
+        const parsed = Number(raw)
+        if (!Number.isFinite(parsed)) {
+          issues.push({
+            file: spec.file,
+            row: rowNumber,
+            message: `"${column.name}" must be a number`,
           })
           valid = false
         }

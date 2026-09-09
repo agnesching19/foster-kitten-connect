@@ -39,7 +39,11 @@ Deno.serve(async (request) => {
     ) {
       return json({ error: 'Invalid notification request' }, 400)
     }
-    const count = Math.max(1, Math.min(50, Math.round(Number(body.count) || 1)))
+    const rawCount = Number(body.count) || 1
+    const count =
+      body.type === 'feeding'
+        ? Math.max(0.5, Math.min(50, rawCount))
+        : Math.max(1, Math.min(50, Math.round(rawCount)))
 
     const { data: litter, error: litterError } = await admin
       .from('litters')

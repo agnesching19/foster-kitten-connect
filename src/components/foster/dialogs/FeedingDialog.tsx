@@ -88,6 +88,9 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
       if (feedingType === 'wet' && normalisedFlavours.some((flavour) => !flavour)) {
         throw new Error('Choose a flavour for every pouch.')
       }
+      if (feedingType === 'wet' && pouchCount !== 0.5 && !Number.isInteger(pouchCount)) {
+        throw new Error('Choose half a pouch or a whole number of pouches.')
+      }
       if (feedingType === 'treat' && !treatName.trim()) {
         throw new Error('Enter the type of treat.')
       }
@@ -218,11 +221,13 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
               <CountStepper
                 id="feeding-pouch-count"
                 value={pouchCount}
+                min={0.5}
+                halfAtMinimum
                 onChange={(count) => {
                   setPouchCount(count)
                   setFlavours((current) =>
                     Array.from(
-                      { length: count },
+                      { length: Math.ceil(count) },
                       (_, index) => current[index] ?? current.at(-1) ?? '',
                     ),
                   )
@@ -232,18 +237,18 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
                 }}
               />
               <span className="mt-1 block text-xs text-muted">
-                Number of pouches served during this feeding.
+                Choose half a pouch or a whole number of pouches.
               </span>
             </div>
             <fieldset className="min-w-0 sm:col-span-2">
               <legend className="mb-2 text-sm font-medium text-ink">
-                {pouchCount === 1 ? 'Flavour *' : 'Flavours *'}
+                {pouchCount <= 1 ? 'Flavour *' : 'Flavours *'}
               </legend>
               <div className="grid gap-3">
                 {flavours.map((flavour, index) => (
                   <div key={index} className="grid min-w-0 gap-1">
                     <label htmlFor={`feeding-flavour-${index}`} className="text-xs text-muted">
-                      Pouch {index + 1}
+                      {pouchCount === 0.5 ? 'Half pouch' : `Pouch ${index + 1}`}
                     </label>
                     <div className="relative min-w-0">
                       <select
@@ -292,7 +297,11 @@ export function FeedingDialog({ open, onClose, litterId, feeding }: FeedingDialo
                         className={inputClass}
                         placeholder="Enter another flavour"
                         maxLength={80}
-                        aria-label={`Other flavour for pouch ${index + 1}`}
+                        aria-label={
+                          pouchCount === 0.5
+                            ? 'Other flavour for half pouch'
+                            : `Other flavour for pouch ${index + 1}`
+                        }
                       />
                     ) : null}
                   </div>

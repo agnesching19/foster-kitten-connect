@@ -344,8 +344,15 @@ function FeedingDayCard({
                     {feeding.feeding_type === 'wet' && feeding.meal_number != null ? (
                       <Badge label={`Feed ${feeding.meal_number}`} color="brand" />
                     ) : null}
-                    {feeding.feeding_type === 'wet' && feeding.pouch_count > 1 ? (
-                      <Badge label={`×${feeding.pouch_count} pouches`} color="neutral" />
+                    {feeding.feeding_type === 'wet' && feeding.pouch_count !== 1 ? (
+                      <Badge
+                        label={
+                          feeding.pouch_count === 0.5
+                            ? '½ pouch'
+                            : `×${feeding.pouch_count} pouches`
+                        }
+                        color="neutral"
+                      />
                     ) : null}
                     {feeding.feeding_type === 'dry' ? (
                       <Badge label="Dry top-up" color="neutral" />
