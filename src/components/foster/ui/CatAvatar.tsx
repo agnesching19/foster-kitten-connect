@@ -38,18 +38,24 @@ export function CatAvatar({
         setImageUrl(null)
         return
       }
+      let publicThumbnail = Boolean(publicThumbnailPath)
       let signedUrl = publicThumbnailPath
         ? await getCommunityThumbnailUrl(publicThumbnailPath)
         : await getCatAvatarUrl(avatarPath)
       let storedThumbnail = !publicThumbnailPath
-      if (!signedUrl && !publicThumbnailPath) {
+      if (!signedUrl) {
+        publicThumbnail = false
+        signedUrl = publicThumbnailPath ? await getCatAvatarUrl(avatarPath) : null
+        storedThumbnail = Boolean(signedUrl)
+      }
+      if (!signedUrl) {
         signedUrl = await getCatAvatarUrl(avatarPath, 'original')
         storedThumbnail = false
         void backfillCatAvatarThumbnail(avatarPath)
       }
       if (!active) return
       setImageUrl(signedUrl)
-      setUsingPublicThumbnail(Boolean(publicThumbnailPath))
+      setUsingPublicThumbnail(publicThumbnail)
       setUsingStoredThumbnail(storedThumbnail)
       setFailed(false)
     }
@@ -89,10 +95,11 @@ export function CatAvatar({
         onError={() => {
           if (usingPublicThumbnail && avatarPath) {
             setUsingPublicThumbnail(false)
-            void getCatAvatarUrl(avatarPath).then((fallbackUrl) => {
+            void getCatAvatarUrl(avatarPath, 'original').then((fallbackUrl) => {
               if (fallbackUrl) setImageUrl(fallbackUrl)
               else setFailed(true)
             })
+            void backfillCatAvatarThumbnail(avatarPath)
             return
           }
           if (usingStoredThumbnail && avatarPath) {
