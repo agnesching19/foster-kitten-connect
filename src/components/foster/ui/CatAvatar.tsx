@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react'
-import { getCatAvatarUrl, getCommunityThumbnailUrl } from '@/lib/avatar-storage'
+import {
+  backfillCatAvatarThumbnail,
+  getCatAvatarUrl,
+  getCommunityThumbnailUrl,
+} from '@/lib/avatar-storage'
 import { AvatarPreviewDialog } from './AvatarPreviewDialog'
 import { catAvatarSizeClasses, type CatAvatarSize } from './avatar-styles'
 import { recordImageTraffic } from '@/lib/traffic-monitor'
@@ -24,6 +28,7 @@ export function CatAvatar({
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
   const [usingPublicThumbnail, setUsingPublicThumbnail] = useState(false)
+  const [usingStoredThumbnail, setUsingStoredThumbnail] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -33,12 +38,19 @@ export function CatAvatar({
         setImageUrl(null)
         return
       }
-      const signedUrl = publicThumbnailPath
+      let signedUrl = publicThumbnailPath
         ? await getCommunityThumbnailUrl(publicThumbnailPath)
         : await getCatAvatarUrl(avatarPath)
+      let storedThumbnail = !publicThumbnailPath
+      if (!signedUrl && !publicThumbnailPath) {
+        signedUrl = await getCatAvatarUrl(avatarPath, 'original')
+        storedThumbnail = false
+        void backfillCatAvatarThumbnail(avatarPath)
+      }
       if (!active) return
       setImageUrl(signedUrl)
       setUsingPublicThumbnail(Boolean(publicThumbnailPath))
+      setUsingStoredThumbnail(storedThumbnail)
       setFailed(false)
     }
 
@@ -81,6 +93,15 @@ export function CatAvatar({
               if (fallbackUrl) setImageUrl(fallbackUrl)
               else setFailed(true)
             })
+            return
+          }
+          if (usingStoredThumbnail && avatarPath) {
+            setUsingStoredThumbnail(false)
+            void getCatAvatarUrl(avatarPath, 'original').then((fallbackUrl) => {
+              if (fallbackUrl) setImageUrl(fallbackUrl)
+              else setFailed(true)
+            })
+            void backfillCatAvatarThumbnail(avatarPath)
             return
           }
           setFailed(true)

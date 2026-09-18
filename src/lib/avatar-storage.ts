@@ -5,14 +5,12 @@ export const COMMUNITY_AVATAR_BUCKET = 'community-avatar-thumbnails'
 
 const SIGNED_URL_LIFETIME_SECONDS = 24 * 60 * 60
 const SIGNED_URL_CACHE_MS = 23 * 60 * 60 * 1000
-const SIGNED_URL_STORAGE_PREFIX = 'kitty-tracker:avatar-url:v1:'
+const SIGNED_URL_STORAGE_PREFIX = 'kitty-tracker:avatar-url:v2:'
 
-export type CatAvatarVariant = 'thumbnail' | 'preview'
+export type CatAvatarVariant = 'thumbnail' | 'preview' | 'original'
 
-const avatarTransforms = {
-  thumbnail: { width: 256, height: 256, quality: 70, resize: 'cover' as const },
-  preview: { width: 1200, height: 1200, quality: 80, resize: 'contain' as const },
-}
+const THUMBNAIL_SIZE = 256
+const PREVIEW_SIZE = 1200
 
 type CachedAvatarUrl = {
   url: string
@@ -86,16 +84,104 @@ const avatarTypes: Record<string, string> = {
   'image/gif': 'gif',
 }
 
+function avatarThumbnailPath(path: string): string {
+  return `${path}.thumbnail.webp`
+}
+
+function loadImage(file: Blob): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const image = new Image()
+    image.onload = () => {
+      URL.revokeObjectURL(url)
+      resolve(image)
+    }
+    image.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('Could not read the selected image.'))
+    }
+    image.src = url
+  })
+}
+
+async function resizeAvatar(
+  file: Blob,
+  maxSize: number,
+  resize: 'contain' | 'cover',
+  quality: number,
+): Promise<Blob> {
+  const image = await loadImage(file)
+  const sourceWidth = image.naturalWidth
+  const sourceHeight = image.naturalHeight
+  if (!sourceWidth || !sourceHeight) throw new Error('The selected image has no dimensions.')
+
+  const canvas = document.createElement('canvas')
+  let sourceX = 0
+  let sourceY = 0
+  let sourceCropWidth = sourceWidth
+  let sourceCropHeight = sourceHeight
+
+  if (resize === 'cover') {
+    const cropSize = Math.min(sourceWidth, sourceHeight)
+    sourceX = (sourceWidth - cropSize) / 2
+    sourceY = (sourceHeight - cropSize) / 2
+    sourceCropWidth = cropSize
+    sourceCropHeight = cropSize
+    canvas.width = maxSize
+    canvas.height = maxSize
+  } else {
+    const scale = Math.min(1, maxSize / Math.max(sourceWidth, sourceHeight))
+    canvas.width = Math.max(1, Math.round(sourceWidth * scale))
+    canvas.height = Math.max(1, Math.round(sourceHeight * scale))
+  }
+
+  const context = canvas.getContext('2d')
+  if (!context) throw new Error('This browser cannot prepare avatar images.')
+  context.drawImage(
+    image,
+    sourceX,
+    sourceY,
+    sourceCropWidth,
+    sourceCropHeight,
+    0,
+    0,
+    canvas.width,
+    canvas.height,
+  )
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error('Could not prepare the avatar image.'))),
+      'image/webp',
+      quality,
+    )
+  })
+}
+
 export async function uploadCatAvatar(file: File, pathPrefix: string): Promise<string> {
-  const extension = avatarTypes[file.type]
-  if (!extension) throw new Error('Choose a JPG, PNG, WebP or GIF image.')
+  if (!avatarTypes[file.type]) throw new Error('Choose a JPG, PNG, WebP or GIF image.')
   if (file.size > 5 * 1024 * 1024) throw new Error('Avatar images must be 5 MB or smaller.')
 
-  const path = `${pathPrefix}/${crypto.randomUUID()}.${extension}`
+  const path = `${pathPrefix}/${crypto.randomUUID()}.webp`
+  const [preview, thumbnail] = await Promise.all([
+    resizeAvatar(file, PREVIEW_SIZE, 'contain', 0.8),
+    resizeAvatar(file, THUMBNAIL_SIZE, 'cover', 0.7),
+  ])
   const { error } = await supabase.storage
     .from(CAT_AVATAR_BUCKET)
-    .upload(path, file, { cacheControl: '86400', contentType: file.type })
+    .upload(path, preview, { cacheControl: '31536000', contentType: 'image/webp' })
   if (error) throw error
+
+  const { error: thumbnailError } = await supabase.storage
+    .from(CAT_AVATAR_BUCKET)
+    .upload(avatarThumbnailPath(path), thumbnail, {
+      cacheControl: '31536000',
+      contentType: 'image/webp',
+    })
+  if (thumbnailError) {
+    await supabase.storage.from(CAT_AVATAR_BUCKET).remove([path])
+    throw thumbnailError
+  }
   return path
 }
 
@@ -118,13 +204,16 @@ export async function syncCommunityThumbnails(
 
   await Promise.all(
     existingPaths.map(async (path) => {
-      const sourceUrl = await getCatAvatarUrl(path, 'thumbnail')
-      if (!sourceUrl) throw new Error('Could not prepare a community thumbnail.')
+      const thumbnailUrl = await getCatAvatarUrl(path, 'thumbnail')
+      let response = thumbnailUrl ? await fetch(thumbnailUrl) : null
+      if (!response?.ok) {
+        const originalUrl = await getCatAvatarUrl(path, 'original')
+        response = originalUrl ? await fetch(originalUrl) : null
+      }
+      if (!response?.ok) throw new Error('Could not download a community thumbnail.')
 
-      const response = await fetch(sourceUrl)
-      if (!response.ok) throw new Error('Could not download a community thumbnail.')
-
-      const thumbnail = await response.blob()
+      const source = await response.blob()
+      const thumbnail = await resizeAvatar(source, THUMBNAIL_SIZE, 'cover', 0.7)
       const { error } = await supabase.storage
         .from(COMMUNITY_AVATAR_BUCKET)
         .upload(path, thumbnail, {
@@ -141,14 +230,41 @@ export function getCatAvatarUrl(
   path: string,
   variant: CatAvatarVariant = 'thumbnail',
 ): Promise<string | null> {
-  return getCachedSignedUrl(CAT_AVATAR_BUCKET, path, variant, avatarTransforms[variant])
+  const storedPath = variant === 'thumbnail' ? avatarThumbnailPath(path) : path
+  return getCachedSignedUrl(CAT_AVATAR_BUCKET, storedPath, variant)
+}
+
+const pendingThumbnailBackfills = new Map<string, Promise<void>>()
+
+export function backfillCatAvatarThumbnail(path: string): Promise<void> {
+  const pending = pendingThumbnailBackfills.get(path)
+  if (pending) return pending
+
+  const request = (async () => {
+    const sourceUrl = await getCatAvatarUrl(path, 'original')
+    if (!sourceUrl) return
+    const response = await fetch(sourceUrl)
+    if (!response.ok) return
+    const thumbnail = await resizeAvatar(await response.blob(), THUMBNAIL_SIZE, 'cover', 0.7)
+    const { error } = await supabase.storage
+      .from(CAT_AVATAR_BUCKET)
+      .upload(avatarThumbnailPath(path), thumbnail, {
+        cacheControl: '31536000',
+        contentType: 'image/webp',
+        upsert: true,
+      })
+    // Collaborators can view an avatar but only its owner may create its thumbnail.
+    if (error && error.message !== 'The resource already exists') return
+  })().finally(() => pendingThumbnailBackfills.delete(path))
+
+  pendingThumbnailBackfills.set(path, request)
+  return request
 }
 
 function getCachedSignedUrl(
   bucket: string,
   path: string,
   cacheVariant: string,
-  transform?: (typeof avatarTransforms)[CatAvatarVariant],
 ): Promise<string | null> {
   const cacheKey = `${bucket}:${cacheVariant}:${path}`
   const cached = signedUrlCache.get(cacheKey) ?? readStoredUrl(cacheKey)
@@ -160,7 +276,7 @@ function getCachedSignedUrl(
 
   const request = supabase.storage
     .from(bucket)
-    .createSignedUrl(path, SIGNED_URL_LIFETIME_SECONDS, transform ? { transform } : undefined)
+    .createSignedUrl(path, SIGNED_URL_LIFETIME_SECONDS)
     .then(({ data, error }) => {
       if (error) return null
 
@@ -181,7 +297,8 @@ function getCachedSignedUrl(
 export async function removeCatAvatars(paths: Array<string | null | undefined>) {
   const existingPaths = paths.filter((path): path is string => Boolean(path))
   if (!existingPaths.length) return
-  const { error } = await supabase.storage.from(CAT_AVATAR_BUCKET).remove(existingPaths)
+  const privatePaths = existingPaths.flatMap((path) => [path, avatarThumbnailPath(path)])
+  const { error } = await supabase.storage.from(CAT_AVATAR_BUCKET).remove(privatePaths)
   if (error) throw error
   const { error: thumbnailError } = await supabase.storage
     .from(COMMUNITY_AVATAR_BUCKET)
@@ -189,7 +306,7 @@ export async function removeCatAvatars(paths: Array<string | null | undefined>) 
   if (thumbnailError) console.warn('Could not remove community avatar thumbnails', thumbnailError)
   existingPaths.forEach((path) => {
     const cacheKeys = [
-      `${CAT_AVATAR_BUCKET}:thumbnail:${path}`,
+      `${CAT_AVATAR_BUCKET}:thumbnail:${avatarThumbnailPath(path)}`,
       `${CAT_AVATAR_BUCKET}:preview:${path}`,
       `${COMMUNITY_AVATAR_BUCKET}:community-thumbnail:${path}`,
     ]
